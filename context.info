@@ -1,0 +1,4 @@
+; $Id$
+name = Context
+description = "Context is arg(0)"
+package = Context

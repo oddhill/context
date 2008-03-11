@@ -1,0 +1,121 @@
+<?php
+// $Id$
+
+define('CONTEXT_GET', 0);
+define('CONTEXT_SET', 1);
+define('CONTEXT_EXISTS', 2);
+define('CONTEXT_CLEAR', 3);
+
+/**
+ * Master context function. Avoid calling this directly -- use one of the helper functions below.
+ *
+ * @param $op
+ *   The operation to perform - handled by the context helper functions. Use them.
+ * @param $space
+ *   A string to be used as the namespace for the context information.
+ * @param $key
+ *   Usually a string to be used as a key to set/retrieve context information. An array can
+ *   also be used when setting context to establish an entire context namespace at once.  
+ *   (At some point objects may also be accepted, but currently functionaliy isn't complete.)
+ * @param $value
+ *   A value to set for the provided key. If omitted the value will be set to true.
+ *
+ * @return
+ *   Either the requested value, or false if the operation fails.
+ */
+function context_context($op = CONTEXT_GET, $space = null, $key = null, $value = null) {
+  static $context;
+  $context = !$context ? array() : $context;
+  switch ($op) {
+    case CONTEXT_GET:
+      // return entire context
+      if (!$space) {
+        return $context;
+      }
+      // return entire space if set
+      else if (!$key && isset($context[(string) $space])) {
+        return $context[(string) $space];
+      }
+      // return val of key from space
+      else if (is_array($context[(string) $space]) && isset($context[(string) $space][(string) $key])) {
+        return $context[(string) $space][(string) $key];
+      }
+      break;
+    case CONTEXT_SET:
+      // bail if invalid space is specified or context is already set
+      if (is_string($space) || is_int($space)) {
+        // initialize namespace if no key is specified
+        if (!$key) {
+          $context[(string) $space] = array();
+          return true;
+        }
+        // set to true if key is a usable identifier. otherwise, allow a key or object to be inserted
+        if (!$value) {
+          if (is_string($key) || is_int($key)) {
+            $context[(string) $space][(string) $key] = true;
+            return true;
+          }
+          elseif (is_array($key) || is_object($key)) {
+            $context[(string) $space] = $key;
+            return true;
+          }
+        }
+        // set value if key is valid
+        if ((is_string($key) || is_int($key)) && $value) {
+          $context[$space][$key] = $value;
+          return true;
+        }
+      }
+      break;
+    case CONTEXT_EXISTS:
+      // return entire context
+      if (!$space) return false;
+      if (!$key) {
+        // return entire space if set
+        return isset($context[$space]);
+      }
+      // return val of key from space
+      return isset($context[$space][$key]);
+    case CONTEXT_CLEAR:
+      $context = array();
+      return true;
+  }
+  return false;
+}
+
+/**
+ * Sets a context by space + key.
+ */
+function context_set($space, $key = null, $value = null) {
+  return context_context(CONTEXT_SET, $space, $key, $value);
+}
+
+/**
+ * Retrieves a context by space + (optional) key
+ */
+function context_get($space = null, $key = null) {
+  return context_context(CONTEXT_GET, $space, $key, null);
+}
+
+/**
+ * Returns a boolean for whether a context space + key have been set
+ */
+function context_exists($space = null, $key = null) {
+  return context_context(CONTEXT_EXISTS, $space, $key, null);
+}
+
+/**
+ * Clears static context array() -- meant only for testing
+ */
+function context_clear() {
+  return context_context(CONTEXT_CLEAR);
+}
+
+/**
+ * Implementation of hook_simpletest().
+ */
+function context_simpletest() {
+  $dir = drupal_get_path('module', 'context') .'/tests';
+  $tests = file_scan_directory($dir, '\.test$');
+  return array_keys($tests);
+}

@@ -1,0 +1,91 @@
+<?php
+// $Id$
+
+class ContextGetTest extends  DrupalTestCase {
+  /**
+   * Implementation of get_info() for information
+   */
+  function get_info() {
+    return array(
+      'name' => t('context_get(), context_exists() unit tests'),
+      'desc' => t('Sets all possible context types and checks for integrity.') ,
+      'group' => 'Context Tests'
+    );
+  }
+
+  function setUp() {
+    $this->drupalModuleEnable('context');
+  }
+
+  function testContextGet() {
+    // define possible data types
+    $set_types = array(
+      'bool'    => true,
+      'int'     => 1,
+      'string'  => 'lorem',
+      'array'   => array('lorem'),
+      'object'  => new StdClass(),
+    );
+    $id_types = array('int', 'string');
+
+    // SPACE
+    foreach ($set_types as $type => $val) {
+      $set = context_set($val);
+      // Test return value of context_set()
+      if (in_array($type, $id_types)) {
+        // test set integrity
+        $this->assertIdentical(true, $set);      
+        // test get integrity
+        $this->assertIdentical(array(), context_get($val));
+        $this->assertIdentical(true, context_exists($val));
+      }
+      else {
+        $this->assertIdentical(false, $set);
+      }
+      context_clear();
+    }
+      
+    // SPACE+KEY
+    foreach ($set_types as $type => $val) {
+      foreach ($set_types as $type2 => $val2) {
+        // test set integrity
+        $set = context_set($val, $val2);        
+        if (in_array($type, $id_types)) {
+          // test set integrity
+          if ($type2 != 'bool') {
+            $this->assertIdentical(true, $set);
+          }
+          else {
+            $this->assertIdentical(false, $set);
+          }
+          // test get + exists integrity
+          if (in_array($type2, $id_types)) {
+            $this->assertIdentical(true, (context_get($val, $val2) == $val2));
+            $this->assertIdentical(true, context_exists($val, $val2));
+          }
+          else if (in_array($type2, array('array', 'object'))) {
+            $this->assertIdentical(true, (context_get($val) == $val2));
+            $this->assertIdentical(true, context_exists($val));
+          }
+        }
+      }
+      context_clear();      
+    }
+
+    // SPACE+KEY+VALUE, o lord
+    foreach ($set_types as $type => $val) {
+      foreach ($set_types as $type2 => $val2) {
+        foreach ($set_types as $type3 => $val3) {
+          $set = context_set($val, $val2, $val3);
+          if (in_array($type, $id_types)) {
+            if(in_array($type2, $id_types)) {
+              $this->assertIdentical(true, (context_get($val, $val2, $val3) == $val3));
+              $this->assertIdentical(true, context_exists($val, $val2, $val3));
+            }
+          }
+          context_clear();
+        }
+      }
+    }
+  }
+}
