@@ -1,4 +1,3 @@
 ; $Id$
 name = Context
-description = "Context is arg(0)"
-package = Context
+description = "Provide modules with a cache that lasts for a single page request."
