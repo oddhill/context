@@ -110,12 +110,3 @@ function context_exists($space = null, $key = null) {
 function context_clear() {
   return context_context(CONTEXT_CLEAR);
 }
-
-/**
- * Implementation of hook_simpletest().
- */
-function context_simpletest() {
-  $dir = drupal_get_path('module', 'context') .'/tests';
-  $tests = file_scan_directory($dir, '\.test$');
-  return array_keys($tests);
-}
