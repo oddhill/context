@@ -1,0 +1,154 @@
+/* Context devel block */
+.context-devel-space {
+  font-weight:bold;
+  padding:3px 5px;
+  background:#369; color:#fff;
+}
+
+.context-devel-tree {
+  border-right:1px solid #69c;
+  border-bottom:1px solid #69c;
+}
+
+.context-devel-wrapper {
+  border-left:1px solid #69c;
+}
+
+.context-devel-wrapper .context-devel-wrapper {
+  border-left:8px solid #69c;
+}
+
+.context-devel-wrapper label {
+  display:block;
+  border-top:1px solid #69c;
+  padding: 5px;
+}
+
+.context-devel-wrapper small {
+  font-weight:normal; float:right;
+  font-size:8px; line-height:14px; padding:0px 3px;
+  background:#333; color:#ccc;
+}
+
+/* Context admin listing page */
+table.context-ui span.context-space {
+  font-weight:bold;
+}
+
+table.context-ui span.context-key {
+  margin-left:2em;
+}
+
+table.context-ui span.context-value {
+  margin-left:4em;
+}
+
+table.context-ui span.overridden {
+  color:#9ab;
+}
+
+h3.context-space small {
+  display:inline;
+  padding:.1em .5em; margin-left:1em;
+  font-size:.6em; font-weight:bold;
+  text-transform:uppercase;
+  background:#e8f0f8; /* Garland blue */
+}
+
+/* Context definition editing form */
+form#context-ui-form div.context-ui-item {
+  padding:0em 0em .75em; margin-bottom:1em;
+  background:#e8f0f8;
+  border:1px solid #bdf;
+  border-bottom: 2px solid #ace;
+}
+
+  form#context-ui-form div.context-ui-item .form-item {
+    border-top:1px solid #fff;
+    padding: .75em; margin:0em;
+  }
+  
+  form#context-ui-form div.context-ui-item label,
+  form#context-ui-form div.context-ui-item div.form-checkboxes,
+  form#context-ui-form div.context-ui-item .description {
+    float:left; clear:none;
+    width:45%;
+  }
+  
+  form#context-ui-form div.context-ui-item div.form-checkboxes {
+    background:#fff; border:1px solid #ace;
+    height:20em; font-size:.9em;
+    overflow:auto;
+    float:right;
+  }
+
+  form#context-ui-form div.context-ui-item div.form-checkboxes .form-item {
+    border: 0px; border-bottom:1px solid #e8f0f8; padding:.1em;
+    display:block;
+  }
+
+  form#context-ui-form div.context-ui-item div.form-checkboxes .form-item label {
+    float:none; width:auto;
+  }
+
+  
+form#context-ui-form div.context-ui-block-selector,
+form#context-ui-form div.context-ui-block-regions {
+  overflow:hidden; width:50%; float:left;
+}
+
+  form#context-ui-form div.context-ui-block-selector select {
+    width:90%;}
+  
+  
+  form#context-ui-form div.context-ui-block-regions {
+    width:45%;
+    float:right;
+  }
+  
+form#context-ui-form div.context-ui-block-regions .item-list {
+  border-left:1px solid #ace; border-right:1px solid #ace;
+  margin:0em 0em 1em;
+}
+
+  form#context-ui-form div.context-ui-block-regions .item-list h3 {
+    background:#ace;
+    padding: .25em; margin:0em;
+  }
+  
+  form#context-ui-form div.context-ui-block-regions .item-list ul,
+  form#context-ui-form div.context-ui-block-regions .item-list ul li {
+    background:transparent; padding:0em; margin:0em;
+  }
+  
+    form#context-ui-form div.context-ui-block-regions .item-list ul li {
+      padding:.25em; background:#e8f0f8;
+      border-bottom:1px solid #ace;
+      border-left: 1px solid #fff;
+      border-top: 1px solid #fff;
+    }
+
+      form#context-ui-form div.context-ui-block-regions .item-list ul li.disabled {
+        color:#999;
+      }
+
+    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools {
+      background:#ace;
+      float:right;
+      height:20px;
+    }
+
+    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span {
+      cursor:pointer;
+      float:left; display:block; text-indent:-9999px; overflow:hidden;
+      width:20px; height:20px;
+    }
+
+    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.up {
+      background: url(widgets.gif) 0% 0% no-repeat;}
+
+    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.down {
+      background: url(widgets.gif) 50% 0% no-repeat;}
+
+    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.remove {
+      background: url(widgets.gif) 100% 0% no-repeat;}

@@ -1,0 +1,5 @@
+; $Id$
+name = Context UI
+description = "Provides a simple UI for settings up a site structure using Context."
+dependencies = context
+package = Context
