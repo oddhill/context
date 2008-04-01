@@ -365,11 +365,11 @@ function context_ui_form($op, $cid = NULL) {
   }
 
   // Control block visibility
-  global $theme;
+  global $theme_key;
   $block_options =
   $block_defaults = array();
   $blocks = _context_ui_get_blocks();
-  $regions = system_region_list($theme);
+  $regions = system_region_list($theme_key);
   // $blocks in [0] have not been assigned a region
   foreach ($blocks[0] as $block) {
     if (!isset($context->block[$block->bid])) {
@@ -414,7 +414,7 @@ function context_ui_form($op, $cid = NULL) {
   );
   foreach (array_keys($regions) as $region) {
     $defaults = array();
-    $midpoint = false;    
+    $midpoint = false;
     foreach (_context_ui_get_blocks($region, $context) as $block) {
       if ($block->type == 'context_ui') {
         $defaults[] = $block->bid;
@@ -556,11 +556,11 @@ function context_ui_form_process($form) {
   
   // Blocks must be done by region
   $context->block = array();
-  global $theme;
+  global $theme_key;
   // Get list of "valid" available blocks
   $valid = _context_ui_get_blocks();
   $valid = $valid[0];
-  foreach (system_region_list($theme) as $region => $label) {
+  foreach (system_region_list($theme_key) as $region => $label) {
     if ($blocks = $form['block']['regions'][$region]) {
       $blocks = explode(',', $blocks);
       $midpoint = array_search('system', $blocks);
@@ -935,18 +935,18 @@ function _context_ui_get_views() {
  *   A keyed (by "module_delta" convention) array of blocks.
  */
 function _context_ui_get_blocks($region = null, $context = null) {
-  global $theme;
+  global $theme_key;
   static $block_info, $valid, $system_blocks;
   // we don't static cache context blocks
   $context_blocks = $blocks = array();
 
   if (!$system_blocks) {
     // initialize regions
-    foreach (system_region_list($theme) as $r => $l) {
+    foreach (system_region_list($theme_key) as $r => $l) {
       $system_blocks[$r] = array();      
     }
     // load blocks from database    
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s'", $theme);
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s'", $theme_key);
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
