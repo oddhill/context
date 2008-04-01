@@ -1,0 +1,23 @@
+<?php
+// $Id$
+
+function context_ui_install() {
+  switch ($GLOBALS['db_type']) {
+    case 'mysqli':
+    case 'mysql':
+      db_query("CREATE TABLE {context_ui} (cid INT(10) NOT NULL, system INT(1) NOT NULL, status INT(1) NOT NULL, space VARCHAR(255) NOT NULL, `key` VARCHAR(255) NOT NULL, value VARCHAR(255), PRIMARY KEY(cid), KEY (system, space, `key`, value))");
+      db_query("CREATE TABLE {context_ui_item} (type VARCHAR(32) NOT NULL, id VARCHAR(255) NOT NULL, cid INT(10) NOT NULL, KEY(id, type, cid))");
+      db_query("CREATE TABLE {context_ui_block} (module VARCHAR(64) NOT NULL, delta VARCHAR(32) NOT NULL, region VARCHAR(64) NOT NULL, weight TINYINT(4) NOT NULL, cid INT(10) NOT NULL, KEY(module, delta, region, cid))");
+      break;
+  }
+}
+
+
+/**
+ * hook_uninstall().
+ */
+function context_ui_uninstall() {
+  db_query('DROP TABLE {context_ui}');
+  db_query('DROP TABLE {context_ui_item}');
+  db_query('DROP TABLE {context_ui_block}');
+}
