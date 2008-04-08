@@ -120,7 +120,7 @@ function context_ui_rebuild() {
   }
   
   // Remove any unused contexts
-  foreach ($system as $c) {
+  foreach ($system as $c => $dummy) {
     context_ui_context('delete', $c);
   }
 }
