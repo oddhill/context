@@ -73,12 +73,7 @@ function context_ui_tree($op = '') {
       ORDER BY system ASC, space ASC, `key` ASC, value ASC");
     while ($context = db_fetch_object($result)) {
       $branch = $context->system ? 'system' : 'ui';      
-      if (is_bool($context->value) || $context->value == 1 || !$context->value) {
-        $tree[$branch][$context->space][$context->key] = $context;
-      }
-      else if (!$tree[$branch][$context->space][$context->key][$context->value]) {
-        $tree[$branch][$context->space][$context->key][$context->value] = $context;
-      }
+      $tree[$branch][$context->space][$context->key][$context->value] = $context;
     }
   }
   switch ($op) {
@@ -134,6 +129,9 @@ function context_ui_rebuild() {
  * Page callback for context_ui admin landing page.
  */
 function context_ui_admin() {
+  // rebuild blocks
+  _block_rehash();
+
   // rebuild default contexts
   context_ui_rebuild();
 
@@ -182,10 +180,10 @@ function theme_context_ui_admin($context_tree) {
           $class = '';
           if ($context->system) {
             $links[] = l(t('View'), "admin/build/context/view/$context->cid");
-            $links[] = l(t('Export'), "admin/build/context/export/$context->cid");
           }
           else {
             $links[] = l(t('Edit'), 'admin/build/context/edit/'. $context->cid);
+            $links[] = l(t('Export'), "admin/build/context/export/$context->cid");
             $links[] = l(t('Delete'), 'admin/build/context/delete/'. $context->cid);
           }
           if (!$context->status) {
@@ -945,7 +943,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
     foreach (system_region_list($theme_key) as $r => $l) {
       $system_blocks[$r] = array();      
     }
-    // load blocks from database    
+    // load blocks from database
     $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s'", $theme_key);
     while ($block = db_fetch_object($result)) {
       // load block info

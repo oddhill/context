@@ -63,21 +63,43 @@ function context_ui_context_items() {
   }
   
   // Menu
-  if (module_exists('menu')) {    
+  if (module_exists('menu')) {
+    // grab menu cache
+    global $_menu;
     $menus = array();
-    $root = menu_get_root_menus();
-    unset($root[1]); // exclude core Drupal menu "Navigation" by default
-    foreach ($root as $root_mid => $root_menu) {
-      $tmp = menu_parent_options(0, $root_mid, 0);
-      unset($tmp[key($tmp)]);
-      $menus[$root_mid] = $root_menu;
-      $menus = $menus + $tmp;
+    // build options using root menus
+    foreach (menu_get_root_menus() as $root_mid => $root_menu) {
+      // build menu options from children of each root menu
+      $menu = array();
+      $options = menu_parent_options(0, $root_mid, 0);
+      unset($options[key($options)]);
+      foreach ($options as $mid => $title) {
+        $path = $_menu['items'][$mid]['path'];
+        $menu[$path] = $title;
+      }
+      $path = $_menu['items'][$root_mid]['path'];
+      $menus[$path] = $root_menu;
+      $menus = $menus + $menu;
     }
     $items['menu'] = array(
       'title' => t('Menus'),
       'description' => t('Display the selected menu items as active when this context is set. <strong>Note:</strong> You must use <code>context_ui_menu_links()</code> instead of <code>primary_menu_links()</code> in your theme to make use of this feature.'),
       'options' => $menus,
       'widget' => 'select',
+    );
+  }
+  
+  if (module_exists('nodequeue')) {
+    $result = db_query("SELECT qid, title FROM {nodequeue_queue}");
+    $options = array();
+    while ($nq = db_fetch_object($result)) {
+      $options[$nq->qid] = $nq->title;
+    }
+    $items['nodequeue'] = array(
+      'title' => t('Nodequeue'),
+      'description' => t('Set this context when a node in the selected nodequeue(s) is viewed.'),
+      'options' => $options,
+      'widget' => 'select',      
     );
   }
   
@@ -178,7 +200,16 @@ function context_ui_help($section) {
  */
 function context_ui_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page) {
+    // implementation of context_ui_set for node
     context_ui_set('node', $node->type);
+
+    // implementation of context_ui_set for nodequeue
+    if (module_exists('nodequeue')) {
+      $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
+      while($qid = db_fetch_object($result)) {
+        context_ui_set('nodequeue', $qid->qid);
+      }
+    }
   }
 }
 
@@ -282,13 +313,13 @@ function context_ui_menu_get() {
   if (!isset($menu_contexts)) {
     $menu_contexts = array();
     $menu_context = db_query(
-      "SELECT ci.id AS mid, c.space AS space, c.key AS `key`, c.value as value
+      "SELECT ci.id AS path, c.space AS space, c.key AS `key`, c.value as value
       FROM {context_ui_item} ci
       JOIN {context_ui} c ON c.cid = ci.cid
       WHERE ci.type = '%s' AND c.status = %d",
       'menu', 1);
     while ($m = db_fetch_object($menu_context)) {
-      $menu_contexts[$m->mid] = $m;
+      $menu_contexts[$m->path] = $m;
     }
   }
   return $menu_contexts;
@@ -297,12 +328,12 @@ function context_ui_menu_get() {
 /*
  * Takes a menu context object (just a row from db) and checks for specified context.
  */
-function context_ui_menu_check($mid_context) {
-  if (!empty($mid_context->value)) {
-    return context_get($mid_context->space, $mid_context->key) == $mid_context->value;
+function context_ui_menu_check($context) {
+  if (!empty($context->value)) {
+    return context_get($context->space, $context->key) == $context->value;
   }
   else {
-    return context_exists($mid_context->space, $mid_context->key);
+    return context_exists($context->space, $context->key);
   }
 }
 
@@ -325,7 +356,7 @@ function _context_ui_menu_get_active_trail_in_submenu($pid) {
         if (
           isset($item['path']) && ($item['path'] == $path ||
           ($item['path'] == '<front>' && drupal_is_front_page())) ||
-          ($menu_context = $menu_contexts[$mid] && context_ui_menu_check($menu_contexts[$mid]))
+          ($menu_context = $menu_contexts[$item['path']] && context_ui_menu_check($menu_contexts[$item['path']]))
           ) {
           $trails[$count] = array();
           while ($mid && $menu['items'][$mid]) {
@@ -391,7 +422,7 @@ function context_ui_menu_links($start_level = 1, $pid = 0) {
     foreach ($menu['visible'][$pid]['children'] as $cid) {
       $index = "menu-$start_level-$count-$pid";
       $link = menu_item_link($cid, FALSE);
-      if ($menu_context = $menu_contexts[$cid]) {
+      if ($menu_context = $menu_contexts[$link['href']]) {
         $active = context_ui_menu_check($menu_context);
         $link['warp'] = $menu_context->warp;
       }
