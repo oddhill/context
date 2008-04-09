@@ -2,62 +2,6 @@
 // $Id$
 
 /*
- * Invokes hook_context_define() to collect all contexts provided in code by modules.
- *
- * @param $space
- *   An optional string namespace identifier. If provided, only context definitions with the
- *   specified namespace will be returned.
- *
- * @return
- *   An array of context objects.
- */
-function context_ui_defaults($space = null) {
-  static $contexts, $spaces;
-  if (!$contexts) {
-    $contexts = array();
-    foreach (module_implements('context_define') as $module) {
-      $function = $module .'_context_define';
-      $contexts = array_merge($contexts, $function());      
-    }
-    foreach ($contexts as &$context) {
-      $context = (object) $context;
-      $spaces[$context->space][] = $context;
-    }
-  }
-  if ($space) {
-    if (isset($spaces[$space])) {
-      return $spaces[$space];
-    }
-    else {
-      return false;
-    }
-  }
-  return $contexts;
-}
-
-/*
- * Invokes hook_context_items() to provides an array of item types that a context may be associated with.
- */
-function context_ui_types($op = 'list') {
-  static $types;
-  if (!$types) {
-    $types = array();
-    foreach (module_implements('context_items') as $module) {
-      $function = $module .'_context_items';
-      $types = array_merge($types, $function());
-    }
-  }
-  switch ($op) {
-    case 'list':
-      return array_keys($types);
-      break;
-    case 'full':
-      return $types;
-      break;
-  }
-}
-
-/*
  * Generates an array tree representation of available space/key/value context definitions.
  */
 function context_ui_tree($op = '') {
