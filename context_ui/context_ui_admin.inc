@@ -315,7 +315,7 @@ function context_ui_form($op, $cid = NULL) {
       }
       break;
   }
-
+  
   // Core context definition
   $form = array();
   $form['value'] = array(
@@ -827,6 +827,7 @@ function context_ui_item_block($op = 'load', $context) {
     switch ($op) {
       case 'load':
         $result = db_query("SELECT module, delta, region, weight FROM {context_ui_block} WHERE cid = %d", $context->cid);
+        $context->block = array();
         while ($block = db_fetch_object($result)) {
           $bid = $block->module ."_". $block->delta;
           $block->bid = $bid;

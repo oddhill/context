@@ -3,8 +3,8 @@
 
 include_once(drupal_get_path("module", "context_ui") ."/context_ui_admin.inc");
 
-/*
- * hook_block()
+/**
+ * Implementation of hook_block()
  */
 function context_ui_block($op = 'list', $delta = 0) {
   $block = array();
@@ -29,14 +29,8 @@ function context_ui_block($op = 'list', $delta = 0) {
   }
 }
 
-/*
- * hook_context_define()
- */
-function context_ui_context_define() {
-  return array();
-}
 
-/*
+/**
  * hook_context_items()
  */
 function context_ui_context_items() {
@@ -107,7 +101,7 @@ function context_ui_context_items() {
 }
 
 /*
- * hook_menu()
+ * Implementation of hook_menu()
  */
 function context_ui_menu($may_cache) {
   $items = array();
@@ -168,22 +162,22 @@ function context_ui_menu($may_cache) {
     return $items;
   }
   else {
-    // rebuild context_ui "cache"
+    // Rebuild context_ui "cache".
     if ($_GET['q'] == 'admin/build/modules') {
       context_ui_rebuild();
     }
 
-    // baby jesus cries
+    // Init the theme and attempt to override the theme_blocks.
     init_theme();
     context_ui_block_hack();
 
-    // include context ui css
+    // Include context ui css.
     drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
   }
 }
 
-/*
- * hook_help()
+/**
+ * Implementation of hook_help()
  */
 function context_ui_help($section) {
   switch ($section) {
@@ -195,15 +189,15 @@ function context_ui_help($section) {
   }
 }
 
-/*
- * hook_nodeapi()
+/**
+ * Implementation of hook_nodeapi()
  */
 function context_ui_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page) {
-    // implementation of context_ui_set for node
+    // Implementation of context_ui_set for node.
     context_ui_set('node', $node->type);
 
-    // implementation of context_ui_set for nodequeue
+    // Implementation of context_ui_set for nodequeue.
     if (module_exists('nodequeue')) {
       $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
       while($qid = db_fetch_object($result)) {
@@ -213,8 +207,8 @@ function context_ui_nodeapi(&$node, $op, $teaser, $page) {
   }
 }
 
-/*
- * hook_form_alter()
+/**
+ * Implementation ofhook_form_alter()
  */
 function context_ui_form_alter($form_id, &$form) {
   if ($form['#node']) {
@@ -226,8 +220,8 @@ function context_ui_form_alter($form_id, &$form) {
   }
 }
 
-/*
- * hook_views_pre_query()
+/**
+ * Implementation of hook_views_pre_query()
  */
 function context_ui_views_pre_query($view) {
   if ($view->build_type == 'page') {
@@ -263,7 +257,7 @@ function context_ui_set($type, $id) {
   return $set;
 }
 
-/*
+/**
  * Takes a retrieved context array and returns a themed out tree representation of that context.
  */
 function theme_context_devel($context) {
@@ -275,7 +269,7 @@ function theme_context_devel($context) {
   return $output;
 }
 
-/*
+/**
  * Helper function to theme_context_devel that recurses down context arrays and themes accordingly.
  */
 function theme_context_devel_recurse($value) {
@@ -325,7 +319,7 @@ function context_ui_menu_get() {
   return $menu_contexts;
 }
 
-/*
+/**
  * Takes a menu context object (just a row from db) and checks for specified context.
  */
 function context_ui_menu_check($context) {
@@ -337,7 +331,7 @@ function context_ui_menu_check($context) {
   }
 }
 
-/*
+/**
  * Alternate implementation of _menu_get_active_trail_in_submenu(). Uses context in addition to a path check.
  */
 function _context_ui_menu_get_active_trail_in_submenu($pid) {
@@ -388,7 +382,7 @@ function _context_ui_menu_get_active_trail_in_submenu($pid) {
   return NULL;
 }
 
-/*
+/**
  * Alternate implementation of primary_menu_links(). Uses context.
  */
 function context_ui_menu_links($start_level = 1, $pid = 0) {
@@ -450,7 +444,7 @@ function context_ui_menu_links($start_level = 1, $pid = 0) {
   return $links;
 }
 
-/*
+/**
  * Alternate implementation of menu_secondary_links(). Uses context.
  */
 function context_ui_menu_secondary_links() {
@@ -466,7 +460,7 @@ function context_ui_menu_secondary_links() {
   return context_ui_menu_links(1, $msm);
 }
 
-/*
+/**
  * An egregious hack. Checks the function namespace for a theme and theme engine override of theme_blocks
  * and attempts to take the first available override. If all else fails, falls back to a custom
  * context_ui theme function namespace that requires custom implementation by the themer.
@@ -498,7 +492,7 @@ function context_ui_block_hack() {
   eval($eval);
 }
 
-/*
+/**
  * An alternative version of block_list() that provides any context_ui enabled blocks.
  */
 function context_ui_block_list($region) {
