@@ -286,6 +286,11 @@ function theme_context_links($links, $attributes = array('class' => 'links')) {
         $class = $key;
       }
 
+      // Add active class for active menu items
+      if (stristr($key, 'active')) {
+        $class .= " active";
+      }    
+
       // Add first and last classes to the list of links to help out themers.
       $extra_class = '';
       if ($i == 1) {
