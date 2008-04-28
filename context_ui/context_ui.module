@@ -27,7 +27,6 @@ function context_ui_block($op = 'list', $delta = 0) {
   }
 }
 
-
 /**
  * hook_context_items()
  */
@@ -645,13 +644,14 @@ function context_ui_export($cid = NULL) {
 function context_ui_set($type, $id) {
   $set = false;
   $result = db_query("
-    SELECT c.space, c.key, c.value FROM {context_ui_item} ci
+    SELECT c.space, c.key, c.value, c.cid FROM {context_ui_item} ci
     JOIN {context_ui} c ON ci.cid = c.cid
     WHERE ci.type = '%s' AND ci.id = '%s' AND c.status = %d",
     $type, $id, 1);
   if (db_num_rows($result) > 0) {
     while ($context = db_fetch_object($result)) {      
       context_set($context->space, $context->key, $context->value);
+      context_ui_menu_set_location($context);
     }
     $set = true;
   }
@@ -701,164 +701,49 @@ function theme_context_devel_recurse($value) {
 }
 
 /**
- * Retrieves a mid => context info array and static caches it.
+ * Alters the menu to reflect any active contexts. Called from context_ui_set().
  */
-function context_ui_menu_get() {
-  static $menu_contexts;
-  if (!isset($menu_contexts)) {
-    $menu_contexts = array();
-    $menu_context = db_query(
-      "SELECT ci.id AS path, c.space AS space, c.key AS `key`, c.value as value
+function context_ui_menu_set_location($context) {
+  if ($context->cid) {
+    $result = db_query("
+      SELECT ci.id
       FROM {context_ui_item} ci
-      JOIN {context_ui} c ON c.cid = ci.cid
-      WHERE ci.type = '%s' AND c.status = %d",
-      'menu', 1);
-    while ($m = db_fetch_object($menu_context)) {
-      $menu_contexts[$m->path] = $m;
-    }
-  }
-  return $menu_contexts;
-}
+      WHERE ci.type = '%s' AND ci.cid = %d",
+      'menu', $context->cid);
+    if ($path = db_result($result)) {
+      // Load global menu -- unfortunately we may have to modify it manually
+      global $_menu;
 
-/**
- * Takes a menu context object (just a row from db) and checks for specified context.
- */
-function context_ui_menu_check($context) {
-  if (!empty($context->value)) {
-    return context_get($context->space, $context->key) == $context->value;
-  }
-  else {
-    return context_exists($context->space, $context->key);
-  }
-}
+      // Get menu item for active context
+      $context_menu = menu_get_item(null, $path);
+      $items[] = $context_menu;      
 
-/**
- * Alternate implementation of _menu_get_active_trail_in_submenu(). Uses context in addition to a path check.
- */
-function _context_ui_menu_get_active_trail_in_submenu($pid) {
-  static $trails;
+      // Grab the menu tree from active context item to the root
+      $mid = $context_menu['pid'];
+      while ($mid && ($item = menu_get_item($mid))) {
+        $items[] = $item;
+        $mid = $item['pid'];
+      }
+      $items = array_reverse($items);
 
-  if (!isset($trails)) {
-    // Find all menu items which point to the current node and for each
-    // follow the parents up the chain to build an active trail.
-    $trails = array();
-    $menu = menu_get_menu();
-    $menu_contexts = context_ui_menu_get();
-    $path = $_GET['q'];
-    $count = 0;
-    while (!$count) {
-      foreach ($menu['items'] as $mid => $item) {
-        if (
-          isset($item['path']) && ($item['path'] == $path ||
-          ($item['path'] == '<front>' && drupal_is_front_page())) ||
-          ($menu_context = $menu_contexts[$item['path']] && context_ui_menu_check($menu_contexts[$item['path']]))
-          ) {
-          $trails[$count] = array();
-          while ($mid && $menu['items'][$mid]) {
-            array_unshift($trails[$count], $mid);
-            $mid = $menu['items'][$mid]['pid'];
-          }
-          $count ++;
+      // Graft the current active page on if it is different
+      $active_mid = menu_get_active_item();
+      if ($active_mid != $context_mid) {
+        $active_menu = menu_get_item($active_mid);
+        // Due to a bug/feature? of menu_set_location() menu leaves that
+        // are part of the 'visible' portion of the menu tree short-circuit
+        // any further menu grafting. We check here, and make sure the leaf
+        // item is not a visible one.        
+        if (isset($_menu['visible'][$active_mid])) {      
+          unset($_menu['visible'][$active_mid]);
         }
+        $items[] = $active_menu;
       }
-      $path = substr($path, 0, strrpos($path, '/'));
+      
+      // Push the new location path through
+      menu_set_location($items);
     }
   }
-
-  if ($trails) {
-    foreach ($trails as $trail) {
-      $count_trail = count($trail);
-      for ($i = 0; $i < $count_trail; $i++) {
-        if ($trail[$i] == $pid) {
-          // Return a trail from $pid down to the current page inclusive.
-          for ( ; $i < $count_trail; $i++) {
-            $subtrail[] = $trail[$i];
-          }
-          return $subtrail;
-        }
-      }
-    }
-  }
-
-  return NULL;
-}
-
-/**
- * Alternate implementation of primary_menu_links(). Uses context.
- */
-function context_ui_menu_links($start_level = 1, $pid = 0) {
-  if (!module_exists('menu')) {
-    return NULL;
-  }
-  if (!$pid) {
-    $pid = variable_get('menu_primary_menu', 0);
-  }
-  if (!$pid) {
-    return NULL;
-  }
-
-  $start_level = ($start_level < 1) ? 1 : $start_level;
-
-  if ($start_level > 1) {
-    $trail = _context_ui_menu_get_active_trail_in_submenu($pid);
-    if (!$trail) {
-      return NULL;
-    }
-    else {
-      $pid = $trail[$start_level - 1];
-    }
-  }
-
-  $menu_contexts = context_ui_menu_get();
-  $menu = menu_get_menu();
-  $links = array();
-  if (is_array($menu['visible'][$pid]) && isset($menu['visible'][$pid]['children'])) {
-    $count = 1;
-    foreach ($menu['visible'][$pid]['children'] as $cid) {
-      $index = "menu-$start_level-$count-$pid";
-      $link = menu_item_link($cid, FALSE);
-      if ($menu_context = $menu_contexts[$link['href']]) {
-        $active = context_ui_menu_check($menu_context);
-        $link['warp'] = $menu_context->warp;
-      }
-      if (menu_in_active_trail_in_submenu($cid, $pid)) {
-        $active = true;
-      }
-      if ($active == true) {
-        $index .= ' active';
-        $link['attributes']['class'] .= ' active';
-      }
-      $links[$index] = $link;
-      $count++;
-      $active = false;
-    }
-  }
-
-  // Special case - provide link to admin/build/menu if primary links is empty.
-  if (empty($links) && $start_level == 1 && $pid == variable_get('menu_primary_menu', 0) && user_access('administer menu')) {
-    $links['1-1'] = array(
-      'title' => t('Edit primary links'),
-      'href' => 'admin/build/menu'
-    );
-  }
-
-  return $links;
-}
-
-/**
- * Alternate implementation of menu_secondary_links(). Uses context.
- */
-function context_ui_menu_secondary_links() {
-  $msm = variable_get('menu_secondary_menu', 0);
-  if ($msm == 0) {
-    return NULL;
-  }
-
-  if ($msm == variable_get('menu_primary_menu', 0)) {
-    return context_ui_menu_links(2, $msm);
-  }
-
-  return context_ui_menu_links(1, $msm);
 }
 
 /**
