@@ -59,7 +59,7 @@ function context_ui_context_items() {
     global $_menu;
     $menus = array();
     // build options using root menus
-    foreach (menu_get_root_menus() as $root_mid => $root_menu) {
+    foreach (array_reverse(menu_get_root_menus(), true) as $root_mid => $root_menu) {
       // build menu options from children of each root menu
       $menu = array();
       $options = menu_parent_options(0, $root_mid, 0);
@@ -69,7 +69,7 @@ function context_ui_context_items() {
         $menu[$path] = $title;
       }
       $path = $_menu['items'][$root_mid]['path'];
-      $menus[$path] = $root_menu;
+      $menus[$root_mid] = "<strong>". $root_menu ."</strong>";
       $menus = $menus + $menu;
     }
     $items['menu'] = array(
@@ -390,8 +390,8 @@ function context_ui_form($op, $cid = NULL) {
   );
 
   // Generate settings for context item associations
-  foreach (context_ui_types('full') as $type => $item) {
-      $form['items'][$type] = array(
+  foreach (context_ui_types('full') as $type => $item) { 
+    $form['items'][$type] = array(
       '#title' => $item['title'],
       '#description' => $item['description'],
       '#type' => 'checkboxes',
