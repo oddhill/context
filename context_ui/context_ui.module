@@ -80,6 +80,13 @@ function context_ui_context_items() {
     );
   }
   
+  $items['user'] = array(
+    'title' => t('User Pages'),
+    'description' => t('Set this context when a user with selected role(s) is viewed'),
+    'options' => user_roles(true),
+    'widget' => 'select',
+  );
+  
   if (module_exists('nodequeue')) {
     $result = db_query("SELECT qid, title FROM {nodequeue_queue}");
     $options = array();
@@ -224,6 +231,15 @@ function context_ui_form_alter($form_id, &$form) {
 function context_ui_views_pre_query($view) {
   if ($view->build_type == 'page') {
     context_ui_set('views', $view->name);
+  }
+}
+
+/**
+ * Implementation of hook_user()
+ */
+function context_ui_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'view') {
+    context_ui_set('user', array_keys($account->roles));
   }
 }
 
@@ -636,18 +652,21 @@ function context_ui_export($cid = NULL) {
  *   The item type to be matched. Any of the currently supported context items types ("view",
  *   "node", etc.) can be specified.
  * @param $id
- *   The string or integer id of the context item.
+ *   An array of string or integer ids of the context item to match. Individual ids are also accepted.
  *
  * @return
  *   True if one or more contexts were set. False if no items/contexts matched.
  */
-function context_ui_set($type, $id) {
+ function context_ui_set($type, $id) {
+  if (!is_array($id)) {
+    $id = array($id);
+  }
   $set = false;
   $result = db_query("
     SELECT c.space, c.key, c.value, c.cid FROM {context_ui_item} ci
     JOIN {context_ui} c ON ci.cid = c.cid
-    WHERE ci.type = '%s' AND ci.id = '%s' AND c.status = %d",
-    $type, $id, 1);
+    WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = 1",
+    array_merge(array($type), $id));
   if (db_num_rows($result) > 0) {
     while ($context = db_fetch_object($result)) {      
       context_set($context->space, $context->key, $context->value);
