@@ -216,7 +216,7 @@ function context_ui_nodeapi(&$node, $op, $teaser, $page) {
  * Implementation of hook_form_alter()
  */
 function context_ui_form_alter($form_id, &$form) {
-  if ($form['#node']) {
+  if ($form['#node'] && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
     context_ui_set('node', $form['#node']->type);
   }
   else if ($form_id == 'comment_form' && $nid = $form['nid']['#value']) {
@@ -747,7 +747,7 @@ function context_ui_menu_set_location($context) {
 
       // Graft the current active page on if it is different
       $active_mid = menu_get_active_item();
-      if ($active_mid != $context_mid) {
+      if ($active_mid != $_menu['path index'][$path]) {
         $active_menu = menu_get_item($active_mid);
         // Due to a bug/feature? of menu_set_location() menu leaves that
         // are part of the 'visible' portion of the menu tree short-circuit
@@ -755,6 +755,17 @@ function context_ui_menu_set_location($context) {
         // item is not a visible one.        
         if (isset($_menu['visible'][$active_mid])) {      
           unset($_menu['visible'][$active_mid]);
+        }
+        
+        // If the active menu item is a local task we need to make sure
+        // to include it's parent.
+        if ($active_menu['type'] & MENU_IS_LOCAL_TASK) {
+          $parent_menu = menu_get_item($active_menu['pid']);
+          $items[] = $parent_menu;
+          // Allow for two levels of local tasks.
+          if ($parent_menu['type'] & MENU_IS_LOCAL_TASK) {
+            $items[] = menu_get_item($parent_menu['pid']);
+          }
         }
         $items[] = $active_menu;
       }
