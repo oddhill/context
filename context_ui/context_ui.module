@@ -688,9 +688,12 @@ function context_ui_export($cid = NULL) {
     WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = 1",
     array_merge(array($type), $id));
   if (db_num_rows($result) > 0) {
-    while ($context = db_fetch_object($result)) {      
-      context_set($context->space, $context->key, $context->value);
-      context_ui_menu_set_location($context);
+    while ($context = db_fetch_object($result)) {
+      // If this context already has a value, don't alter it.
+      if (!context_exists($context->space, $context->key)) {
+        context_set($context->space, $context->key, $context->value);
+        context_ui_menu_set_location($context);
+      }
     }
     $set = true;
   }
