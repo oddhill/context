@@ -448,9 +448,10 @@ function context_ui_form($op, $cid = NULL) {
   // $blocks in [0] have not been assigned a region
   foreach ($blocks[0] as $block) {
     if (!isset($context->block[$block->bid])) {
-      $block_options[$block->bid] = $block->label ." ($block->bid)";
+      $block_options[$block->module][$block->bid] = $block->label . " ($block->bid)";
     }
   }
+  ksort($block_options);
 
   $form['block'] = array(
     '#type' => 'fieldset',
