@@ -74,7 +74,7 @@ function context_ui_context_items() {
     }
     $items['menu'] = array(
       'title' => t('Menus'),
-      'description' => t('Display the selected menu items as active when this context is set. <strong>Note:</strong> You must use <code>context_ui_menu_links()</code> instead of <code>primary_menu_links()</code> in your theme to make use of this feature.'),
+      'description' => t('Display the selected menu items as active when this context is set.'),
       'options' => $menus,
       'widget' => 'select',
     );
