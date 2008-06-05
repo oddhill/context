@@ -193,10 +193,22 @@ function theme_context_ui_block_ui($regions, $context = null) {
  * hook_validate()
  */
 function context_ui_form_validate($form_id, $form_values) {
-  if ($form_values['value']) {
+  if ($form_values['op'] == t('Save') && $form_values['value']) {
+    // Check for string identifier sanity
     foreach (array('value', 'key', 'space') as $elem) {
       if (!preg_match('!^[a-z0-9_]+$!', $form_values[$elem])) {
         form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
+      }
+    }
+    if (!$form_values['cid']) {      
+      // Check that no other user-defined context definition has taken this identifier already
+      $context = new StdClass();
+      $context->space = $form_values['space'];
+      $context->key = $form_values['key'];
+      $context->value = $form_values['value'];
+      $context->system = 0;
+      if ($exists = context_ui_context('load', $context)) {
+        form_set_error($form_values['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
       }
     }
   }
@@ -548,7 +560,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
       $system_blocks[$r] = array();      
     }
     // load blocks from database
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s'", $theme_key);
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s' ORDER BY weight, module, delta", $theme_key);
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
@@ -596,8 +608,10 @@ function _context_ui_get_blocks($region = null, $context = null) {
     }
   }
   
-  foreach ($blocks as &$sort_region) {
-    uasort($sort_region, "_context_ui_block_compare");
+  foreach ($blocks as $r => &$sort_region) {
+    if ($r != 0) {
+      uasort($sort_region, "_context_ui_block_compare");
+    }
   }
 
   return $region ? $blocks[$region] : $blocks;
