@@ -187,7 +187,7 @@ function _context_prefix_get_prefix($q) {
     $languages = locale_supported_languages();
     $languages = array_keys($languages['name']); // grab only language prefixes
     // if first prefix is in languages array, throw it out and use 2nd prefix
-    if (array_search($path, $languages) !== false) {
+    if (array_search($prefix, $languages) !== false) {
       $prefix = array_shift($exploded_q);
     }
   }
