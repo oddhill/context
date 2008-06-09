@@ -609,7 +609,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
   }
   
   foreach ($blocks as $r => &$sort_region) {
-    if ($r != 0) {
+    if ($r !== 0) {
       uasort($sort_region, "_context_ui_block_compare");
     }
   }
