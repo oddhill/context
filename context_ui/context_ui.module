@@ -900,14 +900,14 @@ function context_ui_menu_set_location($context) {
       // Grab the menu tree from active context item to the root
       $mid = $context_menu['pid'];
       while ($mid && ($item = menu_get_item($mid))) {
-        $items[] = $item;
+        $items[$mid] = $item;
         $mid = $item['pid'];
       }
-      $items = array_reverse($items);
+      $items = array_reverse($items, true);
 
       // Graft the current active page on if it is different
       $active_mid = menu_get_active_item();
-      if ($active_mid != $_menu['path index'][$path]) {
+      if ($active_mid != $_menu['path index'][$path] && !$items[$active_mid]) {
         $active_menu = menu_get_item($active_mid);
         // Due to a bug/feature? of menu_set_location() menu leaves that
         // are part of the 'visible' portion of the menu tree short-circuit
@@ -929,7 +929,7 @@ function context_ui_menu_set_location($context) {
         }
         $items[] = $active_menu;
       }
-      
+
       // Push the new location path through
       menu_set_location($items);
     }
