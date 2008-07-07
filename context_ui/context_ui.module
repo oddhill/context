@@ -222,7 +222,7 @@ function context_ui_help($section) {
  * Implementation of hook_nodeapi()
  */
 function context_ui_nodeapi(&$node, $op, $teaser, $page) {
-  if ($op == 'view' && $page) {
+  if ($op == 'view' && $page && arg(0) == 'node') {
     // Implementation of context_ui_set for node.
     context_ui_set('node', $node->type);
 
