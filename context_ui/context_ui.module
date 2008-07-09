@@ -944,6 +944,7 @@ function context_ui_menu_set_location($context) {
  * context_ui theme function namespace that requires custom implementation by the themer.
  */
 function context_ui_block_hack() {
+  /*
   global $theme, $theme_engine;
   if (!function_exists($theme .'_blocks')) {
     $f_name = $theme .'_blocks';
@@ -955,6 +956,8 @@ function context_ui_block_hack() {
     $f_name = 'theme_context_ui_blocks';
   }
   $f_name = str_replace('-', '_', $f_name);
+  */
+  $f_name = 'phptemplate_blocks';
   $eval = '
   function '. $f_name .'($region) {
     $output = "";
