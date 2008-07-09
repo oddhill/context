@@ -196,8 +196,7 @@ function context_ui_menu($may_cache) {
       context_ui_rebuild();
     }
 
-    // Init the theme and attempt to override the theme_blocks.
-    init_theme();
+    // Attempt to override the theme_blocks.
     context_ui_block_hack();
 
     // Include context ui css.
@@ -937,6 +936,9 @@ function context_ui_menu_set_location($context) {
 }
 
 /**
+ * TODO - Rework this, we're may just to require phptemplate and not allow for the theme to implement a 
+ *        phptemplate_blocks function. Otherwise we may check for that namespace and use a backup otherwise.
+ *
  * An egregious hack. Checks the function namespace for a theme and theme engine override of theme_blocks
  * and attempts to take the first available override. If all else fails, falls back to a custom
  * context_ui theme function namespace that requires custom implementation by the themer.
