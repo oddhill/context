@@ -458,6 +458,7 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
   }
 
   // Control block visibility
+  init_theme(); // we need to initialize theme in order to deal with blocks
   global $theme_key;
   $block_options =
   $block_defaults = array();
