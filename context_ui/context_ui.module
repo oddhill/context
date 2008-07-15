@@ -926,10 +926,6 @@ function context_ui_menu_set_location($context) {
         // If the active menu item is a local task we need to make sure
         // to include it's parent.
         if ($active_menu['type'] & MENU_IS_LOCAL_TASK) {
-          if ($active_menu['type'] & MENU_DEFAULT_LOCAL_TASK) {
-            $real_q = end($items);
-            $real_q = $real_q['path'];
-          }
           $parent_menu = menu_get_item($active_menu['pid']);
           $items[] = $parent_menu;
 
@@ -937,6 +933,10 @@ function context_ui_menu_set_location($context) {
           if ($parent_menu['type'] & MENU_IS_LOCAL_TASK) {
             $items[] = menu_get_item($parent_menu['pid']);
           }
+        }
+        if ($active_menu['type'] & MENU_DEFAULT_LOCAL_TASK) {
+          $real_q = end($items);
+          $real_q = $real_q['path'];
         }
         $items[] = $active_menu;
       }
