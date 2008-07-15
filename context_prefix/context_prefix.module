@@ -1,0 +1,453 @@
+<?php
+// $Id$
+
+define(CONTEXT_PREFIX_PATH, 0);
+define(CONTEXT_PREFIX_SUBDOMAIN, 1);
+define(CONTEXT_PREFIX_DOMAIN, 2);
+
+/**
+ * Implementation of hook_menu()
+ */
+function context_prefix_menu($may_cache) {
+  $items = array();
+  if ($may_cache) {
+    $items[] = array(
+      'type' => module_exists('context_ui') ? MENU_LOCAL_TASK : MENU_NORMAL_ITEM,
+      'title' => t('Context Prefixes'),
+      'description' => t('Displays a list of context definitions.'),
+      'path' => 'admin/build/context/prefix',
+      'callback' => 'context_prefix_admin',
+      'access' => user_access('administer site configuration'),
+      'weight' => 10,
+    );
+  }
+  return $items;
+}
+
+/**
+ * Implementation of hook_init()
+ * Checks for any valid context prefixes in request string and sets the context appropriately
+ */
+function context_prefix_init() {
+  $location = variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH);
+  switch($location) {
+    case CONTEXT_PREFIX_DOMAIN:
+      context_prefix_prepare_domain();
+      break;
+    case CONTEXT_PREFIX_PATH:
+      context_prefix_prepare_url();
+      break;
+  }
+}
+
+/**
+ * Sets the context based on any path prefixes and repairs the URL after prefix dissection.
+ */
+function context_prefix_prepare_url() {
+  $q = isset($_REQUEST["q"]) ? trim($_REQUEST["q"], "/") : '';
+  $prefix = _context_prefix_get_prefix($q);
+  $items = context_prefix_items();
+  if (isset($items[$prefix]) && $active = $items[$prefix] ) {
+    context_set('context_prefix', $active->module, $active->id);
+    context_set('context_prefix', 'prefix', $prefix);
+    // if $_GET and $_REQUEST are different, the path has been aliased
+    // we will continue to the aliased destination
+    if ($_GET['q'] != $_REQUEST['q']) {
+      return;
+    }
+    // there is nothing beyond the path prefix -- treat as frontpage
+    else if ($q == $prefix) {
+      $_GET['q'] = variable_get('site_frontpage', 'node');
+    }
+    // pass the rest of the path onto Drupal cleanly
+    else {
+      // for now, we check arg(0) + arg(1) for the prefix
+      if (strpos($q, $prefix) !== 0) {
+        $q = explode('/', $q);
+        if ($q[1] == $prefix) {
+          unset($q[1]);
+        }
+        $q = implode('/', $q);
+        // reset _REQUEST as other prefixing modules (i18n) will use it and not $_GET
+        $_REQUEST['q'] = $_GET['q'] = $q;
+      }
+      // trim off context path and reset q
+      else {
+        $q = trim(substr($q, strlen($prefix)), '/');
+        $_REQUEST['q'] = $_GET['q'] = _context_prefix_get_normal_path($q, $prefix);
+      }
+    }
+  }
+}
+
+/**
+ * Sets the context based on domain.
+ */
+function context_prefix_prepare_domain() {
+  $host = $_SERVER['HTTP_HOST'];
+  // We handle sub.domain.com, and nothing more (no sub1.sub2.domain.com).
+  $prefix = str_replace('http://','',$host);
+  $items = context_prefix_items();
+  if (isset($items[$prefix]) && $active = $items[$prefix] ) {
+    context_set('context_prefix', $active->module, $active->id);
+    context_set('context_prefix', 'prefix', $prefix);
+  }
+}
+
+/**
+ * Page callback for the context_prefix administration page.
+ */
+function context_prefix_admin() {
+  $items = context_prefix_items();
+  if ($items) {
+    $rows = array();
+    foreach ($items as $item) {
+      $rows[] = array($item->module, $item->prefix, $item->id);
+    }
+    $output = theme('table', array(t('Module'), t('Prefix'), t('ID')), $rows);
+  }
+  else {
+    $output = "<p>". t('No context prefix definitions found.') ."</p>";
+  }
+  $output .= drupal_get_form('context_prefix_settings_form');
+  return $output;
+}
+
+/**
+ * Provides a simple API for validating, adding, and deleting context defintions.
+ */
+function context_prefix_api($op = 'insert', $context) {
+  switch ($op) {
+    case 'validate':
+      //if (check_plain($context['module']) && preg_match('!^[a-z0-9_-\\.]+$!', $context['prefix'])) {
+      if (check_plain($context['module'])) {
+        $id = db_result(db_query("SELECT id FROM {context_prefix} WHERE prefix = '%s'", $context['prefix']));
+        return $id ? false : true;
+      }
+      else {
+        return false;
+      }
+    case 'insert':
+      if (context_prefix_api('validate', $context)) {
+        $status = db_query("INSERT INTO {context_prefix} (module, prefix, id) VALUES ('%s', '%s', %d)", $context['module'], $context['prefix'], $context['id']);
+        return $status;
+      }
+      return false;
+    case 'delete':
+      if ($context['prefix']) {
+        $param = 'prefix';
+        $where = $context['prefix'];
+      }
+      else if ($context['id']) {
+        $param = 'id';
+        $where = $context['id'];
+      }
+      $check = db_result(db_query("SELECT id FROM {context_prefix} WHERE module = '%s' AND $param = '%s'", $context['module'], $where));
+      if ($check) {
+        $status = db_query("DELETE FROM {context_prefix} WHERE module = '%s' AND $param = '%s'", $context['module'], $where);
+        return $status;
+      }
+      return false;
+  }
+  return false;
+}
+
+/**
+ * Returns an array of available context definitions. If provided an
+ * optional module argument, will only provide definitions for the
+ * specified module. 
+ */
+function context_prefix_items($module = NULL) {
+  static $items;
+  static $by_module;
+  if (!$items) {
+    $items = $by_module = array();
+    $result = db_query("SELECT * FROM {context_prefix} ORDER BY module ASC");
+    while ($item = db_fetch_object($result)) {
+      $items[$item->prefix] = $item;
+      $by_module[$item->module][$item->prefix] = $item;
+    }
+  }
+  if ($module) {
+    return isset($by_module[$module]) ?  $by_module[$module] : array();
+  }
+  else {
+    return $items;
+  }
+}
+
+/**
+ * Returns a prefix string from a url if a valid one is found
+ */
+function _context_prefix_get_prefix($q) {
+  $exploded_q = explode('/', $q);
+  $prefix = array_shift($exploded_q);
+  // skip over i18n prefix if found
+  if (module_exists('i18n') && function_exists('locale_supported_languages')) {
+    $languages = locale_supported_languages();
+    $languages = array_keys($languages['name']); // grab only language prefixes
+    // if first prefix is in languages array, throw it out and use 2nd prefix
+    if (array_search($prefix, $languages) !== false) {
+      $prefix = array_shift($exploded_q);
+    }
+  }
+  // check that this prefix is valid  
+  $valid = context_prefix_items();
+  if (isset($valid[$prefix])) {
+    return $prefix;
+  }
+  else {
+    return false;
+  }
+}
+
+/**
+ * Taken from i18n
+ */
+function _context_prefix_get_normal_path($path, $prefix) {
+  // If bootstrap, drupal_lookup_path is not defined
+  if (!function_exists('drupal_get_headers')) {
+    return $path;
+  }
+  // Check alias without lang
+  elseif ($alias = drupal_lookup_path('source', $path)) {
+    return $alias;
+  }
+  else {
+    return $path;
+  }
+}
+
+/**
+ * Jose's very smart collision avoidance
+ */
+if (!function_exists('custom_url_rewrite')) {
+  function custom_url_rewrite($type, $path, $original) {
+    switch (variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH)) {
+      case CONTEXT_PREFIX_PATH:
+        return context_prefix_url_rewrite($type, $path, $original);
+      default:
+        return $path;
+    }
+  }
+}
+
+/**
+ * Rewrites path with current context and removes context if searching for source path
+ */
+function context_prefix_url_rewrite($type, $path, $original) {
+  $working_path = $path; // preserve original path
+
+  if (module_exists('i18n')) {
+    if ($type == 'alias' && !i18n_get_lang_prefix($path)) {
+      $prefix[] = i18n_get_lang();
+    }
+    elseif ($type == 'source') {
+      if ($path == $original) {
+        $working_path = i18n_get_normal_path($working_path);
+      }
+      else { // Path may have been dealiased but still have language prefix
+        $working_path = i18n_get_lang_prefix($working_path, TRUE);
+      }
+    }
+  }
+
+  // by now i18n has added/removed language prefix as needed
+  if (!clswitch('get')) {
+    $context = context_get('context_prefix', 'prefix');
+    if ($type == 'alias' && !_context_prefix_get_prefix($working_path) && $context) {
+      $prefix[] = $context;
+    }
+    else if ($type == 'source') {
+      if (_context_prefix_get_prefix($working_path)) {
+        $working_path = trim(substr($working_path, strlen($context)), '/');
+      }
+    }
+  }
+  
+  if ($working_path) {
+    $prefix[] = $working_path;
+  }
+
+  return $prefix ? implode('/', $prefix) : '';
+}
+
+/**
+ * Custom l wrapper for links that need to leave all group contexts
+ */
+function cl($text, $path, $attributes = array(), $query = NULL, $fragment = NULL, $absolute = FALSE, $html = FALSE, $dropcontext = FALSE) {
+  global $base_url;
+  clswitch('set', $dropcontext);
+  if (!$dropcontext && $path == '<front>') {
+    $path = context_prefix_url_rewrite('alias', '', '');
+  }
+  // Handle domains -- need to force domain onto the path and push through as absolute url
+  if ($dropcontext) {
+    switch (variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH)) {
+      case CONTEXT_PREFIX_DOMAIN:
+        $absolute = TRUE;
+        if ($path == '<front>') {
+          $path = variable_get('site_frontpage', 'node');
+        }
+        $path = variable_get('context_prefix_base_domain', '') . '/' . $path; // REPLACE BASE_URL with the hub domain.
+        break;
+    }
+  }
+  $l = l($text, $path, $attributes, $query, $fragment, $absolute, $html);
+  clswitch('reset');
+  return $l;
+}
+
+/**
+ * Returns whether the current l/url call should use context rewriting or not
+ */
+function clswitch($op, $absolute = null) {
+  static $drop;
+  switch ($op) {
+    case 'set';
+      $drop = $absolute;
+      break;
+    case 'get':
+      return $drop;
+      break;
+    case 'reset':
+      $drop = null;
+      break;
+  }
+}
+
+/**
+ * Like theme_links, but handles context warping.
+ * theme_links couldn't believe it.
+ */
+function theme_context_links($links, $attributes = array('class' => 'links')) {
+  $output = '';
+
+  if (count($links) > 0) {
+    $output = '<ul'. drupal_attributes($attributes) .'>';
+
+    $num_links = count($links);
+    $i = 1;
+
+    foreach ($links as $key => $link) {
+      $class = '';
+
+      // Automatically add a class to each link and also to each LI
+      if (isset($link['attributes']) && isset($link['attributes']['class'])) {
+        $link['attributes']['class'] .= ' '. $key;
+        $class = $key;
+      }
+      else {
+        $link['attributes']['class'] = $key;
+        $class = $key;
+      }
+
+      // Add active class for active menu items
+      if (stristr($key, 'active')) {
+        $class .= " active";
+      }    
+
+      // Add first and last classes to the list of links to help out themers.
+      $extra_class = '';
+      if ($i == 1) {
+        $extra_class .= 'first ';
+      }
+      if ($i == $num_links) {
+        $extra_class .= 'last ';
+      }
+      $output .= '<li class="'. $extra_class . $class .'">';
+
+      // Is the title HTML?
+      $html = isset($link['html']) && $link['html'];
+
+      // Initialize fragment and query variables.
+      $link['query'] = isset($link['query']) ? $link['query'] : NULL;
+      $link['fragment'] = isset($link['fragment']) ? $link['fragment'] : NULL;
+
+      if (isset($link['href'])) {
+        if ($link['warp']) {
+          $output .= cl($link['title'], $link['href'], $link['attributes'], $link['query'], $link['fragment'], FALSE, $html, TRUE);
+        }
+        else {
+          $output .= l($link['title'], $link['href'], $link['attributes'], $link['query'], $link['fragment'], FALSE, $html);
+        }
+      }
+      else if ($link['title']) {
+        //Some links are actually not links, but we wrap these in <span> for adding title and class attributes
+        if (!$html) {
+          $link['title'] = check_plain($link['title']);
+        }
+        $output .= '<span'. drupal_attributes($link['attributes']) .'>'. $link['title'] .'</span>';
+      }
+
+      $i++;
+      $output .= "</li>\n";
+    }
+
+    $output .= '</ul>';
+  }
+
+  return $output;
+}
+
+/**
+ * Settings form for choosing the operating mode of context_prefix
+ */
+function context_prefix_settings_form() {
+  global $base_url;
+  $form = array();
+  $form['context_prefix_location'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Prefix location settings'),
+  );  
+  $options = array(
+    CONTEXT_PREFIX_PATH => t('Path prefix'),
+    CONTEXT_PREFIX_DOMAIN => t('Full domain'),
+    // TODO: Implement these features
+    // CONTEXT_PREFIX_SUBDOMAIN => t('Subdomain'),
+  );  
+  $form['context_prefix_location']['context_prefix_prefix_location'] = array(
+    '#type' => 'select',
+    '#title' => t('Select prefix location'),
+    '#description' => t('This setting determines where to look for the prefix/name-space.  If you select path,
+      the prefix is retrieved from the url path, e.g. domain.com/prefix.  If you select domain, the prefix
+      will be based on the domain.'),
+    '#multiple' => FALSE,
+    '#options' => $options,
+    '#default_value' => variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH),
+  );  
+  $form['context_prefix_location']['context_prefix_base_domain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Select base domain for hub'),
+    '#description' => t('This setting determines the base sub-domain.  Enter only the part of the domain, like www'),
+    '#required' => FALSE,
+    '#default_value' => variable_get('context_prefix_base_domain', $base_url),
+  );  
+  return system_settings_form($form);
+}
+
+/**
+ * A wrapper around drupal_goto() that abstracts out the prefix/context setting
+ * You provide both a normal drupal path ('node/43') and a context prefix ('dsi')
+ * and context_prefix_goto will determine the correct location to use.
+ */
+function context_prefix_goto($prefix, $path = '', $query = NULL, $fragment = NULL, $http_response_code = 302) {
+  global $base_url;
+  /** 
+   * TODO: we need to abstract this base_url dissection into a
+   * handler, and in there, we'll abstract out for 
+   * protocol handling, and handling the site's base_url like www.
+   */
+  switch (variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH)) {
+    case CONTEXT_PREFIX_PATH:
+      drupal_goto($prefix .'/'. $path, $query, $fragment, $http_response_code);
+      break;
+    case CONTEXT_PREFIX_DOMAIN:
+      $items = context_prefix_items();
+      if (isset($items[$prefix]) && $active = $items[$prefix] ) {
+        $path = 'http://'. $prefix .'/'. $path;
+        drupal_goto($path, $query, $fragment, $http_response_code);
+      }
+      break;
+  }
+}

@@ -1,4 +1,6 @@
-/* Context devel block */
+/**
+ * Context devel block ================================================
+ */
 .context-devel-space {
   font-weight:bold;
   padding:3px 5px;
@@ -30,7 +32,9 @@
   background:#333; color:#ccc;
 }
 
-/* Context admin listing page */
+/**
+ * Context admin listing page =========================================
+ */
 table.context-ui span.context-space {
   font-weight:bold;
 }
@@ -55,60 +59,81 @@ h3.context-space small {
   background:#e8f0f8; /* Garland blue */
 }
 
-/* Context definition editing form */
-form#context-ui-form div.context-ui-item {
-  padding:0em 0em .75em; margin-bottom:1em;
-  background:#e8f0f8;
-  border:1px solid #bdf;
-  border-bottom: 2px solid #ace;
+/**
+ * Context definition editing form ====================================
+ */
+
+/* General table styles */
+form#context-ui-form table {
+  margin:0em 0em 1em;
 }
 
-  form#context-ui-form div.context-ui-item .form-item {
-    border-top:1px solid #fff;
-    padding: .75em; margin:0em;
-  }
-  
-  form#context-ui-form div.context-ui-item label,
-  form#context-ui-form div.context-ui-item div.form-checkboxes,
-  form#context-ui-form div.context-ui-item .description {
-    float:left; clear:none;
-    width:45%;
-  }
-  
-  form#context-ui-form div.context-ui-item div.form-checkboxes {
-    background:#fff; border:1px solid #ace;
-    height:20em; font-size:.9em;
-    overflow:auto;
-    float:right;
+  form#context-ui-form table td {
+    padding:.75em;
+    vertical-align:top;
   }
 
-  form#context-ui-form div.context-ui-item div.form-checkboxes .form-item {
-    border: 0px; border-bottom:1px solid #e8f0f8; padding:.1em;
+  form#context-ui-form table.context-ui-3col td {
+    width:33%;
+  }
+
+  form#context-ui-form table.context-ui-2col td {
+    width:50%;
+  }
+
+  form#context-ui-form table td.left {
+    border-right:1px solid #ace;
+  }
+
+  form#context-ui-form table tr.even .form-item,
+  form#context-ui-form table tr.odd .form-item {
+    white-space:normal;
+  }
+
+/* Set/get items */
+form#context-ui-form td.setters .form-item,
+form#context-ui-form td.getters .form-item {
+  background:#e8f0f8;
+  border-bottom: 1px solid #ace;
+  padding: 1em; margin:0em;
+}
+
+  form#context-ui-form td.setters .form-item .form-item,
+  form#context-ui-form td.getters .form-item .form-item {
+    background: transparent;
+    border:0px; padding:0px; margin:0px;
+  }
+  
+  form#context-ui-form td.setters .form-item div.form-checkboxes,
+  form#context-ui-form td.getters .form-item div.form-checkboxes {
+    background:#fff; border:1px solid #ace;
+    height:12em; font-size:.9em;
+    overflow:auto;
+  }
+
+  form#context-ui-form td.setters .form-item div.form-checkboxes .form-item,
+  form#context-ui-form td.getters .form-item div.form-checkboxes .form-item {
+    border-bottom:1px solid #e8f0f8; padding:.1em;
     display:block;
   }
 
-  form#context-ui-form div.context-ui-item div.form-checkboxes .form-item label {
-    float:none; width:auto;
-  }
-
-  
+/* Block visibility controls */
 form#context-ui-form div.context-ui-block-selector,
 form#context-ui-form div.context-ui-block-regions {
-  overflow:hidden; width:50%; float:left;
+  overflow:hidden;
 }
 
-  form#context-ui-form div.context-ui-block-selector select {
-    width:90%;}
-  
-  
-  form#context-ui-form div.context-ui-block-regions {
-    width:45%;
-    float:right;
+  form#context-ui-form div.context-ui-block-selector .form-item {
+    margin:0em 0em 1em;
   }
-  
+
+  form#context-ui-form div.context-ui-block-selector select {
+    width:100%;
+  }
+    
 form#context-ui-form div.context-ui-block-regions .item-list {
   border-left:1px solid #ace; border-right:1px solid #ace;
-  margin:0em 0em 1em;
+  margin:0em 0em .5em;
 }
 
   form#context-ui-form div.context-ui-block-regions .item-list h3 {
@@ -122,9 +147,9 @@ form#context-ui-form div.context-ui-block-regions .item-list {
   }
   
     form#context-ui-form div.context-ui-block-regions .item-list ul li {
+      line-height:20px;
       padding:.25em; background:#e8f0f8;
       border-bottom:1px solid #ace;
-      border-left: 1px solid #fff;
       border-top: 1px solid #fff;
     }
 
@@ -145,10 +170,13 @@ form#context-ui-form div.context-ui-block-regions .item-list {
     }
 
     form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.up {
-      background: url(widgets.gif) 0% 0% no-repeat;}
+      background: url(widgets.gif) 0% 0% no-repeat;
+    }
 
     form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.down {
-      background: url(widgets.gif) 50% 0% no-repeat;}
+      background: url(widgets.gif) 50% 0% no-repeat;
+    }
 
     form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.remove {
-      background: url(widgets.gif) 100% 0% no-repeat;}
+      background: url(widgets.gif) 100% 0% no-repeat;
+    }

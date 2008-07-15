@@ -2,62 +2,6 @@
 // $Id$
 
 /*
- * Invokes hook_context_define() to collect all contexts provided in code by modules.
- *
- * @param $space
- *   An optional string namespace identifier. If provided, only context definitions with the
- *   specified namespace will be returned.
- *
- * @return
- *   An array of context objects.
- */
-function context_ui_defaults($space = null) {
-  static $contexts, $spaces;
-  if (!$contexts) {
-    $contexts = array();
-    foreach (module_implements('context_define') as $module) {
-      $function = $module .'_context_define';
-      $contexts = array_merge($contexts, $function());      
-    }
-    foreach ($contexts as &$context) {
-      $context = (object) $context;
-      $spaces[$context->space][] = $context;
-    }
-  }
-  if ($space) {
-    if (isset($spaces[$space])) {
-      return $spaces[$space];
-    }
-    else {
-      return false;
-    }
-  }
-  return $contexts;
-}
-
-/*
- * Invokes hook_context_items() to provides an array of item types that a context may be associated with.
- */
-function context_ui_types($op = 'list') {
-  static $types;
-  if (!$types) {
-    $types = array();
-    foreach (module_implements('context_items') as $module) {
-      $function = $module .'_context_items';
-      $types = array_merge($types, $function());
-    }
-  }
-  switch ($op) {
-    case 'list':
-      return array_keys($types);
-      break;
-    case 'full':
-      return $types;
-      break;
-  }
-}
-
-/*
  * Generates an array tree representation of available space/key/value context definitions.
  */
 function context_ui_tree($op = '') {
@@ -73,12 +17,7 @@ function context_ui_tree($op = '') {
       ORDER BY system ASC, space ASC, `key` ASC, value ASC");
     while ($context = db_fetch_object($result)) {
       $branch = $context->system ? 'system' : 'ui';      
-      if (is_bool($context->value) || $context->value == 1 || !$context->value) {
-        $tree[$branch][$context->space][$context->key] = $context;
-      }
-      else if (!$tree[$branch][$context->space][$context->key][$context->value]) {
-        $tree[$branch][$context->space][$context->key][$context->value] = $context;
-      }
+      $tree[$branch][$context->space][$context->key][$context->value] = $context;
     }
   }
   switch ($op) {
@@ -125,41 +64,9 @@ function context_ui_rebuild() {
   }
   
   // Remove any unused contexts
-  foreach ($system as $c) {
+  foreach ($system as $c => $dummy) {
     context_ui_context('delete', $c);
   }
-}
-
-/*
- * Page callback for context_ui admin landing page.
- */
-function context_ui_admin() {
-  // rebuild default contexts
-  context_ui_rebuild();
-
-  $output = '';
-
-  // User defined contexts
-  $output .= "<h3>". t('User context definitions') ."</h3>";
-  $contexts = context_ui_tree('ui');
-  if ($contexts) {
-    $output .= theme('context_ui_admin', $contexts);
-  }
-  else {
-    $output .= "<p>". t('Please !add_context to get started.', array('!add_context' => l(t('add a context'), 'admin/build/context/add'))) ."</p>";
-  }
-
-  // Module defined contexts
-  $output .= "<h3>". t('Module context definitions') ."</h3>";  
-  $contexts = context_ui_tree('system');
-  if ($contexts) {
-    $output .= theme('context_ui_admin', $contexts);
-  }
-  else {
-    $output .= "<p>". t('There are currently no module defined contexts.') ."</p>";
-  }
-    
-  return $output;
 }
 
 /*
@@ -182,10 +89,10 @@ function theme_context_ui_admin($context_tree) {
           $class = '';
           if ($context->system) {
             $links[] = l(t('View'), "admin/build/context/view/$context->cid");
-            $links[] = l(t('Export'), "admin/build/context/export/$context->cid");
           }
           else {
             $links[] = l(t('Edit'), 'admin/build/context/edit/'. $context->cid);
+            $links[] = l(t('Export'), "admin/build/context/export/$context->cid");
             $links[] = l(t('Delete'), 'admin/build/context/delete/'. $context->cid);
           }
           if (!$context->status) {
@@ -283,243 +190,26 @@ function theme_context_ui_block_ui($regions, $context = null) {
 }
 
 /*
- * Generates the omnibus context definition editing form.
- *
- * @param $op
- *   The type of form to build. Either "add", "view" or "edit"
- * @param $cid
- *   The db context identifier - required when $op == "edit"
- *
- * @return
- *   A Drupal form array.
- */
-function context_ui_form($op, $cid = NULL) {
-  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
-  drupal_add_js(drupal_get_path("module", "context_ui") ."/context_ui.js");
-
-  switch ($op) {
-    case 'view':
-      if (is_numeric($cid) && $context = context_ui_context('load', $cid)) {
-        drupal_set_title(t('View %title', array('%title' => $context->value)));
-      }
-      else {
-        drupal_goto('admin/build/context'); return;
-      }
-      break;
-    case 'edit':
-      if (is_numeric($cid) && $context = context_ui_context('load', $cid)) {
-        if (!$context->system) {
-          drupal_set_title(t('Edit %title', array('%title' => $context->value)));
-        }
-        else {
-          drupal_goto('admin/build/context'); return;
-        }
-      }
-      break;
-  }
-
-  // Core context definition
-  $form = array();
-  $form['value'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Value'),
-    '#required' => true,
-    '#maxlength' => 30,
-    '#description' => t('A system name for this context. May only contain lowercase letters, underscores, and numbers. Example: <b>science_blog</b>'),
-  );
-  $form['key'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Key'),
-    '#default_value' => 'section',
-    '#required' => true,
-    '#maxlength' => 30,
-    '#description' => t('The type of context information provided in this namespace. Example: <b>section</b>'),
-  );
-  $form['space'] = array(
-    '#type' => 'textfield',
-    '#title' => t('Namespace'),
-    '#default_value' => 'context_ui',
-    '#required' => true,
-    '#maxlength' => 30,
-    '#description' => t('The namespace for this context definition. Example: <b>context_ui</b>'),
-  );
-
-  $form['items'] = array(
-    '#title' => t('Context Items'),
-    '#tree' => true,
-    '#type' => 'fieldset',
-  );
-
-  // Generate settings for context item associations
-  foreach (context_ui_types('full') as $type => $item) {
-      $form['items'][$type] = array(
-      '#title' => $item['title'],
-      '#description' => $item['description'],
-      '#type' => 'checkboxes',
-      '#size' => 8,
-      '#multiple' => true,
-      '#options' => $item['options'],
-      '#prefix' => '<div class="context-ui-item clear-block">',
-      '#suffix' => '</div>',
-    );
-  }
-
-  // Control block visibility
-  global $theme;
-  $block_options =
-  $block_defaults = array();
-  $blocks = _context_ui_get_blocks();
-  $regions = system_region_list($theme);
-  // $blocks in [0] have not been assigned a region
-  foreach ($blocks[0] as $block) {
-    if (!isset($context->block[$block->bid])) {
-      $block_options[$block->bid] = $block->label ." ($block->bid)";
-    }
-  }
-
-  $form['block'] = array(
-    '#type' => 'fieldset',
-    '#title' => t('Blocks'),
-    '#tree' => true,
-    '#description' => t('Control block visibility using context. Selected blocks will be shown when this context is set provided that custom block visibility settings and/or throttling do not hide them. Grayed out blocks are those provided by Drupal\'s standard block settings. These settings apply to the current theme and any enabled themes with regions in common.'),
-  );
-  $form['block']['selector'] = array(
-    '#type' => 'item',
-    '#tree' => true,
-    '#prefix' => '<div class="context-ui-block-selector">',
-    '#suffix' => '</div>',
-    'blocks' => array(
-      '#type' => 'select',
-      '#multiple' => true,
-      '#size' => 12,
-      '#title' => t('Blocks'),
-      '#options' => $block_options,
-    ),
-    'regions' => array(
-      '#type' => 'select',
-      '#title' => t('Regions'),
-      '#options' => $regions,
-    ),
-    'add' => array(
-      '#type' => 'markup',
-      '#value' => "<input id='edit-block-selector-add' class='form-submit' type='button' value='+ ". t('Add') ."'/>",
-    ),
-  );
-  $form['block']['regions'] = array(
-    '#type' => 'item',
-    '#tree' => true,
-    '#prefix' => '<div class="context-ui-block-regions">',
-    '#suffix' => '</div>',
-    '#value' => theme('context_ui_block_ui', $regions, $context),
-  );
-  foreach (array_keys($regions) as $region) {
-    $defaults = array();
-    $midpoint = false;    
-    foreach (_context_ui_get_blocks($region, $context) as $block) {
-      if ($block->type == 'context_ui') {
-        $defaults[] = $block->bid;
-      }
-      else if (!$midpoint) {
-        $midpoint = true;
-        $defaults[] = 'system';
-      }
-    }
-    if (!$defaults) {
-      $defaults = array('system');
-    }
-    $defaults = implode(',', $defaults);
-    $form['block']['regions'][$region] = array(
-      '#type' => 'hidden',
-      '#default_value' => $defaults,
-    );
-  }
-
-  if ($op == 'view') {
-    $form[] = array(
-      '#type' => 'item',
-      '#value' => l(t('Back'), 'admin/build/context'),
-    );
-  }
-  
-  if ($op != 'view') {
-    $form[] = array(
-      '#type' => 'submit',
-      '#value' => t('Save'),    
-    );
-  }
-  
-  if ($op == 'edit') {
-    $form[] = array(
-      '#type' => 'submit',
-      '#value' => t('Delete'),
-    );  
-  }
-
-  if ($op == 'view' || $op == 'edit') {
-    if ($context) {
-      $form['value']['#default_value'] = $context->value;
-      $form['key']['#default_value'] = $context->key;
-      $form['space']['#default_value'] = $context->space;
-      $form['cid'] = array(
-        '#type' => 'value',
-        '#value' => $cid,
-      );
-      $form['system'] = array(
-        '#type' => 'value',
-        '#value' => $context->system,
-      );
-      if ($op == 'view' || $context->system) {        
-        $form['value']['#disabled'] = 
-        $form['key']['#disabled'] = 
-        $form['space']['#disabled'] = 
-        $form['block']['selector']['blocks']['#disabled'] = 
-        $form['block']['selector']['regions']['#disabled'] = true;
-      }
-      // Set default values for each item type (except blocks)
-      foreach (context_ui_types() as $type) {
-        if (is_array($context->{$type})) {
-          $defaults = array();
-          foreach ($context->{$type} as $id) {
-            $defaults[$id] = $id;
-          }
-          $form['items'][$type]['#default_value'] = $defaults;
-        }
-        $form['items'][$type]['#disabled'] = $op == 'view' ? true : false;
-      }
-      // Blocks must be selected by region
-      if (is_array($context->block)) {
-        foreach ($regions as $region => $label) {
-          if (is_array($form['block'][$region])) {
-            $defaults = array();
-            foreach ($form['block'][$region]['#options'] as $block => $label) {
-              if (array_search($block, $context->block) !== false) {
-                $defaults[$block] = $block;
-              }
-            }
-            $form['block'][$region]['#default_value'] = $defaults;
-          }
-          $form['block'][$region]['#disabled'] = $op == 'view' ? true : false;
-        }
-      }
-    }
-    else {
-      return drupal_goto('admin/build/context');
-    }
-  }  
-
-  return $form;
-}
-
-/*
  * hook_validate()
  */
 function context_ui_form_validate($form_id, $form_values) {
-  $context = new stdClass();
-  if ($context->value = $form_values['value']) {
-    $context->space = $form_values['space'];
-    $context->key = $form_values['key'];
-    if (!preg_match('!^[a-z0-9_]+$!', $context->value)) {
-      form_set_error('value', t('The context name can only consist of lowercase letters, underscores, and numbers.'));
+  if ($form_values['op'] == t('Save') && $form_values['value']) {
+    // Check for string identifier sanity
+    foreach (array('value', 'key', 'space') as $elem) {
+      if (!preg_match('!^[a-z0-9_]+$!', $form_values[$elem])) {
+        form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
+      }
+    }
+    if (!$form_values['cid']) {      
+      // Check that no other user-defined context definition has taken this identifier already
+      $context = new StdClass();
+      $context->space = $form_values['space'];
+      $context->key = $form_values['key'];
+      $context->value = $form_values['value'];
+      $context->system = 0;
+      if ($exists = context_ui_context('load', $context)) {
+        form_set_error($form_values['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
+      }
     }
   }
 }
@@ -556,11 +246,11 @@ function context_ui_form_process($form) {
   
   // Blocks must be done by region
   $context->block = array();
-  global $theme;
+  global $theme_key;
   // Get list of "valid" available blocks
   $valid = _context_ui_get_blocks();
   $valid = $valid[0];
-  foreach (system_region_list($theme) as $region => $label) {
+  foreach (system_region_list($theme_key) as $region => $label) {
     if ($blocks = $form['block']['regions'][$region]) {
       $blocks = explode(',', $blocks);
       $midpoint = array_search('system', $blocks);
@@ -610,55 +300,6 @@ function context_ui_form_submit($form_id, $form_values) {
   // rebuild cache
   context_ui_rebuild();
   return 'admin/build/context';
-}
-
-/*
- * Provides a form with an exported context definition for use in modules.
- *
- * @param $cid
- *   A context id.
- *
- * @return
- *   A FormAPI array.
- */
-function context_ui_export($cid = NULL) {
-  if (is_numeric($cid) && $context = context_ui_context('load', $cid)) {
-    drupal_set_title(t('Export %title', array('%title' => $context->value)));
-
-    // help text -- too bad the help module in 5 doesn't take wildcards
-    $help = t('You can use exported contexts in your modules by returning an array of defined contexts in <code>hook_context_define()</code>.');
-
-    // prune system specific information and cast for Drupal's AOP (array oriented programming)
-    unset($context->cid);
-    unset($context->status);
-    unset($context->system);
-    $context = (array) $context;
-
-    // clean up blocks
-    foreach ($context['block'] as $bid => $block) {
-      unset($block->bid);
-      $context['block'][$bid] = (array) $block;
-    }
-
-    // export
-    $export = '$items[] = '. var_export($context, true) .';';
-    
-    // build the form
-    $form = array();
-    $form['help'] = array(
-      '#type' => 'item',
-      '#value' => $help,
-    );
-    $form['export'] = array(
-      '#type' => 'textarea',
-      '#rows' => 24,
-      '#default_value' => $export,
-    );
-    return $form;
-  }
-  else {
-    drupal_goto('admin/build/context'); return;
-  }
 }
 
 /*
@@ -829,6 +470,7 @@ function context_ui_item_block($op = 'load', $context) {
     switch ($op) {
       case 'load':
         $result = db_query("SELECT module, delta, region, weight FROM {context_ui_block} WHERE cid = %d", $context->cid);
+        $context->block = array();
         while ($block = db_fetch_object($result)) {
           $bid = $block->module ."_". $block->delta;
           $block->bid = $bid;
@@ -872,34 +514,6 @@ function context_ui_item_block($op = 'load', $context) {
 }
 
 /*
- * Provide a form to confirm deletion of a context definition.
- */
-function context_ui_delete_confirm($cid) {
-  $context = context_ui_context('load', $cid);
-  if (!$context) {
-    return drupal_goto('admin/build/context');
-  }
-  $form['cid'] = array('#type' => 'value', '#value' => $cid);
-  $form = confirm_form($form,
-    t('Are you sure you want to delete %title?', array('%title' => $context->value)),
-    'admin/build/context',
-    t('This action cannot be undone.'),
-    t('Delete'), t('Cancel')
-  );
-  return $form;
-}
-
-/*
- * hook_submit()
- */
-function context_ui_delete_confirm_submit($form_id, $form) {
-  context_ui_context('delete', $form['cid']);
-  // rebuild cache
-  context_ui_rebuild();
-  return 'admin/build/context';
-}
-
-/*
  * Helper function to generate a list of database and module provided views.
  */
 function _context_ui_get_views() {
@@ -921,7 +535,7 @@ function _context_ui_get_views() {
   return $views;
 }
 
-/*
+/**
  * Helper function to generate a list of blocks from a specified region. If provided a context object,
  * will generate a full list of blocks for that region distinguishing between system blocks and
  * context-provided blocks.
@@ -935,18 +549,18 @@ function _context_ui_get_views() {
  *   A keyed (by "module_delta" convention) array of blocks.
  */
 function _context_ui_get_blocks($region = null, $context = null) {
-  global $theme;
+  global $theme_key;
   static $block_info, $valid, $system_blocks;
   // we don't static cache context blocks
   $context_blocks = $blocks = array();
 
   if (!$system_blocks) {
     // initialize regions
-    foreach (system_region_list($theme) as $r => $l) {
+    foreach (system_region_list($theme_key) as $r => $l) {
       $system_blocks[$r] = array();      
     }
-    // load blocks from database    
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s'", $theme);
+    // load blocks from database
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s' ORDER BY weight, module, delta", $theme_key);
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
@@ -994,17 +608,11 @@ function _context_ui_get_blocks($region = null, $context = null) {
     }
   }
   
-  foreach ($blocks as &$sort_region) {
-    uasort($sort_region, "_context_ui_block_compare");
+  foreach ($blocks as $r => &$sort_region) {
+    if ($r !== 0) {
+      uasort($sort_region, "_context_ui_block_compare");
+    }
   }
 
   return $region ? $blocks[$region] : $blocks;
-}
-
-/*
- * Helper function to sort block objects by weight
- */
-function _context_ui_block_compare($a, $b) {
-  // Enabled blocks
-  return ($a->weight - $b->weight);
 }
