@@ -34,7 +34,7 @@ class ContextGetTest extends  DrupalTestCase {
       // Test return value of context_set()
       if (in_array($type, $id_types)) {
         // test set integrity
-        $this->assertIdentical(true, $set);      
+        $this->assertIdentical(true, $set);
         // test get integrity
         $this->assertIdentical(array(), context_get($val));
         $this->assertIdentical(true, context_exists($val));
@@ -44,12 +44,12 @@ class ContextGetTest extends  DrupalTestCase {
       }
       context_clear();
     }
-      
+
     // SPACE+KEY
     foreach ($set_types as $type => $val) {
       foreach ($set_types as $type2 => $val2) {
         // test set integrity
-        $set = context_set($val, $val2);        
+        $set = context_set($val, $val2);
         if (in_array($type, $id_types)) {
           // test set integrity
           if ($type2 != 'bool') {
@@ -69,7 +69,7 @@ class ContextGetTest extends  DrupalTestCase {
           }
         }
       }
-      context_clear();      
+      context_clear();
     }
 
     // SPACE+KEY+VALUE, o lord

@@ -15,7 +15,7 @@ define('CONTEXT_CLEAR', 3);
  *   A string to be used as the namespace for the context information.
  * @param $key
  *   Usually a string to be used as a key to set/retrieve context information. An array can
- *   also be used when setting context to establish an entire context namespace at once.  
+ *   also be used when setting context to establish an entire context namespace at once.
  *   (At some point objects may also be accepted, but currently functionaliy isn't complete.)
  * @param $value
  *   A value to set for the provided key. If omitted the value will be set to true.
@@ -37,7 +37,7 @@ function context_context($op = CONTEXT_GET, $space = null, $key = null, $value =
         return $context[(string) $space];
       }
       // return val of key from space
-      else if (is_array($context[(string) $space]) && isset($context[(string) $space][(string) $key])) {
+      else if (isset($context[(string) $space]) && is_array($context[(string) $space]) && isset($context[(string) $space][(string) $key])) {
         return $context[(string) $space][(string) $key];
       }
       break;

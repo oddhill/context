@@ -1,10 +1,12 @@
+// $Id$
+
 if (typeof(Drupal) == "undefined" || !Drupal.context_ui) {
   Drupal.context_ui = {};
 }
 
 Drupal.context_ui.attach = function() {
   var item_tools = "<div class='tools'><span class='up'>Up</span><span class='down'>Down</span><span class='remove'>X</span></div>";
-  
+
   // multiselect handler
   $("input#edit-block-selector-add").click(function() {
     var region = $("select#edit-block-selector-regions").val();
@@ -12,7 +14,7 @@ Drupal.context_ui.attach = function() {
     if (selected.size() > 0) {
       $("div.context-ui-block-regions ul." + region + " li.dummy").remove();
       selected.each(function() {
-        if (!$(this).attr('disabled')) {          
+        if (!$(this).attr('disabled')) {
           // create new block li
           var block = document.createElement('li');
           var value = $(this).attr('value');
@@ -26,14 +28,14 @@ Drupal.context_ui.attach = function() {
           $(this).remove();
 
           // add block item to region
-          $("div.context-ui-block-regions ul."+ region).append(block);                    
-          
+          $("div.context-ui-block-regions ul."+ region).append(block);
+
           Drupal.context_ui.regionblocks(region);
         }
       });
     }
   });
-  
+
   // attach tool handler to existing context_ui blocks
   $("div.context-ui-block-regions ul li").each(function() {
     Drupal.context_ui.attachtools(this);
@@ -56,12 +58,12 @@ Drupal.context_ui.attachtools = function(block) {
       // retrieve region info before item is deleted
       var region = $(item).parents("ul").attr("class");
 
-      // remove block item      
+      // remove block item
       item.remove();
-      
+
       // add block option
-      $("select#edit-block-selector-blocks").append(option);      
-      
+      $("select#edit-block-selector-blocks").append(option);
+
       Drupal.context_ui.regionblocks(region);
     });
     // move block up
@@ -96,7 +98,7 @@ Drupal.context_ui.regionblocks = function (region) {
       }
       else {
         serialized = serialized +","+ $(this).attr('title');
-      }      
+      }
     });
     $("input#edit-block-regions-"+ region).val(serialized);
   }
@@ -108,7 +110,7 @@ Drupal.context_ui.regionblocks = function (region) {
 if (Drupal.jsEnabled) {
   $(document).ready(function() {
     if ($('form#context-ui-form').size() > 0) {
-      Drupal.context_ui.attach();      
+      Drupal.context_ui.attach();
     }
   });
 };

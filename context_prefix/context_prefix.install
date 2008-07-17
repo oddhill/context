@@ -2,13 +2,50 @@
 // $Id$
 
 function context_prefix_install() {
-  switch ($GLOBALS['db_type']) {
-    case 'mysqli':
-    case 'mysql':
-      db_query("CREATE TABLE {context_prefix} (module VARCHAR(255) NOT NULL, prefix VARCHAR(255) NOT NULL, id INT(10) NOT NULL, PRIMARY KEY (prefix))");
-      db_query("UPDATE {system} SET weight = -20 WHERE name = 'context_prefix'");
-      break;
-  }
+  drupal_install_schema('context_prefix');
+  db_query("UPDATE {system} SET weight = -20 WHERE name = 'context_prefix'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function context_prefix_uninstall() {
+  drupal_uninstall_schema('context_prefix');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function context_prefix_schema() {
+  $schema['context_prefix'] = array(
+    'description' => t('context_prefix.'),
+    'fields' => array(
+      'prefix' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'module' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'id' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('prefix'),
+  );
+  
+  return $schema;
 }
 
 function context_prefix_update_1() {

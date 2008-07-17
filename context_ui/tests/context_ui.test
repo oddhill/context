@@ -16,24 +16,24 @@ class ContextUiTest extends DrupalTestCase {
       'group' => 'Context UI Tests',
     );
   }
-  
+
   function setUp() {
     $this->drupalModuleEnable('context');
     $this->drupalModuleEnable('context_ui');
-    
+
     parent::setUp();
   }
-  
+
   function tearDown() {
     include_once(drupal_get_path("module", "context_ui") ."/context_ui_admin.inc");
     context_ui_context('delete', $this->context);
-    
+
     $this->drupalModuleDisable('context');
     $this->drupalModuleDisable('context_ui');
-    
+
     parent::tearDown();
   }
-  
+
   // Random ID is like randomNAME, but provides only lowercase letters.
   function randomID($number = 4, $prefix = 'simpletest_') {
     $chars = 'abcdefghijklmnopqrstuvwxyz_';
@@ -45,34 +45,34 @@ class ContextUiTest extends DrupalTestCase {
     }
     return $prefix;
   }
-  
+
   function testCreateContext() {
-        
+
     // User setup
-    $user = $this->drupalCreateUserRolePerm(array('administer site configuration', 'access content', 'create page content'));    
+    $user = $this->drupalCreateUserRolePerm(array('administer site configuration', 'access content', 'create page content'));
     $this->drupalLoginUser($user);
-    
+
     // Create context
     $context = new stdClass();
     $context->space = $this->randomID(15);
-    $context->key = $this->randomID(15);  
+    $context->key = $this->randomID(15);
     $context->value = $this->randomID(15);
     $this->context = $context;
-  
+
     $edit = array('space' => $context->space, 'key' => $context->key, 'value' => $context->value);
     $edit['items-node-page'] = 'page';
     $this->drupalPostRequest('admin/build/context/add', $edit, 'Save');
     $this->assertWantedRaw(t('The context %title was saved successfully.', array('%title' =>  $edit['value'])), 'Context saved');
-    
-    // Create Page content 
+
+    // Create Page content
     $edit = array();
     $edit['title'] = $this->randomName(32);
     $edit['body']  = $this->randomName(32);
     $this->drupalPostRequest('node/add/page', $edit, 'Submit');
-    
+
     // View context and test context setting
     node_view(node_load(array('title' => $edit['title'])), FALSE, TRUE);
     $this->assertIdentical(context_get($context->space, $context->key), $context->value , 'Custom context was set');
-    
+
   }
 }

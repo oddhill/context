@@ -1,36 +1,34 @@
 <?php
 // $Id$
 
-define(CONTEXT_PREFIX_PATH, 0);
-define(CONTEXT_PREFIX_SUBDOMAIN, 1);
-define(CONTEXT_PREFIX_DOMAIN, 2);
+define('CONTEXT_PREFIX_PATH', 0);
+define('CONTEXT_PREFIX_SUBDOMAIN', 1);
+define('CONTEXT_PREFIX_DOMAIN', 2);
 
 /**
- * Implementation of hook_menu()
+ * Implementation of hook_menu().
  */
-function context_prefix_menu($may_cache) {
+function context_prefix_menu() {
   $items = array();
-  if ($may_cache) {
-    $items[] = array(
-      'type' => module_exists('context_ui') ? MENU_LOCAL_TASK : MENU_NORMAL_ITEM,
-      'title' => t('Context Prefixes'),
-      'description' => t('Displays a list of context definitions.'),
-      'path' => 'admin/build/context/prefix',
-      'callback' => 'context_prefix_admin',
-      'access' => user_access('administer site configuration'),
-      'weight' => 10,
-    );
-  }
+  $items['admin/build/context/prefix'] = array(
+    'type' => module_exists('context_ui') ? MENU_LOCAL_TASK : MENU_NORMAL_ITEM,
+    'title' => 'Context Prefixes',
+    'description' => 'Displays a list of context definitions.',
+    'page callback' => 'context_prefix_admin',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'weight' => 10,
+  );
   return $items;
 }
 
 /**
- * Implementation of hook_init()
- * Checks for any valid context prefixes in request string and sets the context appropriately
+ * Implementation of hook_init().
+ * Checks for any valid context prefixes in request string and sets the context appropriately.
  */
 function context_prefix_init() {
   $location = variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH);
-  switch($location) {
+  switch ($location) {
     case CONTEXT_PREFIX_DOMAIN:
       context_prefix_prepare_domain();
       break;
@@ -86,7 +84,7 @@ function context_prefix_prepare_url() {
 function context_prefix_prepare_domain() {
   $host = $_SERVER['HTTP_HOST'];
   // We handle sub.domain.com, and nothing more (no sub1.sub2.domain.com).
-  $prefix = str_replace('http://','',$host);
+  $prefix = str_replace('http://', '', $host);
   $items = context_prefix_items();
   if (isset($items[$prefix]) && $active = $items[$prefix] ) {
     context_set('context_prefix', $active->module, $active->id);
@@ -155,7 +153,7 @@ function context_prefix_api($op = 'insert', $context) {
 /**
  * Returns an array of available context definitions. If provided an
  * optional module argument, will only provide definitions for the
- * specified module. 
+ * specified module.
  */
 function context_prefix_items($module = NULL) {
   static $items;
@@ -191,7 +189,7 @@ function _context_prefix_get_prefix($q) {
       $prefix = array_shift($exploded_q);
     }
   }
-  // check that this prefix is valid  
+  // check that this prefix is valid
   $valid = context_prefix_items();
   if (isset($valid[$prefix])) {
     return $prefix;
@@ -202,7 +200,7 @@ function _context_prefix_get_prefix($q) {
 }
 
 /**
- * Taken from i18n
+ * Taken from i18n.
  */
 function _context_prefix_get_normal_path($path, $prefix) {
   // If bootstrap, drupal_lookup_path is not defined
@@ -219,7 +217,7 @@ function _context_prefix_get_normal_path($path, $prefix) {
 }
 
 /**
- * Jose's very smart collision avoidance
+ * Jose's very smart collision avoidance.
  */
 if (!function_exists('custom_url_rewrite')) {
   function custom_url_rewrite($type, $path, $original) {
@@ -264,7 +262,7 @@ function context_prefix_url_rewrite($type, $path, $original) {
       }
     }
   }
-  
+
   if ($working_path) {
     $prefix[] = $working_path;
   }
@@ -289,7 +287,7 @@ function cl($text, $path, $attributes = array(), $query = NULL, $fragment = NULL
         if ($path == '<front>') {
           $path = variable_get('site_frontpage', 'node');
         }
-        $path = variable_get('context_prefix_base_domain', '') . '/' . $path; // REPLACE BASE_URL with the hub domain.
+        $path = variable_get('context_prefix_base_domain', '') .'/'. $path; // REPLACE BASE_URL with the hub domain.
         break;
     }
   }
@@ -345,7 +343,7 @@ function theme_context_links($links, $attributes = array('class' => 'links')) {
       // Add active class for active menu items
       if (stristr($key, 'active')) {
         $class .= " active";
-      }    
+      }
 
       // Add first and last classes to the list of links to help out themers.
       $extra_class = '';
@@ -399,13 +397,13 @@ function context_prefix_settings_form() {
   $form['context_prefix_location'] = array(
     '#type' => 'fieldset',
     '#title' => t('Prefix location settings'),
-  );  
+  );
   $options = array(
     CONTEXT_PREFIX_PATH => t('Path prefix'),
     CONTEXT_PREFIX_DOMAIN => t('Full domain'),
     // TODO: Implement these features
     // CONTEXT_PREFIX_SUBDOMAIN => t('Subdomain'),
-  );  
+  );
   $form['context_prefix_location']['context_prefix_prefix_location'] = array(
     '#type' => 'select',
     '#title' => t('Select prefix location'),
@@ -415,14 +413,14 @@ function context_prefix_settings_form() {
     '#multiple' => FALSE,
     '#options' => $options,
     '#default_value' => variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH),
-  );  
+  );
   $form['context_prefix_location']['context_prefix_base_domain'] = array(
     '#type' => 'textfield',
     '#title' => t('Select base domain for hub'),
     '#description' => t('This setting determines the base sub-domain.  Enter only the part of the domain, like www'),
     '#required' => FALSE,
     '#default_value' => variable_get('context_prefix_base_domain', $base_url),
-  );  
+  );
   return system_settings_form($form);
 }
 
@@ -433,9 +431,9 @@ function context_prefix_settings_form() {
  */
 function context_prefix_goto($prefix, $path = '', $query = NULL, $fragment = NULL, $http_response_code = 302) {
   global $base_url;
-  /** 
+  /**
    * TODO: we need to abstract this base_url dissection into a
-   * handler, and in there, we'll abstract out for 
+   * handler, and in there, we'll abstract out for
    * protocol handling, and handling the site's base_url like www.
    */
   switch (variable_get('context_prefix_prefix_location', CONTEXT_PREFIX_PATH)) {

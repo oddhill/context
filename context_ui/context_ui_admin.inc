@@ -9,15 +9,15 @@ function context_ui_tree($op = '') {
   if (!$tree) {
     $tree = array(
       'system' => array(),
-      'ui' => array(),      
+      'ui' => array(),
     );
     $result = db_query("
       SELECT *
       FROM {context_ui}
-      ORDER BY system ASC, space ASC, `key` ASC, value ASC");
+      ORDER BY system ASC, space ASC, ckey ASC, value ASC");
     while ($context = db_fetch_object($result)) {
-      $branch = $context->system ? 'system' : 'ui';      
-      $tree[$branch][$context->space][$context->key][$context->value] = $context;
+      $branch = $context->system ? 'system' : 'ui';
+      $tree[$branch][$context->space][$context->ckey][$context->value] = $context;
     }
   }
   switch ($op) {
@@ -30,7 +30,7 @@ function context_ui_tree($op = '') {
   }
 }
 
-/*
+/**
  * Cache system contexts
  */
 function context_ui_rebuild() {
@@ -48,12 +48,12 @@ function context_ui_rebuild() {
   }
 
   // Insert or update system contexts
-  foreach ($default_contexts as $c) {    
+  foreach ($default_contexts as $c) {
     // flag this context's type + status
     $c->system = 1;
-    $c->status = isset($ui[$c->space][$c->key][$c->value]) ? 0 : 1;
-    
-    if ($context = context_ui_context('load', $c)) { 
+    $c->status = isset($ui[$c->space][$c->ckey][$c->value]) ? 0 : 1;
+
+    if ($context = context_ui_context('load', $c)) {
       $c->cid = $context->cid;
       context_ui_context('update', $c);
       unset($system[$c->cid]); // remove this context from unused list
@@ -62,14 +62,14 @@ function context_ui_rebuild() {
       context_ui_context('insert', $c);
     }
   }
-  
+
   // Remove any unused contexts
   foreach ($system as $c => $dummy) {
     context_ui_context('delete', $c);
   }
 }
 
-/*
+/**
  * Generates the main context_ui admin page with a tiered context listing.
  */
 function theme_context_ui_admin($context_tree) {
@@ -79,7 +79,7 @@ function theme_context_ui_admin($context_tree) {
       null
     );
     foreach ($keys as $key => $contexts) {
-      if (is_array($contexts)) {            
+      if (is_array($contexts)) {
         $rows[] = array(
           "<span class='context-key'>". $key ."</span>",
           null
@@ -102,7 +102,7 @@ function theme_context_ui_admin($context_tree) {
           $rows[] = array(
             "<span class='context-value $class'>". $value ."</span>",
             implode(' | ', $links),
-          );              
+          );
         }
       }
       else {
@@ -129,18 +129,20 @@ function theme_context_ui_admin($context_tree) {
   return theme('table', array(t('Context'), t('Actions')), $rows, array('class' => 'context-ui'));
 }
 
-/*
+/**
  * Generates the AJAX enabled block administration portion of the context_ui admin form.
  */
 function theme_context_ui_block_ui($regions, $context = null) {
+  $output = '';
+
   $tools = "<div class='tools'><span class='up'></span><span class='down'></span><span class='remove'></span></div>";
   foreach ($regions as $region => $label) {
-    $items = array();    
+    $items = array();
 
     $system = _context_ui_get_blocks($region);
     $system_item = array();
     foreach ($system as $block) {
-      $system_item[] = $block->label ." ($block->bid)";      
+      $system_item[] = $block->label ." ($block->bid)";
     }
     $system_item = implode("<br/>", $system_item);
 
@@ -182,39 +184,39 @@ function theme_context_ui_block_ui($regions, $context = null) {
       $items[] = array(
         'data' => '',
         'class' => 'dummy',
-      );      
+      );
     }
     $output .= theme('item_list', $items, $label, 'ul', array('class' => $region));
   }
   return $output;
 }
 
-/*
+/**
  * hook_validate()
  */
-function context_ui_form_validate($form_id, $form_values) {
-  if ($form_values['op'] == t('Save') && $form_values['value']) {
+function context_ui_form_validate($form, &$form_state) {
+  if ($form_state['clicked_button']['#id'] == 'edit-submit' && $form_state['values']['value']) {
     // Check for string identifier sanity
-    foreach (array('value', 'key', 'space') as $elem) {
-      if (!preg_match('!^[a-z0-9_]+$!', $form_values[$elem])) {
+    foreach (array('value', 'ckey', 'space') as $elem) {
+      if (!preg_match('!^[a-z0-9_]+$!', $form_state['values'][$elem])) {
         form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
       }
     }
-    if (!$form_values['cid']) {      
+    if (!isset($form_state['values']['cid'])) {
       // Check that no other user-defined context definition has taken this identifier already
-      $context = new StdClass();
-      $context->space = $form_values['space'];
-      $context->key = $form_values['key'];
-      $context->value = $form_values['value'];
+      $context = new stdClass();
+      $context->space = $form_state['values']['space'];
+      $context->ckey = $form_state['values']['ckey'];
+      $context->value = $form_state['values']['value'];
       $context->system = 0;
       if ($exists = context_ui_context('load', $context)) {
-        form_set_error($form_values['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
+        form_set_error($form_state['values']['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
       }
     }
   }
 }
 
-/*
+/**
  * Produces a context object from submitted form values.
  *
  * @param $form
@@ -225,12 +227,12 @@ function context_ui_form_validate($form_id, $form_values) {
  */
 function context_ui_form_process($form) {
   $context = new stdClass();
-  
+
   // Context space/key/value definition
-  $context->cid = $form['cid'] ? $form['cid'] : null;
-  $context->system = $form['system'] ? $form['system'] : null;
+  $context->cid = isset($form['cid']) ? $form['cid'] : null;
+  $context->system = isset($form['system']) ? $form['system'] : null;
   $context->space = $form['space'] ? $form['space'] : null;
-  $context->key = $form['key'] ? $form['key'] : null;
+  $context->ckey = $form['ckey'] ? $form['ckey'] : null;
   $context->value = $form['value'] ? $form['value'] : null;
   $context->status = 1; // all user defined contexts have status 1
 
@@ -243,7 +245,7 @@ function context_ui_form_process($form) {
       }
     }
   }
-  
+
   // Blocks must be done by region
   $context->block = array();
   global $theme_key;
@@ -259,9 +261,9 @@ function context_ui_form_process($form) {
           $block = $valid[$bid];
           $modifier = $position < $midpoint ? -10 : 10;
           $block->weight = $position - $midpoint + $modifier;
-          $block->region = $region;        
+          $block->region = $region;
           $block->type = 'context_ui';
-          $context->block[$block->bid] = $block;  
+          $context->block[$block->bid] = $block;
         }
       }
     }
@@ -269,17 +271,18 @@ function context_ui_form_process($form) {
   return $context;
 }
 
-/*
+/**
  * hook_submit()
  */
-function context_ui_form_submit($form_id, $form_values) {
-  switch (t($form_values['op'])) {
+function context_ui_form_submit($form, &$form_state) {
+  switch (t($form_state['values']['op'])) {
     // Send user to delete confirmation page
     case 'Delete':
-      return 'admin/build/context/delete/'. $form_values['cid'];
+      $form_state['redirect'] = 'admin/build/context/delete/'. $form_state['values']['cid'];
+      return;
     // Process form values and save and/or update the context in the db
     case 'Save':
-      $context = context_ui_form_process($form_values);
+      $context = context_ui_form_process($form_state['values']);
       if (!$context->cid) {
         $result = context_ui_context('insert', $context);
         if ($result) {
@@ -299,29 +302,24 @@ function context_ui_form_submit($form_id, $form_values) {
   }
   // rebuild cache
   context_ui_rebuild();
-  return 'admin/build/context';
+  $form_state['redirect'] = 'admin/build/context';
 }
 
 /*
  * Helper function to generate a list of database and module provided views.
  */
 function _context_ui_get_views() {
-  $views = array();
-  $result = db_query("SELECT name FROM {view_view}");
-  while ($view = db_fetch_object($result)) {
-    $views[$view->name] = $view->name;
-  }  
-  views_load_cache(); // the function below was not loaded without this call
-  $default_views = _views_get_default_views();
-  $views_status = variable_get('views_defaults', array());
-  foreach ($default_views as $view) {
-    if (!$views[$view->name] && 
-      ($views_status[$view->name] == 'enabled' || (!$views_status[$view->name] && !$view->disabled))) {
-      $views[$view->name] = $view->name;
+  $enabled_views = array();
+  
+  $views = views_get_all_views();
+  
+  foreach ($views as $view) {
+    if (!isset($views[$view->name]->disabled) || !$views[$view->name]->disabled) {
+      $enabled_views[$view->name] = $view->name;
     }
   }
-  ksort($views);
-  return $views;
+  ksort($enabled_views);
+  return $enabled_views;
 }
 
 /**
@@ -346,14 +344,14 @@ function _context_ui_get_blocks($region = null, $context = null) {
   if (!$system_blocks) {
     // initialize regions
     foreach (system_region_list($theme_key) as $r => $l) {
-      $system_blocks[$r] = array();      
+      $system_blocks[$r] = array();
     }
     // load blocks from database
     $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s' ORDER BY weight, module, delta", $theme_key);
     while ($block = db_fetch_object($result)) {
       // load block info
-      $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
-      $block->label = $block_info[$block->module][$block->delta]['info'];  
+      $block_info[$block->module] = isset($block_info[$block->module]) ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
+      $block->label = $block_info[$block->module][$block->delta]['info'];
       $block->type = 'system';
       $block->bid = $block->module .'_'. $block->delta;
       // add block to region
@@ -366,11 +364,11 @@ function _context_ui_get_blocks($region = null, $context = null) {
       // mark block as available in DB
       $valid[$block->module ."_". $block->delta] = true;
     }
-  }  
+  }
 
-  // load system blocks into main block array  
+  // load system blocks into main block array
   $blocks = $system_blocks;
-  
+
   // load context blocks if provided
   if (is_object($context) && is_array($context->block)) {
     // iterate over context-associated blocks
@@ -382,7 +380,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
         if (!$region || (isset($region) && $block->region == $region)) {
           // load block info
           $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
-          $block->label = $block_info[$block->module][$block->delta]['info'];  
+          $block->label = $block_info[$block->module][$block->delta]['info'];
           $block->type = 'context_ui';
           $block->bid = $block->module .'_'. $block->delta;
           // add block to region
@@ -391,12 +389,12 @@ function _context_ui_get_blocks($region = null, $context = null) {
           }
           else {
             $blocks[0][$block->bid] = $block;
-          }        
+          }
         }
       }
     }
   }
-  
+
   foreach ($blocks as $r => &$sort_region) {
     if ($r !== 0) {
       uasort($sort_region, "_context_ui_block_compare");
