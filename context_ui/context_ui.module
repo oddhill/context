@@ -289,8 +289,9 @@ function context_ui_defaults($space = null) {
       $function = $module .'_context_define';
       $contexts = array_merge($contexts, $function());      
     }
-    foreach ($contexts as &$context) {
+    foreach ($contexts as $key => $context) {
       $context = (object) $context;
+      $contexts[$key] = $context;
       $spaces[$context->space][] = $context;
     }
   }
