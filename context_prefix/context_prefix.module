@@ -160,7 +160,7 @@ function context_prefix_api($op = 'insert', $context) {
 function context_prefix_items($module = NULL) {
   static $items;
   static $by_module;
-  if (!$items) {
+  if (!is_array($items)) {
     $items = $by_module = array();
     $result = db_query("SELECT * FROM {context_prefix} ORDER BY module ASC");
     while ($item = db_fetch_object($result)) {
