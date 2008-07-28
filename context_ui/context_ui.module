@@ -101,6 +101,21 @@ function context_ui_context_items() {
     );
   }
 
+  // Book
+  if (module_exists('book')) {
+    $result = db_query("SELECT b.nid, nr.title FROM {book} b JOIN {node} n ON n.nid = b.nid AND n.vid = b.vid JOIN {node_revisions} nr ON nr.vid = n.vid WHERE n.status = 1 AND b.parent = 0");
+    $options = array();
+    while ($book = db_fetch_object($result)) {
+      $options[$book->nid] = $book->title;
+    }
+    $items['book'] = array(
+      'title' => t('Book'),
+      'description' => t('Set this context when a node in the selected book is viewed.'),
+      'options' => $options,
+      'widget' => 'select',
+    );
+  }
+
   // Outline
   if (module_exists('outline')) {
     $result = db_query("SELECT volume_id, title FROM {outline_volume}");
@@ -112,7 +127,7 @@ function context_ui_context_items() {
       'title' => t('Outline'),
       'description' => t('Set this context when a node in the selected volumes(s) is viewed.'),
       'options' => $options,
-      'widget' => 'select',      
+      'widget' => 'select',
     );
   }
   
@@ -236,6 +251,20 @@ function context_ui_nodeapi(&$node, $op, $teaser, $page) {
     // implementation of context_ui_set for outline
     if (module_exists('outline') && $vol = $node->volume_id) {
       context_ui_set('outline', $vol);
+    }
+
+    // implementation of context_ui_set for book
+    if (module_exists('book') && isset($node->parent)) {
+      // @TODO this non-strict check makes me very nervous...
+      if ($node->parent == 0) {
+        context_ui_set('book', $node->nid);
+      }
+      else {
+        $location = book_location($node);
+        if ($location[0]->parent == 0) {
+          context_ui_set('book', $location[0]->nid);
+        }
+      }
     }
   }
 }
