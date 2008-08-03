@@ -461,7 +461,7 @@ function context_ui_set($type, $id) {
 /**
  * Implementation of hook_context_getter().
  */
-function context_ui_getter($context) {
+function context_ui_context_getter($context) {
   // Set active menu context
   context_ui_menu_set_location($context);
 }
