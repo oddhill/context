@@ -105,14 +105,18 @@ form#context-ui-form td.getters .form-item {
   }
   
   form#context-ui-form td.setters .form-item div.form-checkboxes,
-  form#context-ui-form td.getters .form-item div.form-checkboxes {
+  form#context-ui-form td.getters .form-item div.form-checkboxes,
+  form#context-ui-form td.setters .form-item div.form-radios,
+  form#context-ui-form td.getters .form-item div.form-radios {
     background:#fff; border:1px solid #ace;
     height:12em; font-size:.9em;
     overflow:auto;
   }
 
   form#context-ui-form td.setters .form-item div.form-checkboxes .form-item,
-  form#context-ui-form td.getters .form-item div.form-checkboxes .form-item {
+  form#context-ui-form td.getters .form-item div.form-checkboxes .form-item,
+  form#context-ui-form td.setters .form-item div.form-radios .form-item,
+  form#context-ui-form td.getters .form-item div.form-radios .form-item {
     border-bottom:1px solid #e8f0f8; padding:.1em;
     display:block;
   }

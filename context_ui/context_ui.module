@@ -28,7 +28,21 @@ function context_ui_block($op = 'list', $delta = 0) {
 }
 
 /**
- * hook_context_items()
+ * Implementation of hook_context_items().
+ *
+ * Allows modules to integrate with context_ui and provide their native
+ * objects as options for setting/getting a context definition. The
+ * hook should return an array of items keyed on the object "type"
+ * (e.g. "node", "user", etc.) with the following key-value pairs:
+ *
+ * 'title': Required. The title of the object / form option.
+ * 'type': Optional. Either 'setter' or 'getter'. Defaults to 'setter'.
+ * 'description': Optional. Help text to be displayed on the form.
+ * 'options': Required. A key-value array of options. They key will be
+ *   stored and passed to context_ui_set(), so the integrating module
+ *   should use a unique (within its namespace) / usable identifier.
+ * 'multiple': A boolean value for whether a user should be able to
+ *   associate multiple objects with a single context definition.
  */
 function context_ui_context_items() {
   $items = array();
@@ -40,16 +54,20 @@ function context_ui_context_items() {
   }  
   $items['node'] = array(
     'title' => t('Content Types'),
+    'type' => 'setter',
     'description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
     'options' => $nodetypes,
+    'multiple' => true,
   );
   
   // Views
   if (module_exists('views')) {
     $items['views'] = array(
       'title' => t('Views'),
+      'type' => 'setter',
       'description' => t('Set this context when displaying the page of one of these views.'),
       'options' => _context_ui_get_views(),
+      'multiple' => true,
     );
   }
   
@@ -74,19 +92,23 @@ function context_ui_context_items() {
     }
     $items['menu'] = array(
       'title' => t('Menus'),
+      'type' => 'getter',
       'description' => t('Display the selected menu items as active when this context is set.'),
       'options' => $menus,
-      'widget' => 'select',
+      'multiple' => false,
     );
   }
-  
+
+  // User
   $items['user'] = array(
     'title' => t('User Pages'),
+    'type' => 'setter',
     'description' => t('Set this context when a user with selected role(s) is viewed'),
     'options' => user_roles(true),
-    'widget' => 'select',
+    'multiple' => true,
   );
   
+  // Nodequeue
   if (module_exists('nodequeue')) {
     $result = db_query("SELECT qid, title FROM {nodequeue_queue}");
     $options = array();
@@ -95,9 +117,10 @@ function context_ui_context_items() {
     }
     $items['nodequeue'] = array(
       'title' => t('Nodequeue'),
+      'type' => 'setter',
       'description' => t('Set this context when a node in the selected nodequeue(s) is viewed.'),
       'options' => $options,
-      'widget' => 'select',      
+      'multiple' => true,
     );
   }
 
@@ -110,9 +133,10 @@ function context_ui_context_items() {
     }
     $items['book'] = array(
       'title' => t('Book'),
+      'type' => 'setter',
       'description' => t('Set this context when a node in the selected book is viewed.'),
       'options' => $options,
-      'widget' => 'select',
+      'multiple' => true,
     );
   }
 
@@ -125,9 +149,10 @@ function context_ui_context_items() {
     }
     $items['outline'] = array(
       'title' => t('Outline'),
+      'type' => 'setter',
       'description' => t('Set this context when a node in the selected volumes(s) is viewed.'),
       'options' => $options,
-      'widget' => 'select',
+      'multiple' => true,
     );
   }
   
@@ -210,10 +235,6 @@ function context_ui_menu($may_cache) {
       include_once(drupal_get_path("module", "context_ui") ."/context_ui_admin.inc");
       context_ui_rebuild();
     }
-
-    // Attempt to override the theme_blocks.
-    context_ui_block_hack();
-
     // Include context ui css.
     drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
   }
@@ -480,9 +501,7 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
     $form['items'][$type] = array(
       '#title' => $item['title'],
       '#description' => $item['description'],
-      '#type' => 'checkboxes',
-      '#size' => 8,
-      '#multiple' => true,
+      '#type' => $item['multiple'] ? 'checkboxes' : 'radios',
       '#options' => $item['options'],
     );
   }
@@ -600,11 +619,16 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
         $form['block']['selector']['regions']['#disabled'] = true;
       }
       // Set default values for each item type (except blocks)
-      foreach (context_ui_types() as $type) {
+      foreach (context_ui_types('full') as $type => $item) {
         if (is_array($context->{$type})) {
-          $defaults = array();
-          foreach ($context->{$type} as $id) {
-            $defaults[$id] = $id;
+          if ($item['multiple']) {
+            $defaults = array();
+            foreach ($context->{$type} as $id) {
+              $defaults[$id] = $id;
+            }
+          }
+          else {
+            $defaults = current($context->{$type});
           }
           $form['items'][$type]['#default_value'] = $defaults;
         }
@@ -656,8 +680,15 @@ function theme_context_ui_form($form) {
 
   // Render setters / getters as a two column split
   $header = array(t('Set context'), t('Respond to context'));
-  $getters = drupal_render($form['items']['menu']);
-  $setters = drupal_render($form['items']);
+  $setters = $getters = '';
+  foreach (context_ui_types('full') as $type => $item) {
+    if ($item['type'] == 'getter') {
+      $getters .= drupal_render($form['items'][$type]);
+    }
+    else {
+      $setters .= drupal_render($form['items'][$type]);
+    }
+  }
   $rows = array(
     array(
       array('data' => $setters, 'class' => 'setters left'),
@@ -983,41 +1014,21 @@ function context_ui_menu_set_location($context) {
 }
 
 /**
- * TODO - Rework this, we're may just to require phptemplate and not allow for the theme to implement a 
- *        phptemplate_blocks function. Otherwise we may check for that namespace and use a backup otherwise.
- *
- * An egregious hack. Checks the function namespace for a theme and theme engine override of theme_blocks
- * and attempts to take the first available override. If all else fails, falls back to a custom
- * context_ui theme function namespace that requires custom implementation by the themer.
+ * In order to add blocks we need to intercept theme_blocks and build the block
+ * content using an diffrent process. The current implementation assumes that
+ * the theme layer isn't going to define either 'phptemplate_blocks' or
+ * 'themename_blocks'.
  */
-function context_ui_block_hack() {
-  /*
-  global $theme, $theme_engine;
-  if (!function_exists($theme .'_blocks')) {
-    $f_name = $theme .'_blocks';
-  }
-  else if (!function_exists($theme_engine .'_blocks')) {
-    $f_name = $theme_engine .'_blocks';
-  }
-  else {
-    $f_name = 'theme_context_ui_blocks';
-  }
-  $f_name = str_replace('-', '_', $f_name);
-  */
-  $f_name = 'phptemplate_blocks';
-  $eval = '
-  function '. $f_name .'($region) {
-    $output = "";
-    if ($list = context_ui_block_list($region)) {
-      foreach ($list as $key => $block) {
-        $output .= theme("block", $block);
-      }
+function phptemplate_blocks($region) {
+  $output = "";
+  if ($list = context_ui_block_list($region)) {
+    foreach ($list as $key => $block) {
+      $output .= theme("block", $block);
     }
-    // Add any content assigned to this region through drupal_set_content() calls.
-    $output .= drupal_get_content($region);
-    return $output;
-  }';
-  eval($eval);
+  }
+  // Add any content assigned to this region through drupal_set_content() calls.
+  $output .= drupal_get_content($region);
+  return $output;
 }
 
 /**
