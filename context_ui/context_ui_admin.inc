@@ -317,7 +317,7 @@ function theme_context_ui_form($form) {
       array('data' => drupal_render($form['block']['regions']), 'class' => 'right'),
     ),
   );
-  $output .= theme('table', $header, $rows, array('class' => 'context-ui-2col'));
+  $output .= theme('table', $header, $rows, array('id' => 'context-ui-blocks', 'class' => 'context-ui-2col'));
 
   $output .= drupal_render($form);
   return $output;

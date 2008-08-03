@@ -163,7 +163,7 @@ function context_ui_context_items() {
 }
 
 /**
- * Implementation of hook_menu()
+ * Implementation of hook_menu().
  */
 function context_ui_menu($may_cache) {
   $items = array();
@@ -246,7 +246,7 @@ function context_ui_menu($may_cache) {
 }
 
 /**
- * Implementation of hook_help()
+ * Implementation of hook_help().
  */
 function context_ui_help($section) {
   switch ($section) {
@@ -259,7 +259,7 @@ function context_ui_help($section) {
 }
 
 /**
- * Implementation of hook_nodeapi()
+ * Implementation of hook_nodeapi().
  */
 function context_ui_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page && arg(0) == 'node') {
@@ -296,7 +296,7 @@ function context_ui_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
- * Implementation of hook_form_alter()
+ * Implementation of hook_form_alter().
  */
 function context_ui_form_alter($form_id, &$form) {
   if ($form['#node'] && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
@@ -315,10 +315,10 @@ function context_ui_form_alter($form_id, &$form) {
 
     $rows = array();
     while ($row = db_fetch_object($result)) {
-      $rows[] = array($row->space, $row->key, $row->value, $row->region);
+      $rows[] = array($row->space, $row->key, $row->value, $row->region, l(t('Edit visibility'), 'admin/build/context/edit/'. $row->cid), array(), 'context-ui-blocks');
     }
     if ($rows) {
-      $content = theme('table', array(t('Space'), t('Key'), t('Value'), t('Region')), $rows);
+      $content = theme('table', array(t('Space'), t('Key'), t('Value'), t('Region'), ''), $rows);
     }
     else {
       $content = "<p>". t('No visibility rules have been set for this block using context_ui.') ."</p>";
@@ -340,7 +340,7 @@ function context_ui_form_alter($form_id, &$form) {
 }
 
 /**
- * Implementation of hook_views_pre_query()
+ * Implementation of hook_views_pre_query().
  */
 function context_ui_views_pre_query($view) {
   if ($view->build_type == 'page') {
@@ -349,7 +349,7 @@ function context_ui_views_pre_query($view) {
 }
 
 /**
- * Implementation of hook_user()
+ * Implementation of hook_user().
  */
 function context_ui_user($op, &$edit, &$account, $category = NULL) {
   if ($op == 'view') {
@@ -357,7 +357,7 @@ function context_ui_user($op, &$edit, &$account, $category = NULL) {
   }
 }
 
-/*
+/**
  * Invokes hook_context_define() to collect all contexts provided in code by modules.
  *
  * @param $space
@@ -723,7 +723,7 @@ function _context_ui_block_visibility($op, $block) {
   }
 }
 
-/*
+/**
  * Helper function to sort block objects by weight
  */
 function _context_ui_block_compare($a, $b) {
@@ -731,7 +731,7 @@ function _context_ui_block_compare($a, $b) {
   return ($a->weight - $b->weight);
 }
 
-/*
+/**
  * Provides simple operations (load/insert/update/etc.) on a core context space/key/value definition.
  *
  * @param $op
@@ -843,7 +843,7 @@ function context_ui_context($op, $context) {
   }
 }
 
-/*
+/**
  * Provides simple operations (load/save) on any context-item associations. context_ui_item() will
  * automatically sync the database with the context object provided when saving. Any associations
  * that exist on the object that are absent from the database will be inserted, and any associations
@@ -908,7 +908,7 @@ function context_ui_item($op = 'load', $context) {
   return false;
 }
 
-/*
+/**
  * Provides simple operations (load/save) on any context-block associations. Parallel usage as
  * context_ui_item().
  *
