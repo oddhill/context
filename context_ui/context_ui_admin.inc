@@ -237,10 +237,15 @@ function context_ui_form_process($form) {
   // Values for most item types
   $item_types = context_ui_types();
   foreach ($item_types as $element_id) {
-    foreach ($form['items'][$element_id] as $option => $value) {
-      if ($value) {
-        $context->{$element_id}[] = $option;
+    if (is_array($form['items'][$element_id])) {
+      foreach ($form['items'][$element_id] as $option => $value) {
+        if ($value) {
+          $context->{$element_id}[] = $option;
+        }
       }
+    }
+    else if (isset($form['items'][$element_id])) {
+      $context->{$element_id}[] = $form['items'][$element_id];
     }
   }
   
