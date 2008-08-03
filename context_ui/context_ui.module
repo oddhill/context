@@ -315,7 +315,7 @@ function context_ui_form_alter($form_id, &$form) {
 
     $rows = array();
     while ($row = db_fetch_object($result)) {
-      $rows[] = array($row->space, $row->key, $row->value, $row->region, l(t('Edit visibility'), 'admin/build/context/edit/'. $row->cid), array(), 'context-ui-blocks');
+      $rows[] = array($row->space, $row->key, $row->value, $row->region, l(t('Edit visibility'), 'admin/build/context/edit/'. $row->cid, array(), null, 'context-ui-blocks'));
     }
     if ($rows) {
       $content = theme('table', array(t('Space'), t('Key'), t('Value'), t('Region'), ''), $rows);
