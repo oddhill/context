@@ -5,6 +5,8 @@
  * Implementation of hook_context_items()
  */
 function context_ui_contrib_context_items() {
+  $items = array();
+
   // Views
   if (module_exists('views')) {
     $items['views'] = array(
