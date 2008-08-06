@@ -46,8 +46,12 @@ function context_prefix_menu($may_cache) {
  * Checks for any valid context prefixes in request string and sets the context appropriately
  */
 function context_prefix_init() {
-  _context_prefix_init(CONTEXT_PREFIX_PATH, $types[CONTEXT_PREFIX_PATH]);
-  _context_prefix_init(CONTEXT_PREFIX_DOMAIN, $types[CONTEXT_PREFIX_DOMAIN]);
+  static $once;
+  if (!$once) {
+    _context_prefix_init(CONTEXT_PREFIX_PATH, $types[CONTEXT_PREFIX_PATH]);
+    _context_prefix_init(CONTEXT_PREFIX_DOMAIN, $types[CONTEXT_PREFIX_DOMAIN]);
+    $once = true;
+  }
 }
 
 /**
@@ -102,27 +106,16 @@ function context_prefix_url_rewrite($type, $path, $original) {
   $working_path = $path; // preserve original path
   $args = array();
 
-  if (module_exists('i18n')) {
-    if ($type == 'alias' && !i18n_get_lang_prefix($path)) {
-      $args [] = i18n_get_lang();
-    }
-    elseif ($type == 'source') {
-      if ($path == $original) {
-        $working_path = i18n_get_normal_path($working_path);
-      }
-      else { // Path may have been dealiased but still have language prefix
-        $working_path = i18n_get_lang_prefix($working_path, TRUE);
-      }
-    }
-  }
-
-  // by now i18n has added/removed language prefix as needed
+  // Check to see whether url rewriting has been disabled for this one
+  // instance -- currently only possible through cl()
   if (!clswitch('get')) {
+    // Retrieve the path prefixes for the current page that were
+    // "stripped out" and write them back into url paths.
     $active_path_prefixes = context_prefix_get(CONTEXT_PREFIX_PATH);
     if ($active_path_prefixes) {
       $parsed = context_prefix_parse(CONTEXT_PREFIX_PATH, $working_path);
       // A "normal" url was requested -- prefix the path
-      if ($type == 'alias' && !count($parsed) && count($active_path_prefixes)) {
+      if ($type == 'alias' && !strpos($path, '://') && !count($parsed) && count($active_path_prefixes)) {
         $args = $args + $active_path_prefixes;
       }
       // Source url was requested -- remove all prefixes
@@ -140,34 +133,35 @@ function context_prefix_url_rewrite($type, $path, $original) {
 }
 
 /**
- * Queries the database for valid prefixes based on prefixing method.
+ * Queries the database & modules for valid prefixes based on prefixing method.
  */
 function context_prefix_prefixes($method = CONTEXT_PREFIX_PATH) {
   static $prefixes;
   if (!isset($prefixes)) {
     $prefixes = array();
-  }
-  // Cache an array of all valid prefixes
-  if (!isset($prefixes[$method])) {
-    $prefixes[$method] = array();
 
-    // Gather list of valid path prefix providers
-    $providers = context_prefix_providers(true);
-    $providers_sql = array();
-    foreach ($providers[$method] as $id => $provider) {
-      $providers_sql[] = "'$id'";
-    }
-    $providers_sql = implode(',', $providers_sql);
-
-    // Query for all prefixes of the specified method
-    if ($providers_sql) {
-      $result = db_query("SELECT * FROM {context_prefix} WHERE provider IN ($providers_sql)");
-      while ($row = db_fetch_object($result)) {
-        $prefixes[$method][$row->prefix] = array(
-          'provider' => $row->provider,
-          'id' => $row->id,
-        );
+    // Invoke context_prefix_prefixes() and gather all prefixes
+    // provided "in code" (or stored by their respective modules)
+    foreach (module_invoke_all('context_prefix_prefixes') as $provider => $items) {
+      foreach ($items as $item) {
+        if ($item['prefix'] && $item['id']) {
+          $method = variable_get('context_prefix_method_'. $provider);
+          $prefixes[$method][$item['prefix']] = array(
+            'provider' => $provider,
+            'id' => $item['id'],
+          );
+        }
       }
+    }
+
+    // Gather all database prefixes
+    $result = db_query("SELECT * FROM {context_prefix}");
+    while ($row = db_fetch_object($result)) {
+      $method = variable_get('context_prefix_method_'. $row->provider);
+      $prefixes[$method][$row->prefix] = array(
+        'provider' => $row->provider,
+        'id' => $row->id,
+      );
     }
   }
   return $prefixes[$method];
@@ -213,10 +207,16 @@ function context_prefix_parse($method = CONTEXT_PREFIX_PATH, $q) {
 /**
  * Removes any prefixes from a query string. For path prefixes only.
  */
-function context_prefix_unprefix($q) {
+function context_prefix_unprefix($q, $providers = array()) {
   $parsed = context_prefix_parse(CONTEXT_PREFIX_PATH, $q);
+  if (is_array($providers)) {
+    foreach ($providers as $provider) {
+      unset($parsed[$provider]);
+    }
+  }
+  $parsed = array_keys($parsed);
   $args = explode('/', $q);
-  $args = array_diff($args, array_keys($parsed));
+  $args = array_diff($args, $parsed);
   return implode('/', $args);
 }
 
@@ -325,20 +325,40 @@ function context_prefix_get($type = CONTEXT_PREFIX_PATH) {
  * Page callback for the context_prefix administration page.
  */
 function context_prefix_admin() {
-  $result = pager_query("SELECT * FROM {context_prefix} ORDER BY provider, prefix", 20);
-  $rows = array();
+  global $pager_page_array, $pager_total, $pager_total_items;
+  $page = isset($_GET['page']) ? $_GET['page'] : 0;
+  $element = 0;
+  $limit = 20;
+
+  // Convert $page to an array, used by other functions.
+  $pager_page_array = array($page);
+
   $methods = array(
     CONTEXT_PREFIX_PATH => t('Path prefix'),
     CONTEXT_PREFIX_DOMAIN => t('Full domain'),
   );
-  while ($row = db_fetch_object($result)) {
+  $merged = array();
+  foreach(array_keys($methods) as $method) {
+    foreach(context_prefix_prefixes($method) as $prefix => $info) {
+      $info['prefix'] = $prefix;
+      $merged[] = $info;
+    }
+  }
+  $rows =array();
+  for ($i = $page * $limit; $i < ($page+1) * $limit && $i < count($merged); $i++) {
     $rows[] = array(
-      $row->provider,
-      $row->prefix,
-      $row->id,
-      $methods[variable_get('context_prefix_method_'. $row->prefix, CONTEXT_PREFIX_PATH)],
+      $merged[$i]['provider'],
+      $merged[$i]['prefix'],
+      $merged[$i]['id'],
+      $methods[variable_get('context_prefix_method_'. $merged[$i]['provider'], CONTEXT_PREFIX_PATH)],
     );
   }
+
+  // We calculate the total of pages as ceil(items / limit).
+  $pager_total_items[$element] = count($merged);
+  $pager_total[$element] = ceil($pager_total_items[$element] / $limit);
+  $pager_page_array[$element] = max(0, min((int)$pager_page_array[$element], ((int)$pager_total[$element]) - 1));
+
   if ($rows) {
     $output .= theme('table', array(t('Provider'), t('Prefix'), t('ID'), t('Method')), $rows);
     $output .= theme('pager');
