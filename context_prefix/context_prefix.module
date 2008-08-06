@@ -145,7 +145,7 @@ function context_prefix_prefixes($method = CONTEXT_PREFIX_PATH) {
     foreach (module_invoke_all('context_prefix_prefixes') as $provider => $items) {
       foreach ($items as $item) {
         if ($item['prefix'] && $item['id']) {
-          $method = variable_get('context_prefix_method_'. $provider);
+          $method = variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH);
           $prefixes[$method][$item['prefix']] = array(
             'provider' => $provider,
             'id' => $item['id'],
