@@ -519,6 +519,7 @@ function context_prefix_goto($provider, $prefix, $path = '', $query = NULL, $fra
    */
   switch (variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH)) {
     case CONTEXT_PREFIX_PATH:
+      clswitch('set', true); // Drop prefixing for context_prefix goto's
       drupal_goto($prefix .'/'. $path, $query, $fragment, $http_response_code);
       break;
     case CONTEXT_PREFIX_DOMAIN:
