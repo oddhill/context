@@ -164,7 +164,7 @@ function context_prefix_prefixes($method = CONTEXT_PREFIX_PATH) {
       );
     }
   }
-  return $prefixes[$method];
+  return isset($prefixes[$method]) ? $prefixes[$method] : array();
 }
 
 /**
