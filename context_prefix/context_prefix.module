@@ -209,9 +209,11 @@ function context_prefix_parse($method = CONTEXT_PREFIX_PATH, $q) {
  */
 function context_prefix_unprefix($q, $providers = array()) {
   $parsed = context_prefix_parse(CONTEXT_PREFIX_PATH, $q);
-  if (is_array($providers)) {
-    foreach ($providers as $provider) {
-      unset($parsed[$provider]);
+  if (is_array($providers) && count($providers)) {
+    foreach ($parsed as $prefix => $info) {
+      if (!in_array($info['provider'], $providers)) {
+        unset($parsed[$prefix]);
+      }
     }
   }
   $parsed = array_keys($parsed);
