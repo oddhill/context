@@ -384,12 +384,22 @@ function context_prefix_settings_form() {
   );
 
   foreach (context_prefix_providers() as $id => $provider) {
+    // Check to see whether provider has limited the available prefixing methods
+    if (is_array($provider['methods']) && count($provider['methods'])) {
+      $provider_options = array();
+      foreach ($provider['methods'] as $method) {
+        $provider_options[$method] = $options[$method];
+      }
+    }
+    else {
+      $provider_options = $options;
+    }
     $form['context_prefix_method_'. $id] = array(
       '#provider' => true,
       '#title' => $provider['name'],
       '#description' => $provider['description'],
       '#type' => 'select',
-      '#options' => $options,
+      '#options' => $provider_options,
       '#default_value' => variable_get('context_prefix_method_'. $id, CONTEXT_PREFIX_PATH),
     );
   }
