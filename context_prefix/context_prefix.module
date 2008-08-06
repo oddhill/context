@@ -157,7 +157,7 @@ function context_prefix_prefixes($method = CONTEXT_PREFIX_PATH) {
     // Gather all database prefixes
     $result = db_query("SELECT * FROM {context_prefix}");
     while ($row = db_fetch_object($result)) {
-      $method = variable_get('context_prefix_method_'. $row->provider);
+      $method = variable_get('context_prefix_method_'. $row->provider, CONTEXT_PREFIX_PATH);
       $prefixes[$method][$row->prefix] = array(
         'provider' => $row->provider,
         'id' => $row->id,
