@@ -3,7 +3,7 @@
 
 define('CONTEXT_GET', 0);
 define('CONTEXT_SET', 1);
-define('CONTEXT_EXISTS', 2);
+define('CONTEXT_ISSET', 2);
 define('CONTEXT_CLEAR', 3);
 
 /**
@@ -11,9 +11,9 @@ define('CONTEXT_CLEAR', 3);
  *
  * @param $op
  *   The operation to perform - handled by the context helper functions. Use them.
- * @param $space
+ * @param $namespace
  *   A string to be used as the namespace for the context information.
- * @param $key
+ * @param $attribute
  *   Usually a string to be used as a key to set/retrieve context information. An array can
  *   also be used when setting context to establish an entire context namespace at once.  
  *   (At some point objects may also be accepted, but currently functionaliy isn't complete.)
@@ -23,59 +23,59 @@ define('CONTEXT_CLEAR', 3);
  * @return
  *   Either the requested value, or false if the operation fails.
  */
-function context_context($op = CONTEXT_GET, $space = null, $key = null, $value = null) {
+function context_context($op = CONTEXT_GET, $namespace = null, $attribute = null, $value = null) {
   static $context;
   $context = !$context ? array() : $context;
   switch ($op) {
     case CONTEXT_GET:
       // return entire context
-      if (!$space) {
+      if (!$namespace) {
         return $context;
       }
       // return entire space if set
-      else if (!$key && isset($context[(string) $space])) {
-        return $context[(string) $space];
+      else if (!$attribute && isset($context[(string) $namespace])) {
+        return $context[(string) $namespace];
       }
       // return val of key from space
-      else if (is_array($context[(string) $space]) && isset($context[(string) $space][(string) $key])) {
-        return $context[(string) $space][(string) $key];
+      else if (is_array($context[(string) $namespace]) && isset($context[(string) $namespace][(string) $attribute])) {
+        return $context[(string) $namespace][(string) $attribute];
       }
       break;
     case CONTEXT_SET:
       // bail if invalid space is specified or context is already set
-      if (is_string($space) || is_int($space)) {
+      if (is_string($namespace) || is_int($namespace)) {
         // initialize namespace if no key is specified
-        if (!$key) {
-          $context[(string) $space] = array();
+        if (!$attribute) {
+          $context[(string) $namespace] = array();
           return true;
         }
         // set to true if key is a usable identifier. otherwise, allow a key or object to be inserted
         if (!$value) {
-          if (is_string($key) || is_int($key)) {
-            $context[(string) $space][(string) $key] = true;
+          if (is_string($attribute) || is_int($attribute)) {
+            $context[(string) $namespace][(string) $attribute] = true;
             return true;
           }
-          elseif (is_array($key) || is_object($key)) {
-            $context[(string) $space] = $key;
+          elseif (is_array($attribute) || is_object($attribute)) {
+            $context[(string) $namespace] = $attribute;
             return true;
           }
         }
         // set value if key is valid
-        if ((is_string($key) || is_int($key)) && $value) {
-          $context[$space][$key] = $value;
+        if ((is_string($attribute) || is_int($attribute)) && $value) {
+          $context[$namespace][$attribute] = $value;
           return true;
         }
       }
       break;
-    case CONTEXT_EXISTS:
+    case CONTEXT_ISSET:
       // return entire context
-      if (!$space) return false;
-      if (!$key) {
+      if (!$namespace) return false;
+      if (!$attribute) {
         // return entire space if set
-        return isset($context[$space]);
+        return isset($context[$namespace]);
       }
       // return val of key from space
-      return isset($context[$space][$key]);
+      return isset($context[$namespace][$attribute]);
     case CONTEXT_CLEAR:
       $context = array();
       return true;
@@ -84,24 +84,32 @@ function context_context($op = CONTEXT_GET, $space = null, $key = null, $value =
 }
 
 /**
- * Sets a context by space + key.
+ * Sets a context by namespace + attribute.
  */
-function context_set($space, $key = null, $value = null) {
-  return context_context(CONTEXT_SET, $space, $key, $value);
+function context_set($namespace, $attribute = null, $value = null) {
+  return context_context(CONTEXT_SET, $namespace, $attribute, $value);
 }
 
 /**
- * Retrieves a context by space + (optional) key
+ * Retrieves a context by namespace + (optional) attribute.
  */
-function context_get($space = null, $key = null) {
-  return context_context(CONTEXT_GET, $space, $key, null);
+function context_get($namespace = null, $attribute = null) {
+  return context_context(CONTEXT_GET, $namespace, $attribute, null);
 }
 
 /**
- * Returns a boolean for whether a context space + key have been set
+ * Returns a boolean for whether a context namespace + attribute have been set.
  */
-function context_exists($space = null, $key = null) {
-  return context_context(CONTEXT_EXISTS, $space, $key, null);
+function context_isset($namespace = null, $attribute = null) {
+  return context_context(CONTEXT_ISSET, $namespace, $attribute, null);
+}
+
+/**
+ * Deprecated context_exists() function. Retained for backwards
+ * compatibility -- please use context_isset() instead.
+ */
+function context_exists($namespace = null, $attribute = null) {
+  return context_context(CONTEXT_ISSET, $namespace, $attribute, null);
 }
 
 /**

@@ -35,11 +35,11 @@
 /**
  * Context admin listing page =========================================
  */
-table.context-ui span.context-space {
+table.context-ui span.context-namespace {
   font-weight:bold;
 }
 
-table.context-ui span.context-key {
+table.context-ui span.context-attribute {
   margin-left:2em;
 }
 

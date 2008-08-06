@@ -7,7 +7,7 @@ class ContextGetTest extends  DrupalTestCase {
    */
   function get_info() {
     return array(
-      'name' => t('context_get(), context_exists() unit tests'),
+      'name' => t('context_get(), context_isset() unit tests'),
       'desc' => t('Sets all possible context types and checks for integrity.') ,
       'group' => 'Context Tests'
     );
@@ -37,7 +37,7 @@ class ContextGetTest extends  DrupalTestCase {
         $this->assertIdentical(true, $set);      
         // test get integrity
         $this->assertIdentical(array(), context_get($val));
-        $this->assertIdentical(true, context_exists($val));
+        $this->assertIdentical(true, context_isset($val));
       }
       else {
         $this->assertIdentical(false, $set);
@@ -61,11 +61,11 @@ class ContextGetTest extends  DrupalTestCase {
           // test get + exists integrity
           if (in_array($type2, $id_types)) {
             $this->assertIdentical(true, (context_get($val, $val2) == $val2));
-            $this->assertIdentical(true, context_exists($val, $val2));
+            $this->assertIdentical(true, context_isset($val, $val2));
           }
           else if (in_array($type2, array('array', 'object'))) {
             $this->assertIdentical(true, (context_get($val) == $val2));
-            $this->assertIdentical(true, context_exists($val));
+            $this->assertIdentical(true, context_isset($val));
           }
         }
       }
@@ -80,7 +80,7 @@ class ContextGetTest extends  DrupalTestCase {
           if (in_array($type, $id_types)) {
             if(in_array($type2, $id_types)) {
               $this->assertIdentical(true, (context_get($val, $val2, $val3) == $val3));
-              $this->assertIdentical(true, context_exists($val, $val2, $val3));
+              $this->assertIdentical(true, context_isset($val, $val2, $val3));
             }
           }
           context_clear();
