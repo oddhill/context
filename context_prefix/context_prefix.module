@@ -552,7 +552,9 @@ function cl($text, $path, $attributes = array(), $query = NULL, $fragment = NULL
     if ($path == '<front>') {
       $path = variable_get('site_frontpage', 'node');
     }
-    $path = variable_get('context_prefix_base_domain', '') . '/' . $path; // REPLACE BASE_URL with the hub domain.
+    if ($domain = variable_get('context_prefix_base_domain', '')) {
+      $path = $domain .'/'. $path; // REPLACE BASE_URL with the hub domain.
+    }
   }
   $l = l($text, $path, $attributes, $query, $fragment, $absolute, $html);
   clswitch('reset');
