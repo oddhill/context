@@ -519,9 +519,13 @@ function context_ui_rebuild() {
   foreach ($default_contexts as $c) {
     // Check that the context definition is reasonable
     if (!empty($c->namespace) && !empty($c->attribute)) {
-      // flag this context's type + status
-      $c->system = 1;
-      $c->status = isset($ui[$c->namespace][$c->attribute][$c->value]) ? 0 : 1;
+      // Check that the providing module has not explicitly set system + status
+      // If it has, we trust that the module knows what it is doing. Otherwise,
+      // flag this context's type + status.
+      if (!isset($c->system) && !isset($c->status)) {
+        $c->system = 1;
+        $c->status = isset($ui[$c->namespace][$c->attribute][$c->value]) ? 0 : 1;
+      }
 
       if ($context = context_ui_context('load', $c)) {
         $c->cid = $context->cid;
