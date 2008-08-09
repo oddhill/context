@@ -68,6 +68,7 @@ function context_ui_context_items() {
     // grab menu cache
     global $_menu;
     $menus = array();
+    $errors = array();
     // build options using root menus
     foreach (array_reverse(menu_get_root_menus(), true) as $root_mid => $root_menu) {
       // build menu options from children of each root menu
@@ -75,8 +76,17 @@ function context_ui_context_items() {
       $options = menu_parent_options(0, $root_mid, 0);
       unset($options[key($options)]);
       foreach ($options as $mid => $title) {
-        $path = $_menu['items'][$mid]['path'];
-        $menu[$path] = $title;
+        $item = menu_get_item($mid);
+        $path = $item['path'];
+        // If path is unique, enter into options
+        if (!isset($menu[$path])) {
+          $menu[$path] = $title;
+        }
+        // If duplicate, add to error erray
+        else {
+          $errors[] = t('!item at !path', array('!item' => str_replace('-', '', $menu[$path]), '!path' => $path));
+          $errors[] = t('!item at !path', array('!item' => str_replace('-', '', $title), '!path' => $path));
+        }
       }
       $path = $_menu['items'][$root_mid]['path'];
       $menus[$root_mid] = "<strong>". $root_menu ."</strong>";
@@ -84,11 +94,15 @@ function context_ui_context_items() {
     }
     $items['menu'] = array(
       '#title' => t('Menus'),
-      '#description' => t('Display the selected menu items as active when this context is set.'),
+      '#description' => t('Display the selected menu item as active when this context is set.'),
       '#options' => $menus,
       '#type' => 'radios',
       '#context_ui' => 'getter',
     );
+    if (count($errors)) {
+      $items['menu']['#description'] .= '<p>'. t('<strong>Note:</strong> context_ui will not work properly with menu items that share the same path. You can work around this issue by pointing custom menu items at !alias. The following duplicates were found:', array('!alias' => l(t('path aliases'), 'admin/build/path'))) .'</p>';
+      $items['menu']['#description'] .= theme('item_list', $errors);
+    }
   }
 
   // User
