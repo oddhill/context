@@ -603,7 +603,7 @@ function context_ui_block_list($region) {
         if ($enabled && $page_match && $throttle) {
           // Invoke hook_block('view');
           $array = module_invoke($block->module, 'block', 'view', $block->delta);
-          if (isset($array) && is_array($array) && $array['content']) {
+          if (isset($array) && is_array($array) && $array['content'] && !empty($array['content'])) {
             foreach ($array as $k => $v) {
               $block->$k = $v;
             }
