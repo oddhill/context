@@ -287,7 +287,7 @@ function theme_context_ui_form($form) {
       drupal_render($form['value']),
     ),
   );
-  $output .= theme('table', $header, $rows, array('class' => 'hidden context-ui-3col'));
+  $output .= theme('table', $header, $rows, array('class' => 'context-ui-3col'));
 
   // Render setters / getters as a two column split
   $header = array(t('Set context'), t('Respond to context'));
