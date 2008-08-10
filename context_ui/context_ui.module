@@ -276,7 +276,7 @@ function context_ui_form_alter($form_id, &$form) {
       $rows[] = array($row->namespace, $row->attribute, $row->value, $row->region, l(t('Edit visibility'), 'admin/build/context/edit/'. $row->cid, array(), null, 'context-ui-blocks'));
     }
     if ($rows) {
-      $content = theme('table', array(t('Space'), t('Key'), t('Value'), t('Region'), ''), $rows);
+      $content = theme('table', array(t('Namespace'), t('Attribute'), t('Value'), t('Region'), ''), $rows);
     }
     else {
       $content = "<p>". t('No visibility rules have been set for this block using context_ui.') ."</p>";
@@ -322,7 +322,7 @@ function context_ui_defaults($namespace = null) {
     $contexts = array();
     foreach (module_implements('context_define') as $module) {
       $function = $module .'_context_define';
-      $contexts = array_merge($contexts, $function());      
+      $contexts = array_merge($contexts, $function());
     }
     foreach ($contexts as $key => $context) {
       $context = (object) $context;
@@ -385,24 +385,22 @@ function context_ui_set($type, $id) {
     JOIN {context_ui} c ON ci.cid = c.cid
     WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = 1",
     array_merge(array($type), $id));
-  if (db_num_rows($result) > 0) {
-    while ($context = db_fetch_object($result)) {
-      // If this context already has a value, don't alter it.
-      if (!context_exists($context->namespace, $context->attribute)) {
-        context_set($context->namespace, $context->attribute, $context->value);
+  while ($context = db_fetch_object($result)) {
+    // If this context already has a value, don't alter it.
+    if (!context_isset($context->namespace, $context->attribute)) {
+      context_set($context->namespace, $context->attribute, $context->value);
 
-        // Allow getters to respond to the set context
-        $context = context_ui_context('load', $context);
-        module_invoke_all('context_getter', $context);
+      // Allow getters to respond to the set context
+      $context = context_ui_context('load', $context);
+      module_invoke_all('context_getter', $context);
 
-        // Store the cid of set contexts. Other parts of the stack may be interested.
-        $cid = context_get('context_ui', 'cid');
-        $cid = $cid ? $cid : array();
-        $cid[] = $context->cid;
-        context_set('context_ui', 'cid', $cid);
-      }
+      // Store the cid of set contexts. Other parts of the stack may be interested.
+      $cid = context_get('context_ui', 'cid');
+      $cid = $cid ? $cid : array();
+      $cid[] = $context->cid;
+      context_set('context_ui', 'cid', $cid);
+      $set = true;
     }
-    $set = true;
   }
   return $set;
 }
@@ -432,6 +430,7 @@ function theme_context_devel($context) {
  * Helper function to theme_context_devel that recurses down context arrays and themes accordingly.
  */
 function theme_context_devel_recurse($value) {
+  $output = '';
   if (is_array($value) || is_object($value)) {
     if (is_array($value)) {
       $type = 'array';
@@ -549,14 +548,12 @@ function phptemplate_blocks($region) {
 function context_ui_block_list($region) {
   global $user, $theme_key;
 
-  static $blocks, $cids;
+  static $cids = array();
+  static $blocks = array();
 
   $defaults = array();
 
   if (!count($blocks)) {
-    $blocks = array();
-    $cids = array();
-
     // generate list of active DB contexts
     // formerly an API function -- TODO: evaluate whether this may be useful otherwise
     $result = db_query("SELECT * FROM {context_ui} WHERE status = 1", 'context_ui');
@@ -695,13 +692,10 @@ function _context_ui_block_compare($a, $b) {
 function context_ui_context($op, $context) {
   switch ($op) {
     case 'load':
-      static $cache;
-      if (!$cache) {
-        $cache = array();
-      }
+      static $cache = array();
       // Argument is a cid
       if (is_numeric($context)) {
-        if (!$cache[$context]) {
+        if (!isset($cache[$context])) {
           $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE cid = %d", $context));
         }
         else {
@@ -709,7 +703,7 @@ function context_ui_context($op, $context) {
         }
       }
       // Context object has an associated cid
-      else if (is_object($context) && $context->cid) {
+      else if (is_object($context) && isset($context->cid)) {
         if (!$cache[$context->cid]) {
           $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE cid = %d", $context->cid));
         }
@@ -724,11 +718,13 @@ function context_ui_context($op, $context) {
           $context->attribute,
           $context->value,
         );
-        if ($context->system) {
+        $system = '';
+        $status = '';
+        if (isset($context->system)) {
           $args[] = $context->system;
           $system = "AND system = '%s'";
         }
-        if ($context->status) {
+        if (isset($context->status)) {
           $args[] = $context->status;
           $status = "AND status = %d";
         }
@@ -811,16 +807,17 @@ function context_ui_item($op = 'load', $context) {
     switch ($op) {
       case 'load':
         $result = db_query("SELECT * FROM {context_ui_item} WHERE cid = %d", $context->cid);
-        while ($page = db_fetch_object($result)) {
-          $context->{$page->type}[$page->id] = $page->id;
+        while ($row = db_fetch_object($result)) {
+          $context->{$row->type}[$row->id] = $row->id;
         }
         return $context;
       case 'save':
-        $current = (object) array('cid' => $context->cid);
+        $current = new stdClass();
+        $current->cid = $context->cid;
         $current = context_ui_item('load', $current);
         foreach (context_ui_types() as $type) {
           // Delete any stale associations
-          if (is_array($current->{$type})) {
+          if (isset($current->{$type}) && is_array($current->{$type})) {
             foreach ($current->{$type} as $id) {
               $delete = false;
               if (!is_array($context->{$type})) {
@@ -835,10 +832,10 @@ function context_ui_item($op = 'load', $context) {
             }
           }
           // Add/update any missing associations
-          if (is_array($context->{$type})) {
+          if (isset($context->{$type}) && is_array($context->{$type})) {
             foreach ($context->{$type} as $id) {
               $update = false;
-              if (!is_array($current->{$type})) {
+              if (!(isset($current->{$type}) && is_array($current->{$type}))) {
                 $update = true;
               }
               else if (array_search($id, $current->{$type}) === false) {

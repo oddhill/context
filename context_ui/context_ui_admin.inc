@@ -84,7 +84,10 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
   }
 
   // Core context definition
-  $form = array('#base' => 'context_ui_form');
+  $form = array(
+		'#base' => 'context_ui_form',
+		'#theme' => 'context_ui_form',
+	);
 
   $form['value'] =
   $form['attribute'] =
@@ -95,7 +98,7 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
     '#size' => 20,
   );
 
-  $form['value']['#title'] =  t('Value');
+  $form['value']['#title'] = t('Value');
   $form['value']['#description'] = t('A system name for this context. May only contain lowercase letters, underscores, and numbers. Example: <b>science_blog</b>');
 
   $form['attribute']['#title'] = t('Attribute');
@@ -127,7 +130,7 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
   // $blocks in [0] have not been assigned a region
   foreach ($blocks[0] as $block) {
     if (!isset($context->block[$block->bid])) {
-      $block_options[$block->module][$block->bid] = $block->label . " ($block->bid)";
+      $block_options[$block->module][$block->bid] = $block->label ." ($block->bid)";
     }
   }
   ksort($block_options);
@@ -189,21 +192,21 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
   }
 
   if ($op == 'view') {
-    $form[] = array(
+    $form['back'] = array(
       '#type' => 'item',
       '#value' => l(t('Back'), 'admin/build/context'),
     );
   }
 
   if ($op != 'view') {
-    $form[] = array(
+    $form['submit'] = array(
       '#type' => 'submit',
       '#value' => t('Save'),
     );
   }
 
   if ($op == 'edit') {
-    $form[] = array(
+    $form['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete'),
     );
@@ -248,7 +251,7 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
       // Blocks must be selected by region
       if (is_array($context->block)) {
         foreach ($regions as $region => $label) {
-          if (is_array($form['block'][$region])) {
+          if (isset($form['block'][$region]) && is_array($form['block'][$region])) {
             $defaults = array();
             foreach ($form['block'][$region]['#options'] as $block => $label) {
               if (array_search($block, $context->block) !== false) {
@@ -354,7 +357,7 @@ function context_ui_delete_confirm_submit($form_id, $form) {
  * if import submission has occurred.
  */
 function context_ui_import_page() {
-  if ($_POST['form_id'] == 'context_ui_form') {
+  if (!empty($_POST) && $_POST['form_id'] == 'context_ui_form') {
     return drupal_get_form('context_ui_form', 'add');
   }
   return drupal_get_form('context_ui_import');
@@ -477,7 +480,7 @@ function context_ui_tree($op = '') {
   if (!$tree) {
     $tree = array(
       'system' => array(),
-      'ui' => array(),      
+      'ui' => array(),
     );
     $result = db_query("
       SELECT *
@@ -608,14 +611,16 @@ function theme_context_ui_admin($context_tree) {
  * Generates the AJAX enabled block administration portion of the context_ui admin form.
  */
 function theme_context_ui_block_ui($regions, $context = null) {
+  $output = '';
+
   $tools = "<div class='tools'><span class='up'></span><span class='down'></span><span class='remove'></span></div>";
   foreach ($regions as $region => $label) {
-    $items = array();    
+    $items = array();
 
     $system = _context_ui_get_blocks($region);
     $system_item = array();
     foreach ($system as $block) {
-      $system_item[] = $block->label ." ($block->bid)";      
+      $system_item[] = $block->label ." ($block->bid)";
     }
     $system_item = implode("<br/>", $system_item);
 
@@ -657,7 +662,7 @@ function theme_context_ui_block_ui($regions, $context = null) {
       $items[] = array(
         'data' => '',
         'class' => 'dummy',
-      );      
+      );
     }
     $output .= theme('item_list', $items, $label, 'ul', array('class' => $region));
   }
@@ -675,7 +680,7 @@ function context_ui_form_validate($form_id, $form_values) {
         form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
       }
     }
-    if (!$form_values['cid']) {      
+    if (!isset($form_state['values']['cid'])) {
       // Check that no other user-defined context definition has taken this identifier already
       $context = new StdClass();
       $context->namespace = $form_values['namespace'];
@@ -739,9 +744,9 @@ function context_ui_form_process($form) {
           $block = $valid[$bid];
           $modifier = $position < $midpoint ? -10 : 10;
           $block->weight = $position - $midpoint + $modifier;
-          $block->region = $region;        
+          $block->region = $region;
           $block->type = 'context_ui';
-          $context->block[$block->bid] = $block;  
+          $context->block[$block->bid] = $block;
         }
       }
     }
@@ -804,14 +809,14 @@ function _context_ui_get_blocks($region = null, $context = null) {
   if (!$system_blocks) {
     // initialize regions
     foreach (system_region_list($theme_key) as $r => $l) {
-      $system_blocks[$r] = array();      
+      $system_blocks[$r] = array();
     }
     // load blocks from database
     $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s' ORDER BY weight, module, delta", $theme_key);
     while ($block = db_fetch_object($result)) {
       // load block info
-      $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
-      $block->label = $block_info[$block->module][$block->delta]['info'];  
+      $block_info[$block->module] = isset($block_info[$block->module]) ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
+      $block->label = $block_info[$block->module][$block->delta]['info'];
       $block->type = 'system';
       $block->bid = $block->module .'_'. $block->delta;
       // add block to region
@@ -824,11 +829,11 @@ function _context_ui_get_blocks($region = null, $context = null) {
       // mark block as available in DB
       $valid[$block->module ."_". $block->delta] = true;
     }
-  }  
+  }
 
-  // load system blocks into main block array  
+  // load system blocks into main block array
   $blocks = $system_blocks;
-  
+
   // load context blocks if provided
   if (is_object($context) && is_array($context->block)) {
     // iterate over context-associated blocks
@@ -840,7 +845,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
         if (!$region || (isset($region) && $block->region == $region)) {
           // load block info
           $block_info[$block->module] = $block_info[$block->module] ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
-          $block->label = $block_info[$block->module][$block->delta]['info'];  
+          $block->label = $block_info[$block->module][$block->delta]['info'];
           $block->type = 'context_ui';
           $block->bid = $block->module .'_'. $block->delta;
           // add block to region
@@ -849,12 +854,12 @@ function _context_ui_get_blocks($region = null, $context = null) {
           }
           else {
             $blocks[0][$block->bid] = $block;
-          }        
+          }
         }
       }
     }
   }
-  
+
   foreach ($blocks as $r => $sort_region) {
     if ($r !== 0) {
       uasort($sort_region, "_context_ui_block_compare");
