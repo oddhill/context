@@ -1,12 +1,12 @@
 <?php
 // $Id$
 
-define(CONTEXT_PREFIX_PATH, 0);
-define(CONTEXT_PREFIX_SUBDOMAIN, 1);
-define(CONTEXT_PREFIX_DOMAIN, 2);
+define('CONTEXT_PREFIX_PATH', 0);
+define('CONTEXT_PREFIX_SUBDOMAIN', 1);
+define('CONTEXT_PREFIX_DOMAIN', 2);
 
 /**
- * Implementation of hook_menu()
+ * Implementation of hook_menu().
  */
 function context_prefix_menu($may_cache) {
   $items = array();
