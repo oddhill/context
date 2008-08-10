@@ -1,0 +1,163 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_install().
+ */
+function context_ui_install() {
+  drupal_install_schema('context_ui');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function context_ui_uninstall() {
+  drupal_uninstall_schema('context_ui');
+}
+/**
+ * Implementation of hook_schema().
+ */
+function context_ui_schema() {
+  $schema['context_ui'] = array(
+    'description' => t('context_ui.'),
+    'fields' => array(
+      'cid' => array(
+        'description' => t('The primary identifier for a context.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'system' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'status' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'namespace' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'attribute' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'value' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'unique keys' => array(
+      'key1' => array('system', 'namespace', 'attribute', 'value'),
+    ),
+    'primary key' => array('cid'),
+  );
+
+  $schema['context_ui_item'] = array(
+    'description' => t('context_ui_item.'),
+    'fields' => array(
+      'type' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'id' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'cid' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'unique keys' => array(
+      'key1' => array('id', 'type', 'cid'),
+    ),
+    /* 'primary key' => array(''), */
+  );
+
+  $schema['context_ui_block'] = array(
+    'description' => t('context_ui_block.'),
+    'fields' => array(
+      'module' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'delta' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'region' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'weight' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'cid' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'unique keys' => array(
+      'key1' => array('module', 'delta', 'region', 'cid'),
+    ),
+    /* 'primary key' => array(''), */
+  );
+
+  return $schema;
+}
+
+function context_ui_update_1() {
+  $ret = array();
+  switch ($GLOBALS['db_type']) {
+    case 'mysql':
+    case 'mysqli':
+      $ret[] = update_sql("ALTER TABLE {context_ui} CHANGE COLUMN space namespace VARCHAR(64) NOT NULL");
+      $ret[] = update_sql("ALTER TABLE {context_ui} CHANGE COLUMN ckey attribute VARCHAR(64) NOT NULL");
+      break;
+  }
+  return $ret;
+}
