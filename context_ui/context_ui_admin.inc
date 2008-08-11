@@ -680,7 +680,7 @@ function context_ui_form_validate($form_id, $form_values) {
         form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
       }
     }
-    if (!isset($form_state['values']['cid'])) {
+    if (!isset($form_values['cid'])) {
       // Check that no other user-defined context definition has taken this identifier already
       $context = new StdClass();
       $context->namespace = $form_values['namespace'];
