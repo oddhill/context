@@ -615,9 +615,9 @@ function context_ui_block_list($region) {
       }
     }
     // Custom sort since SQL order by won't give it to us for free
-    foreach ($blocks as $region => $region_blocks) {
+    foreach ($blocks as $key => $region_blocks) {
       uasort($region_blocks, '_context_ui_block_compare');
-      $blocks[$region] = $region_blocks;
+      $blocks[$key] = $region_blocks;
     }
   }
   // Create an empty array if there were no entries
