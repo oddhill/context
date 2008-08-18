@@ -1,0 +1,91 @@
+<?php
+// $Id$
+
+function context_prefix_install() {
+  drupal_install_schema('context_prefix');
+  db_query("UPDATE {system} SET weight = -20 WHERE name = 'context_prefix'");
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function context_prefix_uninstall() {
+  drupal_uninstall_schema('context_prefix');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function context_prefix_schema() {
+  $schema['context_prefix'] = array(
+    'description' => t('context_prefix.'),
+    'fields' => array(
+      'prefix' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'provider' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'id' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'primary key' => array('prefix'),
+  );
+  
+  return $schema;
+}
+
+function context_prefix_update_1() {
+  $items = array();
+  $items[] = update_sql("UPDATE {system} SET weight = -20 WHERE name = 'context_prefix'");
+  return $items;
+}
+
+function context_prefix_update_2() {
+  $items = array();
+  $items[] = update_sql("CREATE TABLE {context_prefix} (space VARCHAR(255) NOT NULL, path VARCHAR(255) NOT NULL, id INT(10) NOT NULL, PRIMARY KEY (path))");
+  $paths = variable_get('context_paths', array());
+  if ($paths) {
+    foreach ($paths as $space => $p) {
+      foreach ($p as $path => $nid) {
+        db_query("REPLACE INTO {context_prefix} (space, path, id) VALUES('%s', '%s', %d)", $space, $path, $nid);
+      }
+    }
+    variable_del('context_paths');
+  }
+  return $items;
+}
+
+function context_prefix_update_3() {
+  $items = array();
+  $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN space space VARCHAR(255) NOT NULL;");
+  $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN path path VARCHAR(255) NOT NULL;");
+  $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN id id VARCHAR(255) NOT NULL;");
+  return $items;
+}
+
+function context_prefix_update_4() {
+  $items = array();
+  $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN space module VARCHAR(255) NOT NULL;");
+  $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN path prefix VARCHAR(255) NOT NULL;");
+  return $items;
+}
+
+function context_prefix_update_5() {
+  $items = array();
+  $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN module provider VARCHAR(255) NOT NULL;");
+  return $items;
+}
