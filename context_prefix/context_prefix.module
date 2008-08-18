@@ -1,0 +1,667 @@
+<?php
+// $Id$
+
+define('CONTEXT_PREFIX_PATH', 0);
+define('CONTEXT_PREFIX_SUBDOMAIN', 1);
+define('CONTEXT_PREFIX_DOMAIN', 2);
+
+/**
+ * Implementation of hook_theme().
+ */
+function context_prefix_theme($existing, $type, $theme, $path) {
+  return array(
+    'context_prefix_settings_form' => array(
+      'arguments' => array('form' => NULL),
+    ),
+    'context_links' => array(
+      'arguments' => array('links' => NULL, 'attributes' => array('class' => 'links')),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function context_prefix_menu() {
+  $items = array();
+  $items['admin/build/context/prefix'] = array(
+    'type' => module_exists('context_ui') ? MENU_LOCAL_TASK : MENU_NORMAL_ITEM,
+    'title' => t('Context prefix'),
+    'description' => t('Settings for context prefix.'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_prefix_settings_form'),
+    'access callback' => 'user_access',
+    'access argumnets' => array('administer site configuration'),
+    'weight' => 10,
+  );
+  $items['admin/build/context/prefix/settings'] = array(
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'title' => t('Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_prefix_settings_form'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'weight' => 0,
+  );
+  $items['admin/build/context/prefix/list'] = array(
+    'type' => MENU_LOCAL_TASK,
+    'title' => t('Registered prefixes'),
+    'page callback' => 'context_prefix_admin',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'weight' => 10,
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_init()
+ * Checks for any valid context prefixes in request string and sets the context appropriately
+ */
+function context_prefix_init() {
+  static $once;
+  if (!$once) {
+    _context_prefix_init(CONTEXT_PREFIX_PATH, $types[CONTEXT_PREFIX_PATH]);
+    _context_prefix_init(CONTEXT_PREFIX_DOMAIN, $types[CONTEXT_PREFIX_DOMAIN]);
+    $once = true;
+  }
+}
+
+/**
+ * Helper function to initialize, parse + set prefixed contexts.
+ */
+function _context_prefix_init($method = CONTEXT_PREFIX_PATH) {
+  switch ($method) {
+    case CONTEXT_PREFIX_PATH:
+      $q = isset($_REQUEST["q"]) ? trim($_REQUEST["q"], "/") : '';
+      $parsed = context_prefix_parse(CONTEXT_PREFIX_PATH, $q);
+      // if $_GET and $_REQUEST are different, the path has NOT been
+      // aliased. We may need to rewrite the path.
+      if ($_GET['q'] == $_REQUEST['q']) {
+        $q = context_prefix_unprefix($q);
+        // there is nothing beyond the path prefix -- treat as frontpage
+        if ($q == '') {
+          $_GET['q'] = variable_get('site_frontpage', 'node');
+        }
+        // pass the rest of the path onto Drupal cleanly
+        else {
+          $_REQUEST['q'] = $_GET['q'] = _context_prefix_get_normal_path($q);
+        }
+      }
+      break;
+    case CONTEXT_PREFIX_DOMAIN:
+      $host = $_SERVER['HTTP_HOST'];
+      // We handle sub.domain.com, and nothing more (no sub1.sub2.domain.com).
+      $q = str_replace('http://','',$host);
+      $parsed = context_prefix_parse(CONTEXT_PREFIX_DOMAIN, $q);
+      break;
+  }
+  if (is_array($parsed)) {
+    foreach ($parsed as $prefix => $info) {
+      context_prefix_set($method, $prefix, $info);
+    }
+  }
+}
+
+/**
+ * Jose's very smart collision avoidance
+ */
+if (!function_exists('custom_url_rewrite_outbound')) {
+  function custom_url_rewrite_outbound(&$path, &$options, $original) {
+    return context_prefix_url_rewrite($path, $options, $original);
+  }
+}
+
+/**
+ * Rewrites path with current context and removes context if searching for source path
+ */
+function context_prefix_url_rewrite(&$path, &$options, $original) {
+  $working_path = $path; // preserve original path
+  $args = array();
+
+  // Check to see whether url rewriting has been disabled for this one
+  // instance -- currently only possible through cl()
+  if (!clswitch('get')) {
+    // Retrieve the path prefixes for the current page that were
+    // "stripped out" and write them back into url paths.
+    $active_path_prefixes = context_prefix_get(CONTEXT_PREFIX_PATH);
+    if ($active_path_prefixes) {
+      $parsed = context_prefix_parse(CONTEXT_PREFIX_PATH, $working_path);
+      // A "normal" url was requested -- prefix the path
+      if (!$options['alias'] && !strpos($path, '://') && !count($parsed) && count($active_path_prefixes)) {
+        $args = $args + $active_path_prefixes;
+      }
+    }
+  }
+
+  if ($working_path) {
+    $args[] = $working_path;
+  }
+
+  $path = is_array($args) ? implode('/', $args) : '';
+}
+
+/**
+ * Queries the database & modules for valid prefixes based on prefixing method.
+ */
+function context_prefix_prefixes($method = CONTEXT_PREFIX_PATH) {
+  static $prefixes;
+  if (!isset($prefixes)) {
+    $prefixes = array();
+
+    // Invoke context_prefix_prefixes() and gather all prefixes
+    // provided "in code" (or stored by their respective modules)
+    foreach (module_invoke_all('context_prefix_prefixes') as $provider => $items) {
+      foreach ($items as $item) {
+        if ($item['prefix'] && $item['id']) {
+          $method = variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH);
+          $prefixes[$method][$item['prefix']] = array(
+            'provider' => $provider,
+            'id' => $item['id'],
+          );
+        }
+      }
+    }
+
+    // Gather all database prefixes
+    $result = db_query("SELECT * FROM {context_prefix}");
+    while ($row = db_fetch_object($result)) {
+      $method = variable_get('context_prefix_method_'. $row->provider, CONTEXT_PREFIX_PATH);
+      $prefixes[$method][$row->prefix] = array(
+        'provider' => $row->provider,
+        'id' => $row->id,
+      );
+    }
+  }
+  return isset($prefixes[$method]) ? $prefixes[$method] : array();
+}
+
+/**
+ * Parses a query string of various types (url, domain, etc.) and
+ * returns an array of any found prefixes and their respective
+ * providers/id values.
+ */
+function context_prefix_parse($method = CONTEXT_PREFIX_PATH, $q) {
+  static $cache;
+  if (!isset($cache)) {
+    $cache = array(
+      CONTEXT_PREFIX_PATH => array(),
+      CONTEXT_PREFIX_DOMAIN => array(),
+    );
+  }
+  if (!isset($cache[$method][$q])) {
+    $valid_prefixes = context_prefix_prefixes($method);
+    // Parse the provided query string and provide an array of any prefixes found
+    switch ($method) {
+      case CONTEXT_PREFIX_PATH:
+        $parsed = array();
+        $args = explode('/', $q);
+        $arg = $args[0];
+        while ($valid_prefixes[$arg]) {
+          $parsed[$arg] = $valid_prefixes[$arg];
+          array_shift($args);
+          $arg = $args[0];
+          if (in_array($arg, $parsed)) {
+            break;
+          }
+        }
+        $cache[$method][$q] = $parsed;
+        break;
+      case CONTEXT_PREFIX_DOMAIN:
+        $parsed = array();
+        if ($valid_prefixes[$q]) {
+          $parsed[$q] = $valid_prefixes[$q];
+        }
+        $cache[$method][$q] = $parsed;
+        break;
+    }
+  }
+  return $cache[$method][$q];
+}
+
+/**
+ * Removes any prefixes from a query string. For path prefixes only.
+ */
+function context_prefix_unprefix($q, $providers = array()) {
+  $parsed = context_prefix_parse(CONTEXT_PREFIX_PATH, $q);
+  if (is_array($providers) && count($providers)) {
+    foreach ($parsed as $prefix => $info) {
+      if (!in_array($info['provider'], $providers)) {
+        unset($parsed[$prefix]);
+      }
+    }
+  }
+  $parsed = array_keys($parsed);
+  $args = explode('/', $q);
+  $args = array_diff($args, $parsed);
+  return implode('/', $args);
+}
+
+/**
+ * Invokes hook_context_prefix_provider() to gather all providers.
+ */
+function context_prefix_providers($by_method = FALSE) {
+  static $providers;
+  if (!is_array($providers)) {
+    $providers = array();
+    $providers = module_invoke_all('context_prefix_provider');
+  }
+  if ($by_method) {
+    static $methods;
+    if (!is_array($methods)) {
+      $methods = array(
+        CONTEXT_PREFIX_PATH => array(),
+        CONTEXT_PREFIX_SUBDOMAIN => array(),
+        CONTEXT_PREFIX_DOMAIN => array(),
+      );
+      foreach ($providers AS $id => $provider) {
+        $methods[variable_get('context_prefix_method_'. $id, CONTEXT_PREFIX_PATH)][$id] = $provider;
+      }
+    }
+    return $methods;
+  }
+  else {
+    return $providers;
+  }
+}
+
+/**
+ * Taken from i18n
+ */
+function _context_prefix_get_normal_path($path) {
+  // If bootstrap, drupal_lookup_path is not defined
+  if (!function_exists('drupal_get_headers')) {
+    return $path;
+  }
+  // Check alias without lang
+  elseif ($alias = drupal_lookup_path('source', $path)) {
+    return $alias;
+  }
+  else {
+    return $path;
+  }
+}
+
+/**
+ * Static cache function for setting + storing any prefixed contexts
+ * that are present on this page's request.
+ */
+function _context_prefix_set($op = 'set', $type = CONTEXT_PREFIX_PATH, $prefix = '', $info = array()) {
+  static $used;
+  if (!$used) {
+    $used = array(
+      CONTEXT_PREFIX_PATH => array(),
+      CONTEXT_PREFIX_SUBDOMAIN => array(),
+      CONTEXT_PREFIX_DOMAIN => array(),
+    );
+  }
+  switch ($op) {
+    case 'set':
+      // Store prefix for url rewriting later on in the stack
+      $used[$type][] = $prefix;
+
+      // Fire the provider callback
+      if ($info['provider'] && $info['id']) {
+        // Fire the provider callback
+        $providers = context_prefix_providers();
+        $callback = $providers[$info['provider']]['callback'];
+        if (function_exists($callback)) {
+          $callback($info['id']);
+        }
+      }
+      break;
+    case 'get':
+      if ($type === 'all') {
+        return $used;
+      }
+      else {
+        return $used[$type];
+      }
+  }
+}
+
+/**
+ * Set wrapper for _context_prefix_set()
+ */
+function context_prefix_set($type = CONTEXT_PREFIX_PATH, $prefix = '', $info = array()) {
+  return _context_prefix_set('set', $type, $prefix, $info);
+}
+
+/**
+ * Get wrapper for _context_prefix_set()
+ */
+function context_prefix_get($type = CONTEXT_PREFIX_PATH) {
+  return _context_prefix_set('get', $type);
+}
+
+/**
+ * PAGE CALLBACKS =====================================================
+ */
+
+/**
+ * Page callback for the context_prefix administration page.
+ */
+function context_prefix_admin() {
+  global $pager_page_array, $pager_total, $pager_total_items;
+  $page = isset($_GET['page']) ? $_GET['page'] : 0;
+  $element = 0;
+  $limit = 20;
+
+  // Convert $page to an array, used by other functions.
+  $pager_page_array = array($page);
+
+  $methods = array(
+    CONTEXT_PREFIX_PATH => t('Path prefix'),
+    CONTEXT_PREFIX_DOMAIN => t('Full domain'),
+  );
+  $merged = array();
+  foreach(array_keys($methods) as $method) {
+    foreach(context_prefix_prefixes($method) as $prefix => $info) {
+      $info['prefix'] = $prefix;
+      $merged[] = $info;
+    }
+  }
+  $rows =array();
+  for ($i = $page * $limit; $i < ($page+1) * $limit && $i < count($merged); $i++) {
+    $rows[] = array(
+      $merged[$i]['provider'],
+      $merged[$i]['prefix'],
+      $merged[$i]['id'],
+      $methods[variable_get('context_prefix_method_'. $merged[$i]['provider'], CONTEXT_PREFIX_PATH)],
+    );
+  }
+
+  // We calculate the total of pages as ceil(items / limit).
+  $pager_total_items[$element] = count($merged);
+  $pager_total[$element] = ceil($pager_total_items[$element] / $limit);
+  $pager_page_array[$element] = max(0, min((int)$pager_page_array[$element], ((int)$pager_total[$element]) - 1));
+
+  if ($rows) {
+    $output .= theme('table', array(t('Provider'), t('Prefix'), t('ID'), t('Method')), $rows);
+    $output .= theme('pager');
+  }
+  else {
+    $output .= "<p>". t('No context prefixes have been registered.') ."</p>";
+  }
+  return $output;
+}
+
+/**
+ * Settings form for choosing the operating mode of context_prefix
+ */
+function context_prefix_settings_form() {
+  global $base_url;
+  $form = array();
+
+  $options = array(
+    CONTEXT_PREFIX_PATH => t('Path prefix'),
+    CONTEXT_PREFIX_DOMAIN => t('Full domain'),
+    // TODO: Implement these features
+    // CONTEXT_PREFIX_SUBDOMAIN => t('Subdomain'),
+  );
+
+  foreach (context_prefix_providers() as $id => $provider) {
+    // Check to see whether provider has limited the available prefixing methods
+    if (is_array($provider['methods']) && count($provider['methods'])) {
+      $provider_options = array();
+      foreach ($provider['methods'] as $method) {
+        $provider_options[$method] = $options[$method];
+      }
+    }
+    else {
+      $provider_options = $options;
+    }
+    $form['context_prefix_method_'. $id] = array(
+      '#provider' => true,
+      '#title' => $provider['name'],
+      '#description' => $provider['description'],
+      '#type' => 'select',
+      '#options' => $provider_options,
+      '#default_value' => variable_get('context_prefix_method_'. $id, CONTEXT_PREFIX_PATH),
+    );
+  }
+
+  $form['context_prefix_location'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Prefix location settings'),
+  );
+  $form['context_prefix_location']['context_prefix_base_domain'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Select base domain'),
+    '#description' => t('This setting determines the base domain for domain based context prefixing.'),
+    '#required' => FALSE,
+    '#default_value' => variable_get('context_prefix_base_domain', $base_url),
+  );
+  $form = system_settings_form($form);
+  $form['#theme'] = 'context_prefix_settings_form';
+  return $form;
+}
+
+/**
+ * Theme function for context_prefix_settings_form()
+ */
+function theme_context_prefix_settings_form($form) {
+  $output = '';
+  $rows = array();
+  foreach (element_children($form) as $id) {
+    if ($form[$id]['#provider']) {
+      $name = $form[$id]['#title'];
+      $description = $form[$id]['#description'];
+      unset($form[$id]['#title']);
+      unset($form[$id]['#description']);
+      $rows[] = array(
+        "<strong>$name</strong><div class='description'>$description</div>",
+        drupal_render($form[$id]),
+      );
+    }
+  }
+  $output .= theme('table', array(t('Provider'), t('Prefix method')), $rows);
+  $output .= drupal_render($form);
+  return $output;
+}
+
+/**
+ * API Functions ======================================================
+ */
+
+/**
+ * Provides a simple API for validating, adding, and deleting context defintions.
+ */
+function context_prefix_api($op = 'insert', $context) {
+  switch ($op) {
+    case 'load':
+      if (isset($context['provider'])) {
+        if ($context['id']) {
+          $context = db_fetch_array(db_query("SELECT * FROM {context_prefix} WHERE id = '%s' AND provider = '%s'", $context['id'], $context['provider']));
+          if ($context) {
+            return $context;
+          }
+        }
+        else if ($context['prefix']) {
+          $context = db_fetch_array(db_query("SELECT * FROM {context_prefix} WHERE prefix = '%s' AND provider = '%s'", $context['prefix'], $context['provider']));
+          if ($context) {
+            return $context;
+          }
+        }
+        return false;
+      }
+      break;
+    case 'validate':
+      if (check_plain($context['provider'])) {
+        $id = db_result(db_query("SELECT id FROM {context_prefix} WHERE prefix = '%s'", $context['prefix']));
+        return $id ? false : true;
+      }
+      else {
+        return false;
+      }
+    case 'insert':
+      if (context_prefix_api('validate', $context)) {
+        $status = db_query("INSERT INTO {context_prefix} (provider, prefix, id) VALUES ('%s', '%s', %d)", $context['provider'], $context['prefix'], $context['id']);
+        return $status;
+      }
+      return false;
+    case 'delete':
+      if ($context['prefix']) {
+        $param = 'prefix';
+        $where = $context['prefix'];
+      }
+      else if ($context['id']) {
+        $param = 'id';
+        $where = $context['id'];
+      }
+      $check = db_result(db_query("SELECT id FROM {context_prefix} WHERE provider = '%s' AND $param = '%s'", $context['provider'], $where));
+      if ($check) {
+        $status = db_query("DELETE FROM {context_prefix} WHERE provider = '%s' AND $param = '%s'", $context['provider'], $where);
+        return $status;
+      }
+      return false;
+  }
+  return false;
+}
+
+/**
+ * A wrapper around drupal_goto() that abstracts out the prefix/context setting
+ * You provide both a normal drupal path ('node/43') and a context prefix ('dsi')
+ * and context_prefix_goto will determine the correct location to use.
+ */
+function context_prefix_goto($provider, $prefix, $path = '', $query = NULL, $fragment = NULL, $http_response_code = 302) {
+  /**
+   * TODO: we need to abstract this base_url dissection into a
+   * handler, and in there, we'll abstract out for
+   * protocol handling, and handling the site's base_url like www.
+   *
+   * TODO: we need to make sure that other prefixed contexts don't
+   * get dropped. e.g. if you are on 'en/node/43' and you
+   * context_prefix_goto('spaces', 'mygroup'), you should end up
+   * at 'en/mygroup', not 'mygroup'
+   */
+  switch (variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH)) {
+    case CONTEXT_PREFIX_PATH:
+      clswitch('set', true); // Drop prefixing for context_prefix goto's
+      drupal_goto($prefix .'/'. $path, $query, $fragment, $http_response_code);
+      break;
+    case CONTEXT_PREFIX_DOMAIN:
+      $prefixes = context_prefix_prefixes(CONTEXT_PREFIX_DOMAIN);
+      if (isset($prefixes[$prefix])) {
+        $path = 'http://'. $prefix .'/'. $path;
+        drupal_goto($path, $query, $fragment, $http_response_code);
+      }
+      break;
+  }
+}
+
+/**
+ * Custom l wrapper for links that need to leave all group contexts
+ *
+ * TODO: Like context_prefix_goto(), this function needs to allow the
+ * selective dropping/adding of contexts.
+ */
+function cl($text, $path, $attributes = array(), $query = NULL, $fragment = NULL, $absolute = FALSE, $html = FALSE, $dropcontext = FALSE) {
+  global $base_url;
+  clswitch('set', $dropcontext);
+  // Handle domains -- need to force domain onto the path and push through as absolute url
+  if ($dropcontext) {
+    $absolute = TRUE;
+    if ($path == '<front>') {
+      $path = variable_get('site_frontpage', 'node');
+    }
+    if ($domain = variable_get('context_prefix_base_domain', '')) {
+      $path = $domain .'/'. $path; // REPLACE BASE_URL with the hub domain.
+    }
+  }
+  $l = l($text, $path, $attributes, $query, $fragment, $absolute, $html);
+  clswitch('reset');
+  return $l;
+}
+
+/**
+ * Returns whether the current l/url call should use context rewriting or not
+ */
+function clswitch($op, $absolute = null) {
+  static $drop;
+  switch ($op) {
+    case 'set';
+      $drop = $absolute;
+      break;
+    case 'get':
+      return $drop;
+      break;
+    case 'reset':
+      $drop = null;
+      break;
+  }
+}
+
+/**
+ * Like theme_links, but handles context warping.
+ * theme_links couldn't believe it.
+ */
+function theme_context_links($links, $attributes = array('class' => 'links')) {
+  $output = '';
+
+  if (count($links) > 0) {
+    $output = '<ul'. drupal_attributes($attributes) .'>';
+
+    $num_links = count($links);
+    $i = 1;
+
+    foreach ($links as $key => $link) {
+      $class = '';
+
+      // Automatically add a class to each link and also to each LI
+      if (isset($link['attributes']) && isset($link['attributes']['class'])) {
+        $link['attributes']['class'] .= ' '. $key;
+        $class = $key;
+      }
+      else {
+        $link['attributes']['class'] = $key;
+        $class = $key;
+      }
+
+      // Add active class for active menu items
+      if (stristr($key, 'active')) {
+        $class .= " active";
+      }
+
+      // Add first and last classes to the list of links to help out themers.
+      $extra_class = '';
+      if ($i == 1) {
+        $extra_class .= 'first ';
+      }
+      if ($i == $num_links) {
+        $extra_class .= 'last ';
+      }
+      $output .= '<li class="'. $extra_class . $class .'">';
+
+      // Is the title HTML?
+      $html = isset($link['html']) && $link['html'];
+
+      // Initialize fragment and query variables.
+      $link['query'] = isset($link['query']) ? $link['query'] : NULL;
+      $link['fragment'] = isset($link['fragment']) ? $link['fragment'] : NULL;
+
+      if (isset($link['href'])) {
+        if ($link['warp']) {
+          $output .= cl($link['title'], $link['href'], $link['attributes'], $link['query'], $link['fragment'], FALSE, $html, TRUE);
+        }
+        else {
+          $output .= l($link['title'], $link['href'], $link['attributes'], $link['query'], $link['fragment'], FALSE, $html);
+        }
+      }
+      else if ($link['title']) {
+        //Some links are actually not links, but we wrap these in <span> for adding title and class attributes
+        if (!$html) {
+          $link['title'] = check_plain($link['title']);
+        }
+        $output .= '<span'. drupal_attributes($link['attributes']) .'>'. $link['title'] .'</span>';
+      }
+
+      $i++;
+      $output .= "</li>\n";
+    }
+
+    $output .= '</ul>';
+  }
+
+  return $output;
+}
