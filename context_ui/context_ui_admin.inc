@@ -664,7 +664,7 @@ function theme_context_ui_block_ui($regions, $context = null) {
         'class' => 'dummy',
       );
     }
-    $output .= theme('item_list', $items, $label, 'ul', array('class' => $region));
+    $output .= theme('item_list', $items, $label, 'ul', array('class' => form_clean_id($region)));
   }
   return $output;
 }

@@ -7,7 +7,7 @@ Drupal.context_ui.attach = function() {
   
   // multiselect handler
   $("input#edit-block-selector-add").click(function() {
-    var region = $("select#edit-block-selector-regions").val();
+    var region = $("select#edit-block-selector-regions").val().replace('_', '-');
     var selected = $("select#edit-block-selector-blocks option:selected");
     if (selected.size() > 0) {
       $("div.context-ui-block-regions ul." + region + " li.dummy").remove();
@@ -44,24 +44,24 @@ Drupal.context_ui.attachtools = function(block) {
   if ($("div.tools", block).size() > 0) {
     // remove block
     $("div.tools span.remove", block).click(function() {
-      item = $(this).parents("li");
+      var item = $(this).parents("li");
       $("div.tools", item).remove();
 
       // create new block select option
       var option = document.createElement('option');
-      var value = $(this).attr('title');
+      var value = $(item).attr('title');
       var text = item.text();
-      $(option).html(text);
+      $(option).attr('value', value).text(text);
 
       // retrieve region info before item is deleted
       var region = $(item).parents("ul").attr("class");
 
       // remove block item      
       item.remove();
-      
+
       // add block option
       $("select#edit-block-selector-blocks").append(option);      
-      
+
       Drupal.context_ui.regionblocks(region);
     });
     // move block up
