@@ -81,13 +81,24 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
         }
       }
       break;
+    case 'clone':
+      if (is_numeric($cid) && $context = context_ui_context('load', $cid)) {
+        drupal_set_title(t('Clone context: %title', array('%title' => $context->value)));
+        $context->system = 0;
+        $context->cid = null;
+        $cid = null;
+      }
+      else {
+        drupal_goto('admin/build/context'); return;
+      }
+      break;
   }
 
   // Core context definition
   $form = array(
-		'#base' => 'context_ui_form',
-		'#theme' => 'context_ui_form',
-	);
+    '#base' => 'context_ui_form',
+    '#theme' => 'context_ui_form',
+  );
 
   $form['value'] =
   $form['attribute'] =
@@ -212,7 +223,7 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
     );
   }
 
-  if ($op == 'view' || $op == 'edit' || ($op == 'add' && $context)) {
+  if ($op == 'view' || $op == 'edit' || $op == 'clone' || ($op == 'add' && $context)) {
     if ($context) {
       $form['value']['#default_value'] = $context->value;
       $form['attribute']['#default_value'] = $context->attribute;
@@ -567,9 +578,11 @@ function theme_context_ui_admin($context_tree) {
           $class = '';
           if ($context->system) {
             $links[] = l(t('View'), "admin/build/context/view/$context->cid");
+            $links[] = l(t('Override'), 'admin/build/context/clone/'. $context->cid);
           }
           else {
             $links[] = l(t('Edit'), 'admin/build/context/edit/'. $context->cid);
+            $links[] = l(t('Clone'), 'admin/build/context/clone/'. $context->cid);
             $links[] = l(t('Export'), "admin/build/context/export/$context->cid");
             $links[] = l(t('Delete'), 'admin/build/context/delete/'. $context->cid);
           }
