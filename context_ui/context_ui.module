@@ -1,0 +1,967 @@
+<?php
+// $Id$
+
+/**
+ * Implementation of hook_init().
+ */
+function context_ui_init() {
+  // Rebuild context_ui "cache".
+  if ($_GET['q'] == 'admin/build/modules') {
+    module_load_include('inc', 'context_ui', 'context_ui_admin');
+    context_ui_rebuild();
+  }
+}
+
+/**
+ * Implementation of hook_theme().
+ */
+function context_ui_theme() {
+  $items['context_ui_form'] = array(
+    'arguments' => array('form' => array()),
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['context_ui_block_ui'] = array(
+    'arguments' => array('form' => array()),
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['context_ui_admin'] = array(
+    'arguments' => array('form' => array()),
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['context_devel'] = array(
+    'arguments' => array('form' => array()),
+  );
+  $items['context_devel_recurse'] = array(
+    'arguments' => array('form' => array()),
+  );
+  $items['context_ui_menu_links'] = array(
+    'arguments' => array('links' => NULL, 'attributes' => array('class' => 'links')),
+  );
+  return $items;
+}
+
+/**
+ * Implementation of hook_block().
+ */
+function context_ui_block($op = 'list', $delta = 0, $edit = array()) {
+  switch ($op) {
+    case 'list':
+      $blocks = array();
+      $blocks['devel']['info'] = t('Context Devel');
+      return $blocks;
+    case 'view':
+      switch ($delta) {
+        case 'devel':
+          $block = array();
+          $block['subject'] = t('Context Devel');
+          if ($context = context_get()) {
+            $output = theme('context_devel', $context);
+            $block['content'] = $output;
+          }
+          else {
+            $block['content'] = "<p>". t('No context information is set.') ."</p>";
+          }
+          return $block;
+      }
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_context_items().
+ *
+ * Allows modules to integrate with context_ui and provide their native
+ * objects as options for setting/getting a context definition. The
+ * hook should return an array of items keyed on the object "type"
+ * (e.g. "node", "user", etc.) with key-value pairs corresponding to
+ * a FormAPI element array with some restrictions and additional info.
+ *
+ * '#title': Required. The title of the object / form option.
+ * '#type': Required. The FormAPI element type to use. Currently only
+ *   'select', 'checkboxes', 'radio', and 'textfield' are allowed.
+ * '#description': Optional. Help text to be displayed on the form.
+ * '#options': Required. A key-value array of options. They key will be
+ *   stored and passed to context_ui_set(), so the integrating module
+ *   should use a unique (within its namespace) / usable identifier.
+ * '#context_ui': Either 'setter' or 'getter'. Determines where this
+ *   item will appear on the context_ui form.
+ */
+function context_ui_context_items() {
+  $items = array();
+
+  // Content Types
+  $nodetypes = array();
+  foreach (node_get_types() as $type) {
+    $nodetypes[$type->type] = t($type->name);  // @todo: this t() is wrong
+  }
+  $items['node'] = array(
+    '#title' => t('Content Types'),
+    '#description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
+    '#options' => $nodetypes,
+    '#type' => 'checkboxes',
+    '#context_ui' => 'setter',
+  );
+
+  // Menu
+  if (module_exists('menu')) {
+    $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
+    foreach ($menus as $key => $name) {
+      $id = explode(':', $key);
+      // @TODO: choose a good convention for excluding root menus from
+      // being selectable items
+      if ($id[1] == '0') {
+        // this is required because root menu names are displayed inside <> and will not be displayed otherwise
+        $menus['_'. $key] = '<strong>'. check_plain($name) .'</strong>';
+      }
+      else {
+        $link = menu_link_load($id[1]);
+        $menus[$link['path']] = $name;
+      }
+      unset($menus[$key]);
+    }
+    $items['menu'] = array(
+      '#title' => t('Menus'),
+      '#description' => t('Display the selected menu items as active when this context is set.'),
+      '#options' => $menus,
+      '#type' => 'radios',
+      '#context_ui' => 'getter',
+    );
+  }
+
+  // User
+  $items['user'] = array(
+    '#title' => t('User Pages'),
+    '#description' => t('Set this context when a user with selected role(s) is viewed'),
+    '#options' => user_roles(true),
+    '#type' => 'checkboxes',
+    '#context_ui' => 'setter',
+  );
+
+  // Book
+  if (module_exists('book')) {
+    $options = array();
+    foreach(book_get_books() as $book) {
+      $options[$book['menu_name']] = $book['title'];
+    }
+    $items['book'] = array(
+      '#title' => t('Book'),
+      '#description' => t('Set this context when a node in the selected book is viewed.'),
+      '#options' => $options,
+      '#type' => 'checkboxes',
+      '#context_ui' => 'setter',
+    );
+  }
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_menu().
+ */
+function context_ui_menu() {
+  $items['admin/build/context'] = array(
+    'title' => 'Context',
+    'description' => 'Associate menus, views, blocks, etc. with different contexts to structure your site.',
+    'page callback' => 'context_ui_admin',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/list'] = array(
+    'title' => 'List',
+    'page callback' => 'context_ui_admin',
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => 0,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/add'] = array(
+    'title' => 'Add Context',
+    'description' => 'Add a context to your site.',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_form', 'add'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 1,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/import'] = array(
+    'title' => 'Import',
+    'description' => 'Import a context definition into your site.',
+    'page callback' => 'context_ui_import_page',
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_LOCAL_TASK,
+    'weight' => 2,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/edit'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_form', 'edit'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/clone'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_form', 'clone'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/view'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_form', 'view'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/export'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_export'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'context_ui_admin.inc',
+  );
+  $items['admin/build/context/delete'] = array(
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_delete_confirm'),
+    'access callback' => 'user_access',
+    'access arguments' => array('administer site configuration'),
+    'type' => MENU_CALLBACK,
+    'file' => 'context_ui_admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Implementation of hook_help().
+ */
+function context_ui_help($path, $arg) {
+  switch ($path) {
+    case 'admin/build/context':
+      return '<p>'.
+        t('Contexts provide you with a way to organize your site using terms familiar to real human beings. You can create a set of sections like <b>"News"</b>, <b>"Projects"</b>, <b>"Staff"</b>, and associate different technical aspects of Drupal to each section. For example, the <b>"News"</b> section may be a collection of <b>Nodes</b>, <b>Views</b>, <b>Menus</b> and <b>Blocks</b>.')
+        .'</p>';
+      break;
+  }
+}
+
+/**
+ * Implementation of hook_nodeapi().
+ */
+function context_ui_nodeapi(&$node, $op, $teaser, $page) {
+  if ($op == 'view' && $page && arg(0) == 'node') {
+    // Implementation of context_ui_set for node.
+    context_ui_set('node', $node->type);
+
+    // Implementation of context_ui_set for book.
+    if (module_exists('book') && isset($node->book)) {
+      if ($node->book['menu_name']) {
+        context_ui_set('book', $node->book['menu_name']);
+      }
+    }
+  }
+}
+
+/**
+ * Implementation of hook_form_alter().
+ */
+function context_ui_form_alter(&$form, $form_state, $form_id) {
+  if (isset($form['#node']) && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
+    context_ui_set('node', $form['#node']->type);
+  }
+  else if ($form_id == 'comment_form' && $nid = $form['nid']['#value']) {
+    $node = node_load($nid);
+    context_ui_set('node', $node->type);
+  }
+  else if ($form_id == 'block_admin_configure') {
+    // Display context_ui visibility information on block configuration pages
+    $module = $form['module']['#value'];
+    $delta = $form['delta']['#value'];
+
+    $result = db_query("SELECT cb.cid, cb.region, c.namespace, c.attribute, c.value FROM {context_ui_block} cb JOIN {context_ui} c ON cb.cid = c.cid WHERE cb.module = '%s' AND cb.delta = '%s' AND c.status = %d", $module, $delta, 1);
+
+    $rows = array();
+    while ($row = db_fetch_object($result)) {
+      $rows[] = array($row->namespace, $row->attribute, $row->value, $row->region, l(t('Edit visibility'), 'admin/build/context/edit/'. $row->cid, array('fragment' => 'context-ui-blocks')));
+    }
+    if ($rows) {
+      $content = theme('table', array(t('Namespace'), t('Attribute'), t('Value'), t('Region'), ''), $rows);
+    }
+    else {
+      $content = "<p>". t('No visibility rules have been set for this block using context_ui.') ."</p>";
+    }
+
+    $form['context_ui'] = array(
+      '#type' => 'fieldset',
+      '#title' => t('Context UI visibility'),
+      '#weight' => -1,
+      '#collapsible' => true,
+    );
+    $form['context_ui']['contexts'] = array(
+      '#type' => 'item',
+      '#value' => $content,
+      '#description' => t('To add or remove block visibility rules based on context, use the !context_admin.', array('!context_admin' => l(t('context administration page'), 'admin/build/context'))),
+    );
+    $form['block_settings']['#weight'] = -5;
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function context_ui_user($op, &$edit, &$account, $category = NULL) {
+  if ($op == 'view') {
+    context_ui_set('user', array_keys($account->roles));
+  }
+}
+
+/**
+ * Invokes hook_context_define() to collect all contexts provided in code by modules.
+ *
+ * @param $space
+ *   An optional string namespace identifier. If provided, only context definitions with the
+ *   specified namespace will be returned.
+ *
+ * @return
+ *   An array of context objects.
+ */
+function context_ui_defaults($namespace = null) {
+  static $contexts, $namespaces;
+  if (!$contexts) {
+    $contexts = array();
+    foreach (module_implements('context_define') as $module) {
+      $function = $module .'_context_define';
+      $contexts = array_merge($contexts, $function());
+    }
+    foreach ($contexts as $key => $context) {
+      $context = (object) $context;
+      $contexts[$key] = $context;
+      $namespaces[$context->namespace][] = $context;
+    }
+  }
+  if ($namespace) {
+    if (isset($namespaces[$namespace])) {
+      return $namespaces[$namespace];
+    }
+    else {
+      return array();
+    }
+  }
+  return $contexts;
+}
+
+/**
+ * Invokes hook_context_items() to provides an array of item types that a context may be associated with.
+ */
+function context_ui_types($op = 'list') {
+  static $types;
+  if (!$types) {
+    $types = array();
+    foreach (module_implements('context_items') as $module) {
+      $function = $module .'_context_items';
+      $types = array_merge($types, $function());
+    }
+  }
+  switch ($op) {
+    case 'list':
+      return array_keys($types);
+      break;
+    case 'full':
+      return $types;
+      break;
+  }
+}
+
+/**
+ * Sets a namespace-attribute-value context that has been associated with the provided item.
+ *
+ * @param $type
+ *   The item type to be matched. Any of the currently supported context items types ("view",
+ *   "node", etc.) can be specified.
+ * @param $id
+ *   An array of string or integer ids of the context item to match. Individual ids are also accepted.
+ *
+ * @return
+ *   True if one or more contexts were set. False if no items/contexts matched.
+ */
+function context_ui_set($type, $id) {
+  if (!is_array($id)) {
+    $id = array($id);
+  }
+  $set = false;
+  $result = db_query("
+    SELECT c.namespace, c.attribute, c.value, c.cid FROM {context_ui_item} ci
+    JOIN {context_ui} c ON ci.cid = c.cid
+    WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = 1",
+    array_merge(array($type), $id));
+  while ($context = db_fetch_object($result)) {
+    // If this context already has a value, don't alter it.
+    if (!context_isset($context->namespace, $context->attribute)) {
+      context_set($context->namespace, $context->attribute, $context->value);
+
+      // Allow getters to respond to the set context
+      $context = context_ui_context('load', $context);
+      module_invoke_all('context_getter', $context);
+
+      // Store the cid of set contexts. Other parts of the stack may be interested.
+      $cid = context_get('context_ui', 'cid');
+      $cid = $cid ? $cid : array();
+      $cid[] = $context->cid;
+      context_set('context_ui', 'cid', $cid);
+      $set = true;
+    }
+  }
+  return $set;
+}
+
+/**
+ * Implementation of hook_context_getter().
+ */
+function context_ui_context_getter($context) {
+  // Set active menu context
+  context_ui_menu_set_location($context);
+}
+
+/**
+ * Takes a retrieved context array and returns a themed out tree representation of that context.
+ */
+function theme_context_devel($context) {
+  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
+  $output = '';
+  foreach ($context as $space => $a) {
+    $output .= "<div class='context-devel-space'>$space</div>";
+    $output .= "<div class='context-devel-tree'>". theme_context_devel_recurse($a) ."</div>";
+  }
+  return $output;
+}
+
+/**
+ * Helper function to theme_context_devel that recurses down context arrays and themes accordingly.
+ */
+function theme_context_devel_recurse($value) {
+  $output = '';
+  if (is_array($value) || is_object($value)) {
+    if (is_array($value)) {
+      $type = 'array';
+    }
+    else if (is_object($value)) {
+      $type = 'object';
+    }
+    foreach ((array)$value as $key => $a) {
+      $output .= "<div class='context-devel-wrapper'><label><small>$type</small>$key</label>". theme('context_devel_recurse', $a) ."</div>";
+    }
+  }
+  else {
+    if (is_string($value)) {
+      $type = 'string';
+    }
+    else if (is_int($value)) {
+      $type = 'int';
+    }
+    else if (is_bool($value)) {
+      $type = 'bool';
+    }
+    $output .= "<div class='context-devel-wrapper'><label><small>$type</small>$value</label></div>";
+  }
+  return $output;
+}
+
+/**
+ * The D6 menu system no longer permits the kind of hackish grafting of
+ * the menu tree that was possible in D5. While breadcrumb trails can
+ * still be altered, menu_navigation_links() determines the active
+ * trail of menu items through other (read: unalterable) means.
+ *
+ * To make use of the context_ui menu functionality, you must use
+ * either theme_context_ui_menu_links() or implement your own theme
+ * function/override that checks against the active paths.
+ */
+function context_ui_menu_set_location($context) {
+  if ($context->cid) {
+    $result = db_query("
+      SELECT ci.id
+      FROM {context_ui_item} ci
+      WHERE ci.type = '%s' AND ci.cid = %d",
+      'menu', $context->cid);
+    if ($path = db_result($result)) {
+      $active_paths = context_get('context_ui', 'active_paths');
+      $active_paths = $active_paths ? $active_paths : array();
+      $active_paths[] = $path;
+      context_set('context_ui', 'active_paths', $active_paths);
+    }
+  }
+}
+
+/**
+ * Theme function for enabling context based active classes on menu
+ * items. This is a simple wrapper around theme_links() that adds a
+ * simple check against active contexts before passing actual markup
+ * duties onto theme_links() or its overrides.
+ */
+function theme_context_ui_menu_links($links, $attributes = array('class' => 'links')) {
+  // Retrieve active paths set by context_ui
+  $active_paths = context_get('context_ui', 'active_paths');
+  $active_paths = $active_paths ? $active_paths : array();
+
+  $modified_links = array();
+  foreach ($links as $key => $link) {
+    // Add active class to both links and key if path is active
+    if (in_array($link['href'], $active_paths)) {
+      $key .= ' active';
+      $link['attributes']['class'] .= ' active';
+    }
+    $modified_links[$key] = $link;
+  }
+
+  // Pass modified links onto theme_links() for actual theming duties
+  return theme('links', $modified_links, $attributes);
+}
+
+/**
+ * In order to add blocks we need to intercept theme_blocks and build the block
+ * content using an diffrent process. The current implementation assumes that
+ * the theme layer isn't going to define either 'phptemplate_blocks' or
+ * 'themename_blocks'.
+ */
+function phptemplate_blocks($region) {
+  $output = "";
+  if ($list = context_ui_block_list($region)) {
+    foreach ($list as $key => $block) {
+      $output .= theme("block", $block);
+    }
+  }
+  // Add any content assigned to this region through drupal_set_content() calls.
+  $output .= drupal_get_content($region);
+  return $output;
+}
+
+/**
+ * An alternative version of block_list() that provides any context_ui enabled blocks.
+ */
+function context_ui_block_list($region) {
+  global $user, $theme_key;
+
+  static $cids = array();
+  static $blocks = array();
+
+  if (!count($blocks)) {
+    // generate list of active DB contexts
+    // formerly an API function -- TODO: evaluate whether this may be useful otherwise
+    $result = db_query("SELECT * FROM {context_ui} WHERE status = 1", 'context_ui');
+    while ($context = db_fetch_object($result)) {
+      if (context_get($context->namespace, $context->attribute) == $context->value) {
+        $cids[$context->cid] = $context->cid;
+      }
+    }
+
+    $rids = array_keys($user->roles);
+    $result = db_query(db_rewrite_sql("
+      SELECT DISTINCT b.*, c.weight AS context_weight, c.region AS context_region, c.cid
+      FROM {blocks} b
+      LEFT JOIN {blocks_roles} r ON b.module = r.module AND b.delta = r.delta
+      LEFT JOIN {context_ui_block} c ON b.module = c.module AND b.delta = c.delta
+      WHERE b.theme = '%s' AND (r.rid IN (". db_placeholders($rids) .") OR r.rid IS NULL)
+      ORDER BY b.region, b.weight, b.module", 'b', 'bid'),
+      array_merge(array($theme_key), $rids)
+    );
+    while ($block = db_fetch_object($result)) {
+      // we determine status as a combination of DB setting + context definition
+      $status = FALSE;
+      // prepare context blocks
+      // if cid is in active contexts, use context weight + region
+      if (isset($block->cid) && in_array($block->cid, $cids)) {
+        $block->context_ui = TRUE;
+        $block->region = $block->context_region ? $block->context_region : $block->region;
+        $block->weight = $block->context_weight ? $block->context_weight : $block->weight;
+        $status = TRUE;
+      }
+      // use db setting
+      else {
+        $status = $block->status;
+      }
+
+      if ($status) {
+        if (!isset($blocks[$block->region])) {
+          $blocks[$block->region] = array();
+        }
+        $enabled = _context_ui_block_visibility('user', $block);
+        $page_match = _context_ui_block_visibility('page', $block);
+        $throttle = _context_ui_block_visibility('throttle', $block);  
+        if ($enabled && $page_match && $throttle) {
+          // Try fetching the block from cache. Block caching is not compatible with
+          // node_access modules. We also preserve the submission of forms in blocks,
+          // by fetching from cache only if the request method is 'GET'.
+          if (!count(module_implements('node_grants')) && $_SERVER['REQUEST_METHOD'] == 'GET' && ($cid = _block_get_cache_id($block)) && ($cache = cache_get($cid, 'cache_block'))) {
+            $array = $cache->data;
+          }
+          else {
+            $array = module_invoke($block->module, 'block', 'view', $block->delta);
+            if (isset($cid)) {
+              cache_set($cid, $array, 'cache_block', CACHE_TEMPORARY);
+            }
+          }
+
+          if (isset($array) && is_array($array) && isset($array['content'])) {
+            foreach ($array as $k => $v) {
+              $block->$k = $v;
+            }
+            // Override default block title if a custom display title is present.
+            if ($block->title) {
+              // Check plain here to allow module generated titles to keep any markup.
+              $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
+            }
+            $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
+          }
+        }
+      }
+    }
+    // Custom sort since SQL order by won't give it to us for free
+    foreach ($blocks as $key => $region_blocks) {
+      uasort($region_blocks, '_context_ui_block_compare');
+      $blocks[$key] = $region_blocks;
+    }
+  }
+  // Create an empty array if there were no entries
+  if (!isset($blocks[$region])) {
+    $blocks[$region] = array();
+  }
+  return $blocks[$region];
+}
+
+function _context_ui_block_visibility($op, $block) {
+  switch ($op) {
+    case 'user':
+      global $user;
+      // Use the user's block visibility setting, if necessary
+      if ($block->custom != 0) {
+        if ($user->uid && isset($user->block[$block->module][$block->delta])) {
+          return $user->block[$block->module][$block->delta];
+        }
+        else {
+          return ($block->custom == 1);
+        }
+      }
+      return true;
+    case 'page':
+      // Match path if necessary
+      if ($block->pages) {
+        if ($block->visibility < 2) {
+          $path = drupal_get_path_alias($_GET['q']);
+          $regexp = '/^('. preg_replace(array('/(\r\n?|\n)/', '/\\\\\*/', '/(^|\|)\\\\<front\\\\>($|\|)/'), array('|', '.*', '\1'. preg_quote(variable_get('site_frontpage', 'node'), '/') .'\2'), preg_quote($block->pages, '/')) .')$/';
+          // Compare with the internal and path alias (if any).
+          $page_match = drupal_match_path($path, $block->pages);
+          if ($path != $_GET['q']) {
+            $page_match = $page_match || drupal_match_path($_GET['q'], $block->pages);
+          }
+          // When $block->visibility has a value of 0, the block is displayed on
+          // all pages except those listed in $block->pages. When set to 1, it
+          // is displayed only on those pages listed in $block->pages.
+          return !($block->visibility xor $page_match);
+        }
+        else {
+          return drupal_eval($block->pages);
+        }
+      }
+      return true;
+    case 'throttle':
+      if (!($block->throttle && (module_invoke('throttle', 'status') > 0))) {
+        return true;
+      }
+      return false;
+  }
+}
+
+/**
+ * Helper function to sort block objects by weight
+ */
+function _context_ui_block_compare($a, $b) {
+  // Enabled blocks
+  return ($a->weight - $b->weight);
+}
+
+/**
+ * Provides simple operations (load/insert/update/etc.) on a core context space/key/value definition.
+ *
+ * @param $op
+ *   Operation to perform on a context. May be one of load/insert/update/delete.
+ * @param $context
+ *   A context object. Optionally, can be an integer cid for the "load" operation.
+ *
+ * @return
+ *   If loading, returns a full context item. All other operations return true on success and false on failure.
+ */
+function context_ui_context($op, $context) {
+  switch ($op) {
+    case 'load':
+      static $cache = array();
+      // Argument is a cid
+      if (is_numeric($context)) {
+        if (!isset($cache[$context])) {
+          $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE cid = %d", $context));
+        }
+        else {
+          return $cache[$context];
+        }
+      }
+      // Context object has an associated cid
+      else if (is_object($context) && isset($context->cid)) {
+        if (!isset($cache[$context->cid])) {
+          $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE cid = %d", $context->cid));
+        }
+        else {
+          return $cache[$context->cid];
+        }
+      }
+      // Context object has no cid -- we'll try to load by ns/attr/val
+      else if (is_object($context) && $context->namespace && $context->attribute && $context->value) {
+        $args = array(
+          $context->namespace,
+          $context->attribute,
+          $context->value,
+        );
+        $system = '';
+        $status = '';
+        if (isset($context->system)) {
+          $args[] = $context->system;
+          $system = "AND system = %d";
+        }
+        if (isset($context->status) && $context->status != 0) {
+          $args[] = $context->status;
+          $status = "AND status = %d";
+        }
+        $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE namespace = '%s' AND attribute = '%s' AND value = '%s' $system $status", $args));
+      }
+      if ($context) {
+        $context = context_ui_item('load', $context);
+        $context = context_ui_item_block('load', $context);
+        // After all that hard work, cache the context
+        $cache[$context->cid] = $context;
+        return $context;
+      }
+      return false;
+    case 'insert':
+      // check for type & existence of context definition
+      $existing = context_ui_context('load', $context);
+      if (!$existing || $existing->system != $context->system) {
+        $values = array(
+          'system' => $context->system,
+          'status' => $context->status,
+          'namespace' => $context->namespace,
+          'attribute' => $context->attribute,
+          'value' => $context->value,
+        );
+        $keys = implode(', ', array_keys($values));
+        $args = array_merge(array($keys), $values);
+        $result = db_query("INSERT INTO {context_ui} (%s) VALUES(%d, %d, '%s', '%s', '%s')", $args);
+        $context->cid = db_last_insert_id('context_ui', 'cid');
+        $result = $result && context_ui_item('save', $context);
+        $result = $result && context_ui_item_block('save', $context);
+        return $result ? true : false;
+      }
+      return false;
+      break;
+    case 'update':
+      if ($context->cid) {
+        // update core context information
+        $values = array(
+          'system' => $context->system,
+          'status' => $context->status,
+          'namespace' => $context->namespace,
+          'attribute' => $context->attribute,
+          'value' => $context->value,
+          'cid'   => $context->cid,
+        );
+        $keys = implode(', ', array_keys($values));
+        $result = db_query("UPDATE {context_ui} SET system = %d, status = %d, namespace = '%s', attribute = '%s', value = '%s'WHERE cid = %d", $values);
+        $result = $result && context_ui_item('save', $context);
+        $result = $result && context_ui_item_block('save', $context);
+        return $result ? true : false;
+      }
+      break;
+    case 'delete':
+      if ($context = context_ui_context('load', $context)) {
+        db_query("DELETE FROM {context_ui} WHERE cid = %d", $context->cid);
+        db_query("DELETE FROM {context_ui_item} WHERE cid = %d", $context->cid);
+        db_query("DELETE FROM {context_ui_block} WHERE cid = %d", $context->cid);
+        return true;
+      }
+      return false;
+  }
+}
+
+/**
+ * Provides simple operations (load/save) on any context-item associations. context_ui_item() will
+ * automatically sync the database with the context object provided when saving. Any associations
+ * that exist on the object that are absent from the database will be inserted, and any associations
+ * that are missing will be removed from the database.
+ *
+ * @param $op
+ *   Operation to perform on a context. May be either load or save.
+ * @param $context
+ *   A context object with item associations.
+ *
+ * @return
+ *   Load returns a context object with item associations. Save returns true on success and false on failure.
+ */
+function context_ui_item($op = 'load', $context) {
+  if ($context->cid) {
+    switch ($op) {
+      case 'load':
+        $result = db_query("SELECT * FROM {context_ui_item} WHERE cid = %d", $context->cid);
+        while ($row = db_fetch_object($result)) {
+          $context->{$row->type}[$row->id] = $row->id;
+        }
+        return $context;
+      case 'save':
+        $current = new stdClass();
+        $current->cid = $context->cid;
+        $current = context_ui_item('load', $current);
+        foreach (context_ui_types() as $type) {
+          // Delete any stale associations
+          if (isset($current->{$type}) && is_array($current->{$type})) {
+            foreach ($current->{$type} as $id) {
+              $delete = false;
+              if (!is_array($context->{$type})) {
+                $delete = true;
+              }
+              else if (array_search($id, $context->{$type}) === false) {
+                $delete = true;
+              }
+              if ($delete) {
+                $result = db_query("DELETE FROM {context_ui_item} WHERE cid = %d AND type = '%s' AND id = '%s'", $context->cid, $type, $id);
+              }
+            }
+          }
+          // Add/update any missing associations
+          if (isset($context->{$type}) && is_array($context->{$type})) {
+            foreach ($context->{$type} as $id) {
+              $update = false;
+              if (!(isset($current->{$type}) && is_array($current->{$type}))) {
+                $update = true;
+              }
+              else if (array_search($id, $current->{$type}) === false) {
+                $update = true;
+              }
+              if ($update) {
+                $result = db_query("REPLACE INTO {context_ui_item} (cid, type, id) VALUES(%d, '%s', '%s')", $context->cid, $type, $id);
+              }
+            }
+          }
+        }
+        return true;
+        break;
+    }
+  }
+  return false;
+}
+
+/**
+ * Provides simple operations (load/save) on any context-block associations. Parallel usage as
+ * context_ui_item().
+ *
+ * @param $op
+ *   Operation to perform on a context. May be either load or save.
+ * @param $context
+ *   A context object with an array of blocks at $context->block.
+ *
+ * @return
+ *   Load returns a context object with block information. Save returns true on success and false on failure.
+ */
+function context_ui_item_block($op = 'load', $context) {
+  if ($context->cid) {
+    switch ($op) {
+      case 'load':
+        $result = db_query("SELECT module, delta, region, weight FROM {context_ui_block} WHERE cid = %d", $context->cid);
+        $context->block = array();
+        while ($block = db_fetch_object($result)) {
+          $bid = $block->module ."_". $block->delta;
+          $block->bid = $bid;
+          $context->block[$bid] = $block;
+        }
+        return $context;
+        break;
+      case 'save':
+        // grab the current context-> block associations
+        $current = (object) array('cid' => $context->cid);
+        $current = context_ui_item_block('load', $current);
+        // compare current definition with new definition. remove missing associations from the DB
+        if (is_array($current->block)) {
+          foreach ($current->block as $block) {
+            if (!isset($context->block[$block->bid]) || $current->block[$block->bid] != $context->block[$block->bid]) {
+              $result = db_query("DELETE FROM {context_ui_block WHERE cid = %d AND module = '%s' AND delta = '%s'", $context->cid, $block->module, $block->delta);
+            }
+          }
+        }
+        // compare new definition with current definition. add missing associations to the DB
+        if (is_array($context->block)) {
+          foreach ($context->block as $block) {
+            $block = (object) $block;
+            if (!isset($current->block[$block->bid]) || $current->block[$block->bid] != $context->block[$block->bid]) {
+              $args = array(
+                'module' => $block->module,
+                'delta' => $block->delta,
+                'region' => $block->region,
+                'weight' => $block->weight,
+                'cid' => $context->cid,
+              );
+              $result = db_query("REPLACE INTO {context_ui_block} (module, delta, region, weight, cid) VALUES ('%s', '%s', '%s', %d, %d)", $args);
+            }
+          }
+        }
+        return true;
+        break;
+    }
+  }
+  return false;
+}
+
+/**
+ * Generates a themed set of links for node types associated with
+ * the current active contexts.
+ */
+function theme_context_ui_node_links() {
+  $output = '';
+  $links = _context_ui_node_links();
+  foreach ($links as $link) {
+    $output .= l('+ '. t('Add !type', array('!type' => $link['title'])), $link['href'], array('class' => 'button'));
+  }
+  return $output;
+}
+
+/**
+ * Generates an array of links (suitable for use with theme_links)
+ * to the node forms of types associated with current active contexts.
+ */
+function _context_ui_node_links($resest = false) {
+  static $links;
+  if (!$links || $reset) {
+    $links = array();
+    if ($cids = context_get('context_ui', 'cid')) {
+      // Collect types
+      $types = node_get_types();
+      // Iterate over active contexts
+      foreach ($cids as $cid) {
+        $context = context_ui_context('load', $cid);
+        if (is_array($context->node)) {
+          foreach ($context->node as $type) {
+            if (isset($types[$type]) && node_access('create', $type)) {
+              $links[$type] = array(
+                'title' => $types[$type]->name,
+                'href' => 'node/add/'. $type,
+              );
+            }
+          }
+        }
+      }
+    }
+  }
+  return $links;
+}
