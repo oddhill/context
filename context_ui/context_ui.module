@@ -185,8 +185,8 @@ function context_ui_menu($may_cache) {
       'callback' => 'drupal_get_form',
       'callback arguments' => array('context_ui_form', 'clone'),
       'access' => user_access('administer site configuration'),
-      'type' => MENU_LOCAL_TASK,
-      'title' => t('Add Context'),
+      'type' => MENU_CALLBACK,
+      'title' => t('Clone Context'),
       'description' => t('Duplicate an existing context.'),
       'weight' => 1,
     );
