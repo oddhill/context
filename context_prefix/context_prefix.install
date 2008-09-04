@@ -5,7 +5,12 @@ function context_prefix_install() {
   switch ($GLOBALS['db_type']) {
     case 'mysqli':
     case 'mysql':
-      db_query("CREATE TABLE {context_prefix} (provider VARCHAR(255) NOT NULL, prefix VARCHAR(255) NOT NULL, id INT(10) NOT NULL, PRIMARY KEY (prefix))");
+      db_query("CREATE TABLE {context_prefix} (
+                provider VARCHAR(255) NOT NULL,
+                prefix VARCHAR(255) NOT NULL,
+                id INT(10) NOT NULL,
+                PRIMARY KEY (prefix)
+                ) /*!40100 DEFAULT CHARACTER SET UTF8 */");
       db_query("UPDATE {system} SET weight = -20 WHERE name = 'context_prefix'");
       break;
   }
@@ -19,7 +24,7 @@ function context_prefix_update_1() {
 
 function context_prefix_update_2() {
   $items = array();
-  $items[] = update_sql("CREATE TABLE {context_prefix} (space VARCHAR(255) NOT NULL, path VARCHAR(255) NOT NULL, id INT(10) NOT NULL, PRIMARY KEY (path))");
+  $items[] = update_sql("CREATE TABLE {context_prefix} (space VARCHAR(255) NOT NULL, path VARCHAR(255) NOT NULL, id INT(10) NOT NULL, PRIMARY KEY (path)) /*!40100 DEFAULT CHARACTER SET UTF8 */");
   $paths = variable_get('context_paths', array());
   if ($paths) {
     foreach ($paths as $space => $p) {
@@ -51,4 +56,11 @@ function context_prefix_update_5() {
   $items = array();
   $items[] = update_sql("ALTER TABLE {context_prefix} CHANGE COLUMN module provider VARCHAR(255) NOT NULL;");
   return $items;
+}
+
+/**
+ * hook_uninstall().
+ */
+function context_prefix_uninstall() {
+  db_query('DROP TABLE {context_prefix}');
 }
