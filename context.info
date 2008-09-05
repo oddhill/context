@@ -1,0 +1,5 @@
+; $Id$
+name = Context
+description = "Provide modules with a cache that lasts for a single page request."
+package = Context
+core = "6.x"
