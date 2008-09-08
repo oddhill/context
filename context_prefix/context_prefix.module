@@ -61,8 +61,8 @@ function context_prefix_menu() {
 function context_prefix_init() {
   static $once;
   if (!$once) {
-    _context_prefix_init(CONTEXT_PREFIX_PATH, $types[CONTEXT_PREFIX_PATH]);
-    _context_prefix_init(CONTEXT_PREFIX_DOMAIN, $types[CONTEXT_PREFIX_DOMAIN]);
+     _context_prefix_init(CONTEXT_PREFIX_PATH);
+    _context_prefix_init(CONTEXT_PREFIX_DOMAIN);
     $once = true;
   }
 }
@@ -197,7 +197,7 @@ function context_prefix_parse($method = CONTEXT_PREFIX_PATH, $q) {
         $parsed = array();
         $args = explode('/', $q);
         $arg = $args[0];
-        while ($valid_prefixes[$arg]) {
+        while (isset($valid_prefixes[$arg])) {
           $parsed[$arg] = $valid_prefixes[$arg];
           array_shift($args);
           $arg = $args[0];
@@ -209,7 +209,7 @@ function context_prefix_parse($method = CONTEXT_PREFIX_PATH, $q) {
         break;
       case CONTEXT_PREFIX_DOMAIN:
         $parsed = array();
-        if ($valid_prefixes[$q]) {
+        if (isset($valid_prefixes[$q])) {
           $parsed[$q] = $valid_prefixes[$q];
         }
         $cache[$method][$q] = $parsed;
