@@ -91,6 +91,14 @@ function _context_prefix_init($method = CONTEXT_PREFIX_PATH) {
       break;
   }
   
+  // Initialize a few things so that we can use them without warnings.
+  if (!isset($_GET['q'])) {
+    $_GET['q'] = '';
+  }
+  if (!isset($_REQUEST['q'])) {
+    $_REQUEST['q'] = '';
+  }
+  
   // if $_GET and $_REQUEST are different, the path has NOT been
   // aliased. We may need to rewrite the path.
   if (in_array($method, array(CONTEXT_PREFIX_PATH, CONTEXT_PREFIX_PAIR)) && ($_GET['q'] == $_REQUEST['q'])) {
@@ -314,7 +322,7 @@ function context_prefix_providers($by_method = FALSE) {
   }
   if ($by_method) {
     static $methods;
-    if (!is_array($methods)) {
+    if (!isset($methods)) {
       $methods = new context_prefix_cache();
 
       foreach ($providers AS $id => $provider) {
