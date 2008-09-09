@@ -214,14 +214,29 @@ function context_prefix_prefixes($requested_method = CONTEXT_PREFIX_PATH) {
       }
     }
 
-    // Gather all database prefixes.
-    $result = db_query("SELECT * FROM {context_prefix}");
-    while ($row = db_fetch_object($result)) {
-      $method = variable_get('context_prefix_method_'. $row->provider, CONTEXT_PREFIX_PATH);
-      $prefixes[$method][$row->prefix] = array(
-        'provider' => $row->provider,
-        'id' => $row->id,
-      );
+    // Gather database prefixes.
+    $result = db_query("SELECT DISTINCT(provider) FROM {context_prefix}");
+    while ($item = db_fetch_object($result)) {
+      $method = variable_get('context_prefix_method_'. $item->provider, CONTEXT_PREFIX_PATH);
+      // Don't load all data base prefixes for keyed pairs.
+      if ($method == CONTEXT_PREFIX_PAIR) {
+        $prefix = variable_get('context_prefix_method_'. $item->provider .'_key', false);
+        if ($prefix != false) {
+          $prefixes[$method][$prefix] = array(
+            'provider' => $item->provider,
+            'id' => null,
+          );
+        }
+      }
+      else {
+        $result = db_query("SELECT * FROM {context_prefix} WHERE provider = '%s'", $item->provider);
+        while ($row = db_fetch_object($result)) {
+          $prefixes[$method][$row->prefix] = array(
+            'provider' => $row->provider,
+            'id' => $row->id,
+          );
+        }
+      }
     }
   }
 
