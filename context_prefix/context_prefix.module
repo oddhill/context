@@ -587,7 +587,7 @@ function context_prefix_api($op = 'insert', $context) {
  * You provide both a normal drupal path ('node/43') and a context prefix ('dsi')
  * and context_prefix_goto will determine the correct location to use.
  */
-function context_prefix_goto($provider, $prefix, $path = '', $query = NULL, $fragment = NULL, $http_response_code = 302) {
+function context_prefix_goto($provider, $id, $path = '', $query = NULL, $fragment = NULL, $http_response_code = 302) {
   /**
    * TODO: we need to abstract this base_url dissection into a
    * handler, and in there, we'll abstract out for
