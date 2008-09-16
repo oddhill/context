@@ -516,7 +516,7 @@ function context_ui_menu_set_location($context) {
             $items[] = menu_get_item($parent_menu['pid']);
           }
         }
-        if ($active_menu['type'] & MENU_DEFAULT_LOCAL_TASK) {
+        if (($active_menu['type'] & MENU_IS_LOCAL_TASK & MENU_LINKS_TO_PARENT)) {
           $real_q = end($items);
           $real_q = $real_q['path'];
         }
@@ -530,6 +530,7 @@ function context_ui_menu_set_location($context) {
       if ($real_q) {
         $_GET['q'] = $real_q;
       }
+
     }
   }
 }
