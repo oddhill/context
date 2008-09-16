@@ -161,9 +161,9 @@ function context_prefix_url_rewrite($type, $path, $original) {
  *    ),
  *  );
  */
-function context_prefix_prefixes($requested_method = CONTEXT_PREFIX_PATH) {
+function context_prefix_prefixes($requested_method = CONTEXT_PREFIX_PATH, $reset = FALSE) {
   static $prefixes;
-  if (!isset($prefixes)) {
+  if (!isset($prefixes) || $reset) {
     $prefixes = array();
 
     // Invoke context_prefix_prefixes() and gather all prefixes
@@ -363,8 +363,10 @@ function _context_prefix_set($op = 'set', $type = CONTEXT_PREFIX_PATH, $prefix =
         // Fire the provider callback
         $providers = context_prefix_providers();
         $callback = $providers[$info['provider']]['callback'];
+        $args = isset($providers[$info['provider']]['callback arguments']) ? $providers[$info['provider']]['callback arguments'] : array();
+        $args[] = $info['id'];
         if (function_exists($callback)) {
-          $callback($info['id']);
+          call_user_func_array($callback, $args);
         }
       }
       break;
@@ -554,7 +556,7 @@ function context_prefix_api($op = 'insert', $context) {
       }
       break;
     case 'validate':
-      if (check_plain($context['provider']) && !preg_match('!^[a-z0-9_-\\.]+$!', $context['prefix'])) {
+      if (check_plain($context['provider']) && preg_match('!^[a-z0-9_-]+$!', $context['prefix'])) {
         $id = db_result(db_query("SELECT id FROM {context_prefix} WHERE prefix = '%s'", $context['prefix']));
         if ($id && ($id == $context['id'])) {
           return true;
