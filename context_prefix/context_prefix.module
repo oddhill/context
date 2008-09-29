@@ -208,8 +208,8 @@ function context_prefix_prefixes($requested_method = CONTEXT_PREFIX_PATH, $reset
         }
       }
       else {
-        $result = db_query("SELECT * FROM {context_prefix} WHERE provider = '%s'", $item->provider);
-        while ($row = db_fetch_object($result)) {
+        $result2 = db_query("SELECT * FROM {context_prefix} WHERE provider = '%s'", $item->provider);
+        while ($row = db_fetch_object($result2)) {
           $prefixes[$method][$row->prefix] = array(
             'provider' => $row->provider,
             'id' => $row->id,
@@ -772,6 +772,7 @@ function theme_context_links($links, $attributes = array('class' => 'links')) {
 function context_prefix_form($provider, $id, $prefix = '') {
   switch (variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH)) {
     case CONTEXT_PREFIX_PATH:
+    case CONTEXT_PREFIX_PAIR:
       $description = t('Choose a prefix path. May contain only lowercase letters, numbers, dashes and underscores. e.g. "my-prefix"');
       break;
     case CONTEXT_PREFIX_SUBDOMAIN:
