@@ -289,6 +289,12 @@ function context_ui_form($op, $cid = NULL, $context = NULL) {
 function theme_context_ui_form($form) {
   $output = '';
 
+  foreach (element_children($form) as $element) {
+    if (isset($form[$element]['#weight']) && $form[$element]['#weight'] < 0) {
+      $output .= drupal_render($form[$element]);
+    }
+  }
+
   // Render space / key / value trio in a 3-column table
   $header = array(t('Namespace'), t('Attribute'), t('Value'));
   unset($form['namespace']['#title']);
