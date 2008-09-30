@@ -772,13 +772,14 @@ function context_ui_form_process($form) {
  * Submit handler for main context_ui form.
  */
 function context_ui_form_submit($form, &$form_state) {
-  switch (t($form_state['values']['op'])) {
+
+  switch ($form_state['clicked_button']['#id']) {
     // Send user to delete confirmation page
-    case 'Delete':
+    case 'edit-delete':
       $form_state['redirect'] = 'admin/build/context/delete/'. $form_state['values']['cid'];
       return;
     // Process form values and save and/or update the context in the db
-    case 'Save':
+    case 'edit-submit':
       $context = context_ui_form_process($form_state['values']);
       if (!$context->cid) {
         $result = context_ui_context('insert', $context);
