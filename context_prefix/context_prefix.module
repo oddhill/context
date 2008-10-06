@@ -497,8 +497,9 @@ function context_prefix_settings_form() {
     '#required' => FALSE,
     '#default_value' => variable_get('context_prefix_base_domain', $base_url),
   );
+	$form = system_settings_form($form);
   $form['#theme'] = 'context_prefix_settings_form';
-  return system_settings_form($form);
+  return $form;
 }
 
 /**
