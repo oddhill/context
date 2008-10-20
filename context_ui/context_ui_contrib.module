@@ -97,7 +97,7 @@ function context_ui_contrib_nodeapi(&$node, $op, $teaser, $page) {
  * Implementation of hook_views_pre_query().
  */
 function context_ui_contrib_views_pre_view($display_id, $args) {
-  if ($display_id->type == 'Normal') {
+  if ($display_id->display_handler->display->display_plugin == 'page') {
     context_ui_set('views', $display_id->name);
   }
 }

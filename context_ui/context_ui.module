@@ -2,9 +2,9 @@
 // $Id$
 
 /**
- * Implementation of hook_init().
+ * Implementation of hook_exit().
  */
-function context_ui_init() {
+function context_ui_exit() {
   // Rebuild context_ui "cache".
   if ($_GET['q'] == 'admin/build/modules') {
     module_load_include('inc', 'context_ui', 'context_ui_admin');
@@ -115,7 +115,7 @@ function context_ui_context_items() {
       }
       else {
         $link = menu_link_load($id[1]);
-        $menus[$link['path']] = $name;
+        $menus[$link['link_path']] = $name;
       }
       unset($menus[$key]);
     }
