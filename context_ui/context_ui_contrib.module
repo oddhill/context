@@ -100,6 +100,9 @@ function context_ui_contrib_views_pre_view($display_id, $args) {
   if ($display_id->display_handler->display->display_plugin == 'page') {
     context_ui_set('views', $display_id->name);
   }
+  else if ($display_id->display_handler->display->display_plugin == 'calendar') {
+    context_ui_set('views', $display_id->name);
+  }  
 }
 
 /**
