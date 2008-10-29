@@ -485,9 +485,9 @@ function context_ui_export(&$form_state, $cid = NULL) {
 /**
  * Generates an array tree representation of available space/key/value context definitions.
  */
-function context_ui_tree($op = '') {
+function context_ui_tree($op = '', $reset = FALSE) {
   static $tree;
-  if (!$tree) {
+  if (!$tree || $reset) {
     $tree = array(
       'system' => array(),
       'ui' => array(),
@@ -519,7 +519,9 @@ function context_ui_rebuild() {
   $types = context_ui_types();
 
   // Grab existing user defined contexts
-  $ui = context_ui_tree('ui');
+  // Always reset this static cache -- since this could be called
+  // before a user-defined context is inserted on submit.
+  $ui = context_ui_tree('ui', TRUE);
 
   // Retrieve existing system contexts
   $system = array();
@@ -530,15 +532,18 @@ function context_ui_rebuild() {
 
   // Insert or update system contexts
   foreach ($default_contexts as $c) {
+    // Check that the providing module has not explicitly set system flag.
+    // If it has, we trust that the module knows what it is doing.
+    if (!isset($c->system)) {
+      $c->system = 1;
+    }
+
     // Check that the context definition is reasonable
     if (!empty($c->namespace) && !empty($c->attribute)) {
       $context = context_ui_context('load', $c);
-      
-      // Check that the providing module has not explicitly set system + status
-      // If it has, we trust that the module knows what it is doing. Otherwise,
-      // flag this context's type + status.
-      if (!isset($c->system) && !isset($c->status)) {
-        $c->system = 1;
+
+      // Check that the providing module has not explicitly set the status.
+      if (!isset($c->status)) {
         $c->status = isset($ui[$c->namespace][$c->attribute][$c->value]) ? 0 : 1;
       }
 
