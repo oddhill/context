@@ -2,115 +2,156 @@
 
 if (typeof(Drupal) == "undefined" || !Drupal.context_ui) {
   Drupal.context_ui = {};
-}
 
-Drupal.context_ui.attach = function() {
-  var item_tools = "<div class='tools'><span class='up'>Up</span><span class='down'>Down</span><span class='remove'>X</span></div>";
-
-  // multiselect handler
-  $("input#edit-block-selector-add").click(function() {
-    var region = $("select#edit-block-selector-regions").val().replace('_', '-');
-    var selected = $("select#edit-block-selector-blocks option:selected");
-    if (selected.size() > 0) {
-      $("div.context-ui-block-regions ul." + region + " li.dummy").remove();
-      selected.each(function() {
-        if (!$(this).attr('disabled')) {
-          // create new block li
-          var block = document.createElement('li');
-          var value = $(this).attr('value');
-          var text = item_tools + $(this).text();
-          $(block).attr('title', value).html(text);
-
-          // attach tool handlers
-          Drupal.context_ui.attachtools(block);
-
-          // remove option
-          $(this).remove();
-
-          // add block item to region
-          $("div.context-ui-block-regions ul."+ region).append(block);
-
-          Drupal.context_ui.regionblocks(region);
-        }
-      });
-    }
-  });
-
-  // attach tool handler to existing context_ui blocks
-  $("div.context-ui-block-regions ul li").each(function() {
-    Drupal.context_ui.attachtools(this);
-  });
-}
-
-Drupal.context_ui.attachtools = function(block) {
-  if ($("div.tools", block).size() > 0) {
-    // remove block
-    $("div.tools span.remove", block).click(function() {
-      var item = $(this).parents("li");
-      $("div.tools", item).remove();
-
-      // create new block select option
-      var option = document.createElement('option');
-      var value = $(item).attr('title');
-      var text = item.text();
-      $(option).attr('value', value).text(text);
-
-      // retrieve region info before item is deleted
-      var region = $(item).parents("ul").attr("class");
-
-      // remove block item
-      item.remove();
-
-      // add block option
-      $("select#edit-block-selector-blocks").append(option);
-
-      Drupal.context_ui.regionblocks(region);
-    });
-    // move block up
-    $("div.tools span.up", block).click(function() {
-      var prev = $(this).parents("li").prev();
-      if (prev) {
-        var item = $(this).parents("li");
-        var region = $(this).parents("ul").attr("class");
-        prev.before(item);
-        Drupal.context_ui.regionblocks(region);
-      }
-    });
-    // move block down
-    $("div.tools span.down", block).click(function() {
-      var next = $(this).parents("li").next();
-      if (next) {
-        var item = $(this).parents("li");
-        var region = $(this).parents("ul").attr("class");
-        next.after(item);
-        Drupal.context_ui.regionblocks(region);
-      }
-    });
+  // Helper function for retrieving a link hash
+  Drupal.context_ui.getHash = function(href) {
+    var start = href.lastIndexOf('#') + 1;
+    var hash = href.substr(start);
+    return hash;
   }
-}
 
-Drupal.context_ui.regionblocks = function (region) {
-  var serialized = '';
-  if ($("div.context-ui-block-regions ul."+ region +" li").size() > 0) {
-    $("div.context-ui-block-regions ul."+ region +" li").each(function() {
+  // Sets populates the hidden region element
+  Drupal.context_ui.regionblocks = function (region) {
+    var serialized = '';
+    $('table#context-ui-region-' + region + ' tr').each(function() {
       if (serialized == '') {
-        serialized = $(this).attr('title');
+        serialized = $(this).attr('id');
       }
       else {
-        serialized = serialized +","+ $(this).attr('title');
+        serialized = serialized +","+ $(this).attr('id');
       }
     });
     $("input#edit-block-regions-"+ region).val(serialized);
   }
-  else if ($("input#edit-block-regions-"+ region).size() > 0) {
-    $("input#edit-block-regions-"+ region).val('');
-  }
 }
 
-if (Drupal.jsEnabled) {
-  $(document).ready(function() {
-    if ($('form#context-ui-form').size() > 0) {
-      Drupal.context_ui.attach();
+Drupal.behaviors.context_ui = function(context) {
+  // Advanced setting toggle
+  $('table#context-ui-trio a.advanced-toggle:not(.contextui-processed)').each(function() {
+    // Add click handler
+    $(this).click(function() {
+      $('table#context-ui-trio tr.trio').toggleClass('hidden');
+      if ($('table#context-ui-trio tr.trio').is('.hidden')) {
+        $('input#edit-section').removeAttr('disabled');
+      }
+      else {
+        $('input#edit-section').attr('disabled', true);
+      }
+      return false;
+    });
+    $(this).addClass('contextui-processed');
+  });
+
+  // Sync the value & section fields
+  $('input#edit-section:not(.contextui-processed), input#edit-value:not(.contextui-processed)').each(function() {
+    $(this).change(function() {
+      if ($(this).is('#edit-section')) {
+        $('input#edit-value').val($(this).val());
+      }
+      else {
+        $('input#edit-section').val($(this).val());
+      }
+    });
+    $(this).addClass('contextui-processed');
+  });
+
+  // Tabledrag
+  for (var base in Drupal.settings.tableDrag) {
+    if (!$('#' + base + '.contextui-processed', context).size()) {
+      // Add additional tabledrag event handlers to populate our
+      // hidden fields
+      $('#' + base).bind('mouseup', function(event) {
+        var region = $(this).attr('id').substr(18); // 18 == strlen('context-ui-region-');
+        Drupal.context_ui.regionblocks(region);
+        return;
+      });
+      $('#' + base).addClass('contextui-processed');
+    }
+  }
+
+  // Block removers
+  $('table#context-ui-blocks a.remove:not(.contextui-processed)').each(function() {
+    // Add click handler
+    $(this).click(function() {
+      // Retrieve region & block id from row
+      var region = $(this).parents('table').attr('id').substr(18);
+      var bid = $(this).parents('tr').eq(0).remove().attr('id');
+
+      // Return this block to the selector
+      $('div.context-ui-block-selector input[@value='+bid+']').attr('checked', 0).parents('div.form-item').eq(0).show();
+
+      // Set region value
+      Drupal.context_ui.regionblocks(region);
+      return false;
+    });
+
+    // Hide blocks in the selector that are enabled
+    var bid = $(this).parents('tr').eq(0).attr('id');
+    $('div.context-ui-block-selector input[@value='+bid+']').parents('div.form-item').eq(0).hide();
+
+    $(this).addClass('contextui-processed');
+  });
+
+  // Display the item widget
+  $('table#context-ui-items td.display a:not(.contextui-processed)').each(function() {
+    $(this).click(function() {
+      var hash = Drupal.context_ui.getHash($(this).attr('href'));
+
+      $("table#context-ui-items td.widget div.buttons").show();
+      $("table#context-ui-items td.widget div.widget").removeClass('active');
+      $("table#context-ui-items td.widget div#widget-"+ hash).addClass('active');
+
+      return false;
+    });
+    $(this).addClass('contextui-processed');
+  });
+
+  // Add blocks to a region
+  $('table#context-ui-blocks td.display a:not(.contextui-processed)').each(function() {
+    $(this).click(function() {
+      var hash = Drupal.context_ui.getHash($(this).attr('href'));
+      var region = hash.replace('_', '-');
+
+      var selected = $("div.context-ui-block-selector input:checked");
+      if (selected.size() > 0) {
+        selected.each(function() {
+          if (!$(this).attr('disabled')) {
+            // create new block markup
+            var block = document.createElement('tr');
+            var text = $(this).parents('div.form-item').eq(0).hide().children('label').text();
+            $(block).attr('id', $(this).attr('value')).addClass('draggable');
+            $(block).html("<td>"+ text + "<input class='block-weight' /></td><td><a href='' class='remove'>X</a></td>");
+
+            // add block item to region
+            var base = "context-ui-region-"+ region
+            Drupal.tableDrag[base].makeDraggable(block);
+            $('table#'+base).append(block);
+            Drupal.attachBehaviors($('table#'+base));
+
+            Drupal.context_ui.regionblocks(region);
+          }
+        });
+      }
+
+      return false;
+    });
+    $(this).addClass('contextui-processed');
+  });
+
+  // Update item display
+  $("table#context-ui-items td.widget input:checkbox, table#context-ui-items td.widget input:radio").each(function() {
+    if (!$(this).is('.contextui-processed')) {
+      $(this).change(function() {
+        var parent = $(this).parents('div.widget');
+        var hash = parent.attr('id').substr(7); // 7 == strlen('widget-');
+        var list = '';
+        $('input[@checked]', parent).each(function() {
+          var label = $(this).parents('label').text();
+          list = list + "<li>"+ label +"</li>";
+        });
+        $("table#context-ui-items td.display #display-"+ hash).html(list);
+      });
+      $(this).addClass('contextui-processed');
     }
   });
-};
+}

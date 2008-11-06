@@ -35,21 +35,25 @@
 /**
  * Context admin listing page =========================================
  */
+table.context-ui td {
+  width:50%;
+  }
+
 table.context-ui span.context-namespace {
   font-weight:bold;
-}
+  }
 
 table.context-ui span.context-attribute {
   margin-left:2em;
-}
+  }
 
 table.context-ui span.context-value {
   margin-left:4em;
-}
+  }
 
 table.context-ui span.overridden {
-  color:#9ab;
-}
+  color:#999;
+  }
 
 h3.context-space small {
   display:inline;
@@ -57,137 +61,178 @@ h3.context-space small {
   font-size:.6em; font-weight:bold;
   text-transform:uppercase;
   background:#e8f0f8; /* Garland blue */
-}
+  }
 
 /**
- * Context definition editing form ====================================
+ * Context UI form ====================================================
  */
+form#context-ui-form div.warning {
+  display:none !important;
+  }
 
-/* General table styles */
+form#context-ui-form div.form-checkboxes input,
+form#context-ui-form div.form-radios input {
+  vertical-align:middle;
+  }
+
 form#context-ui-form table {
-  margin:0em 0em 1em;
-}
+  margin:0px 0px 20px;
+  }
+
+  form#context-ui-form table table {    
+    margin:0px;
+    }
 
   form#context-ui-form table td {
-    padding:.75em;
     vertical-align:top;
-  }
-
-  form#context-ui-form table.context-ui-3col td {
-    width:33%;
-  }
-
-  form#context-ui-form table.context-ui-2col td {
-    width:50%;
-  }
-
-  form#context-ui-form table td.left {
-    border-right:1px solid #ace;
-  }
-
-  form#context-ui-form table tr.even .form-item,
-  form#context-ui-form table tr.odd .form-item {
-    white-space:normal;
-  }
-
-/* Set/get items */
-form#context-ui-form td.setters select,
-form#context-ui-form td.getters select,
-form#context-ui-form td.setters input.form-text,
-form#context-ui-form td.getters input.form-text {
-  width:90%;
-  }
-
-form#context-ui-form td.setters .form-item,
-form#context-ui-form td.getters .form-item {
-  background:#e8f0f8;
-  border-bottom: 1px solid #ace;
-  padding: 1em; margin:0em;
-}
-
-  form#context-ui-form td.setters .form-item .form-item,
-  form#context-ui-form td.getters .form-item .form-item {
-    background: transparent;
-    border:0px; padding:0px; margin:0px;
-  }
-  
-  form#context-ui-form td.setters .form-item div.form-checkboxes,
-  form#context-ui-form td.getters .form-item div.form-checkboxes,
-  form#context-ui-form td.setters .form-item div.form-radios,
-  form#context-ui-form td.getters .form-item div.form-radios {
-    background:#fff; border:1px solid #ace;
-    height:12em; font-size:.9em;
-    overflow:auto;
-  }
-
-  form#context-ui-form td.setters .form-item div.form-checkboxes .form-item,
-  form#context-ui-form td.getters .form-item div.form-checkboxes .form-item,
-  form#context-ui-form td.setters .form-item div.form-radios .form-item,
-  form#context-ui-form td.getters .form-item div.form-radios .form-item {
-    border-bottom:1px solid #e8f0f8; padding:.1em;
-    display:block;
-  }
-
-/* Block visibility controls */
-form#context-ui-form div.context-ui-block-selector,
-form#context-ui-form div.context-ui-block-regions {
-  overflow:hidden;
-}
-
-  form#context-ui-form div.context-ui-block-selector .form-item {
-    margin:0em 0em 1em;
-  }
-
-  form#context-ui-form div.context-ui-block-selector select {
-    width:100%;
-  }
-    
-form#context-ui-form div.context-ui-block-regions .item-list {
-  border-left:1px solid #ace; border-right:1px solid #ace;
-  margin:0em 0em .5em;
-}
-
-  form#context-ui-form div.context-ui-block-regions .item-list h3 {
-    background:#ace;
-    padding: .25em; margin:0em;
-  }
-  
-  form#context-ui-form div.context-ui-block-regions .item-list ul,
-  form#context-ui-form div.context-ui-block-regions .item-list ul li {
-    background:transparent; padding:0em; margin:0em;
-  }
-  
-    form#context-ui-form div.context-ui-block-regions .item-list ul li {
-      line-height:20px;
-      padding:.25em; background:#e8f0f8;
-      border-bottom:1px solid #ace;
-      border-top: 1px solid #fff;
     }
 
-      form#context-ui-form div.context-ui-block-regions .item-list ul li.disabled {
-        color:#999;
+    form#context-ui-form table td td {
+      width:auto;
+      border:0px;
       }
 
-    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools {
-      background:#ace;
-      float:right;
-      height:20px;
+    form#context-ui-form table tr.even .form-item,
+    form#context-ui-form table tr.odd .form-item {
+      white-space:normal;
+      }
+
+  form#context-ui-form table tr.hidden {
+    display:none;
     }
 
-    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span {
-      cursor:pointer;
-      float:left; display:block; text-indent:-9999px; overflow:hidden;
-      width:20px; height:20px;
+/**
+ * NS/A/V trio ========================================================
+ */
+table#context-ui-trio tr.section input.form-text {
+  font-size:200%;
+  }
+table#context-ui-trio td {
+  width:33%;
+  }
+
+/**
+ * Setter/getter items ================================================
+ */
+table#context-ui-blocks td,
+table#context-ui-items td {
+  width:50%;
+  padding:0px;
+  }
+
+form#context-ui-form td.display {}
+
+  form#context-ui-form td.display h1 {
+    border-bottom:1px solid #ddd;
+    padding:5px;
+    font: bold 9px/15px Arial,sans-serif;
+    text-transform:uppercase;
+    background:#eee;
     }
 
-    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.up {
-      background: url(widgets.gif) 0% 0% no-repeat;
+  form#context-ui-form td.display h1 a {
+    float:right;
     }
 
-    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.down {
-      background: url(widgets.gif) 50% 0% no-repeat;
+  form#context-ui-form td.display tr,
+  form#context-ui-form td.display div.item-list {
+    border:0px;
+    border-bottom:1px solid #ddd;
     }
 
-    form#context-ui-form div.context-ui-block-regions .item-list ul li div.tools span.remove {
-      background: url(widgets.gif) 100% 0% no-repeat;
+    form#context-ui-form td.display div.item-list h3 a {
+      display:block;
+      padding:5px;
+      font: bold 13px/15px Arial,sans-serif;
+      }
+
+    form#context-ui-form td.display div.item-list li {
+      padding:5px 5px 5px 15px;
+      font: 9px/10px Arial,sans-serif;
+      }
+
+    form#context-ui-form td.display div.item-list li.empty {
+      display:none;
+      }
+
+    form#context-ui-form td.display tr td {
+      padding:5px;
+      }
+
+form#context-ui-form td.widget {
+  background:#eee;
+  padding:10px;
+  }
+
+  form#context-ui-form td.widget div.widget {
+    display:none;
+    }
+
+    form#context-ui-form td.widget div.active {
+      display:block;
+      }
+
+  form#context-ui-form td.widget select,
+  form#context-ui-form td.widget input.form-text {
+    width:90%;
+    }
+
+
+  form#context-ui-form td.widget .form-item {
+    margin:0px;
+    padding:0px;
+    }
+
+    form#context-ui-form td.widget .form-item .form-item {
+      background: transparent;
+      border:0px; padding:0px; margin:0px;
+    }
+    
+    table#context-ui-blocks div.context-ui-block-selector,
+    table#context-ui-items td.widget .form-item div.form-checkboxes,
+    table#context-ui-items td.widget .form-item div.form-radios {
+      background:#fff; border:1px solid #ddd;
+      font: 11px/25px Arial,sans-serif;
+      height:20em;
+      overflow:auto;
+      }
+
+    table#context-ui-items td.widget .form-item div.form-checkboxes .form-item,
+    table#context-ui-items td.widget .form-item div.form-radios .form-item {
+      border-bottom:1px solid #eee;
+      display:block;
+      }
+
+/**
+ * Block visibility ===================================================
+ */
+#context-ui-blocks span.system-blocks {
+  color:#999;
+  }
+
+form#context-ui-form div.context-ui-block-regions,
+#context-ui-blocks td.display div.form-item,
+#context-ui-blocks td.display input.block-weight {
+  display:none;
+  }
+
+table#context-ui-blocks div.context-ui-block-selector {
+  font:11px/25px Arial,sans-serif;
+  }
+
+  table#context-ui-blocks div.context-ui-block-selector label {
+    padding:0px 5px;
+    background:#eee;
+    }
+
+  table#context-ui-blocks div.context-ui-block-selector div.form-checkboxes {
+    padding:0px; margin:0px;
+    }
+
+  table#context-ui-blocks div.context-ui-block-selector div.form-checkboxes div.form-item {
+    border-bottom:1px solid #eee;
+    }
+
+  table#context-ui-blocks div.context-ui-block-selector label.option {
+    background:transparent;
     }
