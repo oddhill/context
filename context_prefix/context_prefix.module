@@ -387,8 +387,10 @@ function _context_prefix_set($op = 'set', $type = CONTEXT_PREFIX_PATH, $prefix =
       if ($info['provider'] && $info['id']) {
         $providers = context_prefix_providers();
         $callback = $providers[$info['provider']]['callback'];
+        $args = isset($providers[$info['provider']]['callback arguments']) ? $providers[$info['provider']]['callback arguments'] : array();
+        $args[] = $info['id'];
         if (function_exists($callback)) {
-          $callback($info['id']);
+          call_user_func_array($callback, $args);
         }
       }
       break;
@@ -591,6 +593,11 @@ function context_prefix_api($op = 'insert', $context) {
         return $status;
       }
       return false;
+    case 'update':
+      if (context_prefix_api('validate', $context)) {
+        $status = db_query("UPDATE {context_prefix} SET prefix = '%s' WHERE id = '%s' AND provider = '%s'", $context['prefix'], $context['id'], $context['provider']);
+        return $status;
+      }      
     case 'delete':
       if ($context['prefix']) {
         $param = 'prefix';
@@ -771,6 +778,66 @@ function theme_context_links($links, $attributes = array('class' => 'links')) {
   }
 
   return $output;
+}
+
+/**
+ * Generates a context prefix form element that can be dropped into a
+ * FormAPI form array. Includes validation, but nsert/update must be
+ * handled by the implementing submit handler.
+ */
+function context_prefix_form($provider, $id, $prefix = '') {
+  switch (variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH)) {
+    case CONTEXT_PREFIX_PATH:
+    case CONTEXT_PREFIX_PAIR:
+      $description = t('Choose a prefix path. May contain only lowercase letters, numbers, dashes and underscores. e.g. "my-prefix"');
+      break;
+    case CONTEXT_PREFIX_SUBDOMAIN:
+      $description = t('Enter a domain registered for this context, such as "mygroup".  Do not include http://');
+      break;
+    case CONTEXT_PREFIX_DOMAIN:
+      $description = t('Enter a domain registered for this context, such as "www.example.com".  Do not include http://');
+      break;
+  }
+
+  $form = array(
+    '#tree' => TRUE,
+    '#validate' => array('context_prefix_form_validate' => array()),    
+  );
+  $form['prefix'] = array(
+    '#title' => t('Path prefix'),
+    '#type' => 'textfield',
+    '#description' => $description,
+    '#maxlength' => 255,
+    '#required' => true,
+    '#default_value' => $prefix,
+  );
+  $form['provider'] = array(
+    '#type' => 'value',
+    '#value' => $provider,
+  );
+  $form['id'] = array(
+    '#type' => 'value',
+    '#value' => $id,
+  );
+  return $form;
+}
+
+/**
+ * Validation handler for context_prefix_form().
+ */
+function context_prefix_form_validate($form) {
+  $definition = array(
+    'provider' => $form['provider']['#value'],
+    'prefix' => $form['prefix']['#value'],
+    'id' => $form['id']['#value'],
+  );
+  if (!context_prefix_api('validate', $definition)) {
+    form_set_error($form['#parents'][0], t('There was an error registering the prefix "@prefix". It is either invalid or is already taken. Please choose another.', array('@prefix' => $form['prefix']['#value'])));
+    return false;
+  }
+  else {
+    return true;
+  }
 }
 
 /**
