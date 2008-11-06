@@ -93,6 +93,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
   // The 'section' value is a field to make context definition creation
   // less confusing for basic users.
+  $form['section']['#required'] = FALSE;
   $form['section']['#title'] = t('Section');
   $form['section']['#description'] = t('Your site\'s section. !advanced', array('!advanced' => l(t('Toggle advanced settings'), $_GET['q'], array('fragment' => 'advanced', 'attributes' => array('class' => 'advanced-toggle')))));
 
@@ -504,9 +505,6 @@ function context_ui_export(&$form_state, $context) {
     $context['block'][$bid] = (array) $block;
   }
 
-  // export
-  $export = '$items[] = '. var_export($context, true) .';';
-
   // build the form
   $form = array();
   $form['help'] = array(
@@ -516,9 +514,19 @@ function context_ui_export(&$form_state, $context) {
   $form['export'] = array(
     '#type' => 'textarea',
     '#rows' => 24,
-    '#default_value' => $export,
+    '#value' => $context,
+    '#theme' => 'context_ui_export_form',
   );
   return $form;
+}
+
+/**
+ * Themes a context value into an export friendly var_export().
+ */
+function theme_context_ui_export_form($form) {
+  $form['#value'] =
+  $form['#default_value'] = '$items[] = '. var_export($form['#value'], true) .';';
+  return theme('textarea', $form);
 }
 
 /**

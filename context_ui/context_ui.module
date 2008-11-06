@@ -16,6 +16,10 @@ function context_ui_exit() {
  * Implementation of hook_theme().
  */
 function context_ui_theme() {
+  $items['context_ui_export_form'] = array(
+    'arguments' => array('form' => array()),
+    'file' => 'context_ui_admin.inc',
+  );
   $items['context_ui_item_display'] = array(
     'arguments' => array('form' => array()),
     'file' => 'context_ui_admin.inc',
