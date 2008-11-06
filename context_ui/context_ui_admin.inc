@@ -119,7 +119,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
   // Control block visibility
   init_theme(); // we need to initialize theme in order to deal with blocks
-  global $theme_key;
+  $theme_key = variable_get('theme_default', 'garland');
   $block_options =
   $block_defaults = array();
   $blocks = _context_ui_get_blocks();
@@ -769,7 +769,7 @@ function context_ui_form_process($form) {
 
   // Blocks must be done by region
   $context->block = array();
-  global $theme_key;
+  $theme_key = variable_get('theme_default', 'garland');
   // Get list of "valid" available blocks
   $valid = _context_ui_get_blocks();
   $valid = $valid[0];
@@ -841,7 +841,7 @@ function context_ui_form_submit($form, &$form_state) {
  *   A keyed (by "module_delta" convention) array of blocks.
  */
 function _context_ui_get_blocks($region = null, $context = null) {
-  global $theme_key;
+  $theme_key = variable_get('theme_default', 'garland');
   static $block_info, $valid, $system_blocks;
   // we don't static cache context blocks
   $context_blocks = $blocks = array();
