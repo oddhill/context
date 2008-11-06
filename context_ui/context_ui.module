@@ -42,6 +42,9 @@ function context_ui_theme() {
   $items['context_devel_recurse'] = array(
     'arguments' => array('form' => array()),
   );
+  $items['context_ui_links'] = array(
+    'arguments' => array('links' => NULL, 'attributes' => array('class' => 'links')),
+  );
   $items['context_ui_menu_links'] = array(
     'arguments' => array('links' => NULL, 'attributes' => array('class' => 'links')),
   );
@@ -132,7 +135,7 @@ function context_ui_context_items() {
     }
     $items['menu'] = array(
       '#title' => t('Menus'),
-      '#description' => t('Display the selected menu items as active when this context is set.'),
+      '#description' => t('Display the selected menu item as active when this context is set. To use this feature, you must use <strong>theme_context_ui_links()</strong> to theme your links. Please see README.txt for more information.'),
       '#options' => $menus,
       '#type' => 'radios',
       '#context_ui' => 'getter',
@@ -970,7 +973,7 @@ function theme_context_devel_recurse($value) {
  * simple check against active contexts before passing actual markup
  * duties onto theme_links() or its overrides.
  */
-function theme_context_ui_menu_links($links, $attributes = array('class' => 'links')) {
+function theme_context_ui_links($links, $attributes = array('class' => 'links')) {
   // Retrieve active paths set by context_ui
   $active_paths = context_get('context_ui', 'active_paths');
   $active_paths = $active_paths ? $active_paths : array();
@@ -987,6 +990,14 @@ function theme_context_ui_menu_links($links, $attributes = array('class' => 'lin
 
   // Pass modified links onto theme_links() for actual theming duties
   return theme('links', $modified_links, $attributes);
+}
+
+/**
+ * Deprecated name, now that theme_menu_links() no longer exists.
+ * Included for backwards compatibility.
+ */
+function theme_context_ui_menu_links($links, $attributes = array('class' => 'links')) {
+  return theme('context_ui_links', $links, $attributes);
 }
 
 /**
