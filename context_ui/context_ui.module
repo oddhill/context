@@ -1030,9 +1030,10 @@ function _context_ui_node_links($resest = false) {
         if (is_array($context->node)) {
           foreach ($context->node as $type) {
             if (isset($types[$type]) && node_access('create', $type)) {
-              $links[$type] = array(
+              $type_url = str_replace('_', '-', $type);
+              $links[$type_url] = array(
                 'title' => $types[$type]->name,
-                'href' => 'node/add/'. $type,
+                'href' => 'node/add/'. $type_url,
               );
             }
           }
