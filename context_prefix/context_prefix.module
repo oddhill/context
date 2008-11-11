@@ -580,13 +580,16 @@ function context_prefix_api($op = 'insert', $context) {
       }
       break;
     case 'validate':
-      if (check_plain($context['provider'])) {
+      if (check_plain($context['provider']) && preg_match('!^[a-z0-9_-]+$!', $context['prefix'])) {
         $id = db_result(db_query("SELECT id FROM {context_prefix} WHERE prefix = '%s'", $context['prefix']));
-        return $id ? false : true;
+        if (!$id) {
+          return true;
+        }
+        else if (isset($context['id']) && ($id == $context['id'])) {
+          return true;
+        }
       }
-      else {
-        return false;
-      }
+      return false;
     case 'insert':
       if (context_prefix_api('validate', $context)) {
         $status = db_query("INSERT INTO {context_prefix} (provider, prefix, id) VALUES ('%s', '%s', %d)", $context['provider'], $context['prefix'], $context['id']);
@@ -801,7 +804,7 @@ function context_prefix_form($provider, $id, $prefix = '') {
 
   $form = array(
     '#tree' => TRUE,
-    '#validate' => array('context_prefix_form_validate' => array()),    
+    '#element_validate' => array('context_prefix_form_validate'),
   );
   $form['prefix'] = array(
     '#title' => t('Path prefix'),
