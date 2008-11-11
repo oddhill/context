@@ -636,7 +636,7 @@ function theme_context_ui_admin($context_tree) {
           else {
             $links[] = l(t('Edit'), "admin/build/context/$context->cid");
             $links[] = l(t('Export'), "admin/build/context/$context->cid/export");
-            $links[] = l(t('Clone'), "admin/build/context/$context-cid/clone");
+            $links[] = l(t('Clone'), "admin/build/context/$context->cid/clone");
             $links[] = l(t('Delete'), "admin/build/context/$context->cid/delete");
           }
           if (!$context->status) {
