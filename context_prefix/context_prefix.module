@@ -101,7 +101,7 @@ function _context_prefix_init($method = CONTEXT_PREFIX_PATH) {
   
   // if $_GET and $_REQUEST are different, the path has NOT been
   // aliased. We may need to rewrite the path.
-  if (in_array($method, array(CONTEXT_PREFIX_PATH, CONTEXT_PREFIX_PAIR)) && ($_GET['q'] == $_REQUEST['q'])) {
+  if (in_array($method, array(CONTEXT_PREFIX_PATH, CONTEXT_PREFIX_PAIR)) && ($_GET['q'] == trim($_REQUEST['q'], '/'))) {
     $q = context_prefix_unprefix($q, $method);
     // there is nothing beyond the path prefix -- treat as frontpage
     if ($q == '') {
