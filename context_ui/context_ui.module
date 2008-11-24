@@ -122,7 +122,7 @@ function context_ui_context_setters() {
   // Content Types
   $nodetypes = array();
   foreach (node_get_types() as $type) {
-    $nodetypes[$type->type] = t($type->name);  // @todo: this t() is wrong
+    $nodetypes[$type->type] = t(drupal_ucfirst($type->name));
   }
   $items['node'] = array(
     '#title' => t('Content Types'),
@@ -989,4 +989,28 @@ function context_ui_section_info($reset = FALSE) {
     }
   }
   return $info;
+}
+
+/**
+ * Wrapper around menu_navigation_links() that gives themers the option of
+ * building navigation links based on an active context trail.
+ */
+function context_ui_menu_navigation_links($menu_name, $level = 0) {
+  // Retrieve original path so we can repair it after our hack.
+  $original_path = $_GET['q'];
+
+  // Retrieve the first active menu path found.
+  foreach (context_ui_active_contexts() as $context) {
+    if (isset($context->menu) && !empty($context->menu)) {
+      menu_set_active_item($context->menu);
+      break;
+    }
+  }
+
+  // Build the links requested
+  $links = menu_navigation_links($menu_name, $level);
+
+  // Repair and get out
+  menu_set_active_item($original_path);
+  return $links;
 }
