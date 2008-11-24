@@ -2,9 +2,9 @@
 // $Id$
 
 /**
- * Implementation of hook_context_items()
+ * Implementation of hook_context_setters().
  */
-function context_ui_contrib_context_items() {
+function context_ui_contrib_context_setters() {
   $items = array();
 
   // Views
@@ -50,6 +50,14 @@ function context_ui_contrib_context_items() {
     );
   }
 
+  return $items;
+}
+
+/**
+ * Implementation of hook_context_getters().
+ */
+function context_ui_contrib_context_getters() {
+  $items = array();
   // CSS Injector
   if (module_exists('css_injector')) {
     $items['css_injector'] = array(
@@ -60,7 +68,6 @@ function context_ui_contrib_context_items() {
       '#context_ui' => 'getter',
     );
   }
-
   return $items;
 }
 

@@ -37,6 +37,47 @@ function context_ui_admin() {
 }
 
 /**
+ * Recursive function that intelligently populates default values in a
+ * form from a provided array of data.
+ * 
+ * @param $form
+ *   A form API element to populate with default values.
+ * @param $data
+ *   A keyed array of data that matches the tree structure of the
+ *   form API branch it should populate.
+ * 
+ * @return
+ *   A form API element populated with default values.
+ */
+function context_ui_populate_defaults($form, $data) {
+  if ($form['#tree']) {
+    foreach (element_children($form) as $id) {
+      if (isset($data[$id])) {
+        $form[$id] = context_ui_populate_defaults($form[$id], $data[$id]);
+      }
+    }
+  }
+  else {
+    if (is_array($data) && $form['#type'] == 'checkboxes') {
+      $form['#default_value'] = array();
+      foreach ($data as $value) {
+        $form['#default_value'][$value] = $value;
+      }
+    }
+    else if (is_array($data) && $form['#type'] == 'select' && $form['#multiple'] == true) {
+      $form['#default_value'] = array();
+      foreach ($data as $value) {
+        $form['#default_value'][] = $value;
+      }
+    }
+    else {
+      $form['#default_value'] = is_array($data) ? current($data) : $data;
+    }
+  }
+  return $form;
+}
+
+/**
  * Generates the omnibus context definition editing form.
  * Note: submission and validation handlers are in context_ui_admin.inc
  *
@@ -75,21 +116,36 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
       break;
   }
 
+  // Initialize context object if it doesn't already exist
+  $context = !$context ? new StdClass() : $context;
+
   // Core context definition
   $form = array(
     '#base' => 'context_ui_form',
     '#theme' => 'context_ui_form',
   );
 
-  $form['section'] = 
-  $form['value'] =
-  $form['attribute'] =
-  $form['namespace'] = array(
-    '#type' => 'textfield',
-    '#required' => true,
-    '#maxlength' => 64,
-    '#size' => 20,
+  $form['cid'] = array(
+    '#type' => 'value',
+    '#value' => isset($context->cid) ? $context->cid : NULL,
   );
+
+  $form['system'] = array(
+    '#type' => 'value',
+    '#value' => isset($context->system) ? $context->system : 0,
+  );
+
+  foreach (array('value', 'attribute', 'namespace') as $field) {
+    $form[$field] = array(
+      '#type' => 'textfield',
+      '#required' => true,
+      '#maxlength' => 64,
+      '#size' => 20,
+      '#disabled' => isset($context->system) && $context->system ? true : false,
+      '#default_value' => isset($context->{$field}) ? $context->{$field} : '',
+    );
+  }
+  $form['section'] = $form['value'];
 
   // The 'section' value is a field to make context definition creation
   // less confusing for basic users.
@@ -99,27 +155,36 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
   $form['value']['#title'] = t('Value');
   $form['value']['#description'] = t('A system name for this context. May only contain lowercase letters, underscores, and numbers. Example: <b>science_blog</b>');
-
+  
   $form['attribute']['#title'] = t('Attribute');
-  $form['attribute']['#default_value'] = 'section';
+  $form['attribute']['#default_value'] = empty($form['attribute']['#default_value']) ? 'section' : $form['attribute']['#default_value'];
   $form['attribute']['#description'] = t('The type of context information provided in this namespace. Example: <b>section</b>');
 
   $form['namespace']['#title'] = t('Namespace');
-  $form['namespace']['#default_value'] = 'context_ui';
+  $form['namespace']['#default_value'] = empty($form['namespace']['#default_value']) ? 'context_ui' : $form['namespace']['#default_value'];
   $form['namespace']['#description'] = t('The namespace for this context definition. Example: <b>context_ui</b>');
 
   $form['items'] = array('#tree' => true);
 
+  // We need to initialize theme in order to deal with blocks
+  // and also let themes integrate against context_ui
+  init_theme();
+  $theme_key = variable_get('theme_default', 'garland');
+
   // Generate settings for context item associations
-  foreach (context_ui_types('full') as $type => $item) {
-    if (in_array($item['#type'], array('select', 'radios', 'checkboxes', 'textfield'))) {
-      $form['items'][$type] = $item;
+  foreach ((context_ui_setters() + context_ui_getters()) as $id => $info) {
+    $form['items'][$id] = $info;
+
+    // Disable element
+    $form['items'][$id]['#disabled'] = $context->system ? true : false;
+
+    // Default values
+    if (isset($context->{$id})) {
+      $form['items'][$id] = context_ui_populate_defaults($form['items'][$id], $context->{$id});
     }
   }
 
   // Control block visibility
-  init_theme(); // we need to initialize theme in order to deal with blocks
-  $theme_key = variable_get('theme_default', 'garland');
   $block_options =
   $block_defaults = array();
   $blocks = _context_ui_get_blocks();
@@ -150,14 +215,14 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
       '#type' => 'checkboxes',
       '#title' => $module,
       '#options' => $module_blocks,
+      '#disabled' => isset($context->system) && $context->system ? true : false,
     );
   }
-  
 
   $form['block']['blocks'] = array(
     '#tree' => true,
     '#theme' => 'context_ui_block_ui',
-  );  
+  );
   foreach (array_keys($regions) as $region) {
     $defaults = array();
     $midpoint = false;
@@ -234,73 +299,19 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     );
   }
 
-  if ($op == 'edit' || $op == 'clone' || ($op == 'add' && $context)) {
-    if ($context) {
-      $form['section']['#default_value'] = $context->value;
-      $form['value']['#default_value'] = $context->value;
-      $form['attribute']['#default_value'] = $context->attribute;
-      $form['namespace']['#default_value'] = $context->namespace;
-      $form['cid'] = array(
-        '#type' => 'value',
-        '#value' => isset($context->cid) ? $context->cid : NULL,
-      );
-      $form['system'] = array(
-        '#type' => 'value',
-        '#value' => $context->system,
-      );
-      if ($context->system) {
-        $form['value']['#disabled'] =
-        $form['attribute']['#disabled'] =
-        $form['namespace']['#disabled'] =
-        $form['block']['selector']['blocks']['#disabled'] =
-        $form['block']['selector']['regions']['#disabled'] = true;
-      }
-      // Set default values for each item type (except blocks)
-      foreach (context_ui_types('full') as $type => $item) {
-        if (isset($context->{$type}) && is_array($context->{$type})) {
-          if ($item['#type'] == 'checkboxes' || ($item['#type'] == 'select' && $item['#multiple'] == true)) {
-            $defaults = array();
-            foreach ($context->{$type} as $id) {
-              $defaults[$id] = $id;
-            }
-          }
-          else {
-            $defaults = current($context->{$type});
-          }
-          $form['items'][$type]['#default_value'] = $defaults;
-        }
-        $form['items'][$type]['#disabled'] = $context->system ? true : false;
-      }
-      // Blocks must be selected by region
-      if (is_array($context->block)) {
-        foreach ($regions as $region => $label) {
-          if (isset($form['block'][$region]) && is_array($form['block'][$region])) {
-            $defaults = array();
-            foreach ($form['block'][$region]['#options'] as $block => $label) {
-              if (array_search($block, $context->block) !== false) {
-                $defaults[$block] = $block;
-              }
-            }
-            $form['block'][$region]['#default_value'] = $defaults;
-          }
-          $form['block'][$region]['#disabled'] = $context->system ? true : false;
-        }
-      }
-    }
-    else {
-      return drupal_goto('admin/build/context');
-    }
-  }
-
   return $form;
 }
 
+/**
+ * Generates an abbreviated list of items for display in the
+ * setter/getter UI.
+ */
 function context_ui_item_display($type, $element) {
   // We're dealing with an item with options --
   // try to grab the display-friendly value
+  $items = array();
+  $title = l($element['#title'], $_GET['q'], array('fragment' => $type));
   if (isset($element['#options'])) {
-    $title = l($element['#title'], $_GET['q'], array('fragment' => $type));
-    $items = array();
     if (isset($element['#default_value'])) {
       if (is_array($element['#default_value'])) {
         foreach ($element['#default_value'] as $k) {
@@ -314,8 +325,11 @@ function context_ui_item_display($type, $element) {
     if (empty($items)) {
       $items[] = array('data' => '', 'class' => 'empty');
     }
-    return theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
   }
+  else if (in_array($element['#type'], array('textfield', 'textarea'))) {
+    $items[] = !empty($element['#default_value']) ? $element['#default_value'] : array('data' => '', 'class' => 'empty');
+  }
+  return theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
 }
 
 /**
@@ -350,21 +364,20 @@ function theme_context_ui_form($form) {
 
 
   // Render setters / getters as a two column split
-  $widgets = $setters = $getters = '';
-  foreach (context_ui_types('full') as $type => $item) {
-    $widgets .= "<div id='widget-$type' class='widget'>". drupal_render($form['items'][$type]) ."</div>";
-    if ($item['#context_ui'] == 'getter') {
-      $getters .= context_ui_item_display($type, $form['items'][$type]);
-    }
-    else {
-      $setters .= context_ui_item_display($type, $form['items'][$type]);
-    }
+  $widgets = '';
+  $display = "<h1>". t('Set context') ."</h1>";
+  foreach (array_keys(context_ui_setters()) as $id) {
+    $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
+    $display .= context_ui_item_display($id, $form['items'][$id]);
   }
-  $setters = "<h1>". t('Set context') ."</h1>" . $setters;
-  $getters = "<h1>". t('Respond to context') ."</h1>" . $getters; 
+  $display .= "<h1>". t('Respond to context') ."</h1>";
+  foreach (array_keys(context_ui_getters()) as $id) {
+    $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
+    $display .= context_ui_item_display($id, $form['items'][$id]);
+  }
   $rows = array(
     array(
-      array('data' => $setters . $getters, 'class' => 'display'),
+      array('data' => $display, 'class' => 'display'),
       array('data' => $widgets, 'class' => 'widget'),
     ),
   );
@@ -563,7 +576,6 @@ function context_ui_tree($op = '', $reset = FALSE) {
  */
 function context_ui_rebuild() {
   $default_contexts = context_ui_defaults();
-  $types = context_ui_types();
 
   // Grab existing user defined contexts
   // Always reset this static cache -- since this could be called
@@ -596,11 +608,11 @@ function context_ui_rebuild() {
 
       if ($context) {
         $c->cid = $context->cid;
-        context_ui_update($c);
+        context_ui_save($c);
         unset($system[$c->cid]); // remove this context from unused list
       }
       else {
-        context_ui_insert($c);
+        context_ui_save($c);
       }
     }
   }
@@ -752,18 +764,24 @@ function context_ui_form_process($form) {
   $context->value = isset($form['value']) ? $form['value'] : null;
   $context->status = 1; // all user defined contexts have status 1
 
-  // Values for most item types
-  $item_types = context_ui_types();
-  foreach ($item_types as $element_id) {
-    if (is_array($form['items'][$element_id])) {
-      foreach ($form['items'][$element_id] as $option => $value) {
+  // Retrieve values for setters
+  foreach (array_keys(context_ui_setters()) as $id) {
+    if (is_array($form['items'][$id])) {
+      foreach ($form['items'][$id] as $option => $value) {
         if ($value) {
-          $context->{$element_id}[] = $option;
+          $context->{$id}[] = $option;
         }
       }
     }
-    else if (isset($form['items'][$element_id]) && !empty($form['items'][$element_id])) {
-      $context->{$element_id}[] = $form['items'][$element_id];
+    else if (isset($form['items'][$id]) && !empty($form['items'][$id])) {
+      $context->{$id}[] = $form['items'][$id];
+    }
+  }
+
+  // Retrieve values for getters -- preserve key => val associations
+  foreach (array_keys(context_ui_getters()) as $id) {
+    if (isset($form['items'][$id]) && !empty($form['items'][$id])) {
+      $context->{$id} = $form['items'][$id];
     }
   }
 
@@ -796,7 +814,6 @@ function context_ui_form_process($form) {
  * Submit handler for main context_ui form.
  */
 function context_ui_form_submit($form, &$form_state) {
-
   switch ($form_state['clicked_button']['#id']) {
     // Send user to delete confirmation page
     case 'edit-delete':
@@ -805,21 +822,13 @@ function context_ui_form_submit($form, &$form_state) {
     // Process form values and save and/or update the context in the db
     case 'edit-submit':
       $context = context_ui_form_process($form_state['values']);
-      if (!$context->cid) {
-        $result = context_ui_insert($context);
-        if ($result) {
-          drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
-          break;
-        }
+      $result = context_ui_save($context);
+      if ($result) {
+        drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
       }
-      else if (context_ui_load($context->cid)) {
-        $result = context_ui_update($context);
-        if ($result) {
-          drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
-          break;
-        }
+      else {
+        drupal_set_message(t('An error occurred while attempting to save your context information.'), 'error');
       }
-      drupal_set_message(t('An error occurred while attempting to save your context information.'), 'error');
       break;
   }
   // rebuild cache
@@ -902,7 +911,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
 
   foreach ($blocks as $r => $sort_region) {
     if ($r !== 0) {
-      uasort($sort_region, "_context_ui_block_compare");
+      uasort($sort_region, create_function('$a, $b', 'return ($a->weight - $b->weight);'));
       $blocks[$r] = $sort_region;
     }
   }

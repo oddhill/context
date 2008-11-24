@@ -71,8 +71,8 @@ function context_ui_schema() {
     'primary key' => array('cid'),
   );
 
-  $schema['context_ui_item'] = array(
-    'description' => t('context_ui_item.'),
+  $schema['context_ui_setter'] = array(
+    'description' => t('context_ui_setter.'),
     'fields' => array(
       'type' => array(
         'description' => t('?'),
@@ -84,7 +84,7 @@ function context_ui_schema() {
       'id' => array(
         'description' => t('?'),
         'type' => 'varchar',
-        'length' => 255,
+        'length' => 32,
         'not null' => TRUE,
         'default' => '',
       ),
@@ -97,9 +97,38 @@ function context_ui_schema() {
       ),
     ),
     'unique keys' => array(
-      'key1' => array('id', 'type', 'cid'),
+      'key1' => array('type', 'id', 'cid'),
     ),
-    /* 'primary key' => array(''), */
+  );
+
+  $schema['context_ui_getter'] = array(
+    'description' => t('context_ui_getter.'),
+    'fields' => array(
+      'type' => array(
+        'description' => t('?'),
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'description' => t('?'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'cid' => array(
+        'description' => t('?'),
+        'type' => 'int',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'unique keys' => array(
+      'key1' => array('type', 'cid'),
+    ),
   );
 
   $schema['context_ui_block'] = array(
@@ -159,5 +188,30 @@ function context_ui_update_1() {
       $ret[] = update_sql("ALTER TABLE {context_ui} CHANGE COLUMN ckey attribute VARCHAR(64) NOT NULL");
       break;
   }
+  return $ret;
+}
+
+function context_ui_update_2() {
+  $ret = array();
+
+  $schema = context_ui_schema();
+
+  // Add the ui_getter table
+  db_create_table($ret, 'context_ui_getter', $schema['context_ui_getter']);
+
+  // Move getters to the getter table
+  $result = db_query("SELECT * FROM {context_ui_item} WHERE type IN ('menu', 'css_injector')");
+  while ($row = db_fetch_object($result)) {
+    $row->data = $row->id;
+    unset($row->id);
+    drupal_write_record('context_ui_getter', $row);
+  }
+  $ret[] = update_sql("DELETE FROM {context_ui_item} WHERE type IN ('menu', 'css_injector')");
+
+  // Rename ui_item to ui_setter and update keys
+  db_rename_table($ret, 'context_ui_item', 'context_ui_setter');
+  db_drop_unique_key($ret, 'context_ui_setter', 'key1');
+  _db_create_keys_sql(array('unique keys' => $schema['context_ui_setter']['unique keys']));
+
   return $ret;
 }
