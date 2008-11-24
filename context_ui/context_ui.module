@@ -197,6 +197,7 @@ function context_ui_context_getters() {
       }
       unset($menus[$key]);
     }
+    array_unshift($menus, '<strong>&lt;'. t('None') .'&gt;</strong>');
     $items['menu'] = array(
       '#title' => t('Menus'),
       '#description' => t('Display the selected menu item as active when this context is set. To use this feature, you must use <strong>theme_context_ui_links()</strong> to theme your links. Please see README.txt for more information.'),
