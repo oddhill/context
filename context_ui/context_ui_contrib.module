@@ -34,22 +34,6 @@ function context_ui_contrib_context_setters() {
     );
   }
 
-  // Outline
-  if (module_exists('outline')) {
-    $result = db_query("SELECT volume_id, title FROM {outline_volume}");
-    $options = array();
-    while ($vol = db_fetch_object($result)) {
-      $options[$vol->volume_id] = $vol->title;
-    }
-    $items['outline'] = array(
-      '#title' => t('Outline'),
-      '#description' => t('Set this context when a node in the selected volumes(s) is viewed.'),
-      '#options' => $options,
-      '#type' => 'checkboxes',
-      '#context_ui' => 'setter',
-    );
-  }
-
   return $items;
 }
 
@@ -91,11 +75,6 @@ function context_ui_contrib_nodeapi(&$node, $op, $teaser, $page) {
       while($qid = db_fetch_object($result)) {
         context_ui_set('nodequeue', $qid->qid);
       }
-    }
-
-    // Implementation of context_ui_set for outline
-    if (module_exists('outline') && $vol = $node->volume_id) {
-      context_ui_set('outline', $vol);
     }
   }
 }
