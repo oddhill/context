@@ -817,7 +817,7 @@ function context_ui_form_submit($form, &$form_state) {
   switch ($form_state['clicked_button']['#id']) {
     // Send user to delete confirmation page
     case 'edit-delete':
-      $form_state['redirect'] = 'admin/build/context/delete/'. $form_state['values']['cid'];
+      $form_state['redirect'] = 'admin/build/context/'. $form_state['values']['cid'] .'/delete';
       return;
     // Process form values and save and/or update the context in the db
     case 'edit-submit':
