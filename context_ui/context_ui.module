@@ -1,6 +1,10 @@
 <?php
 // $Id$
 
+define('CONTEXT_DISABLED', -1);
+define('CONTEXT_OVERRIDDEN', 0);
+define('CONTEXT_ENABLED', 1);
+
 /**
  * Implementation of hook_exit().
  */
@@ -295,7 +299,19 @@ function context_ui_menu() {
   $items['admin/build/context/%context_ui/delete'] = array(
     'title' => t('Delete'),
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_delete_confirm', 3),
+    'page arguments' => array('context_ui_confirm', 'delete', 3),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/build/context/%context_ui/disable'] = array(
+    'title' => t('Disable'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_confirm', 'disable', 3),
+    'type' => MENU_LOCAL_TASK,
+  );
+  $items['admin/build/context/%context_ui/enable'] = array(
+    'title' => t('Enable'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('context_ui_confirm', 'enable', 3),
     'type' => MENU_LOCAL_TASK,
   );
   foreach ($items as $path => $item) {
@@ -353,7 +369,7 @@ function context_ui_form_alter(&$form, $form_state, $form_id) {
     $module = $form['module']['#value'];
     $delta = $form['delta']['#value'];
 
-    $result = db_query("SELECT cb.cid, cb.region, c.namespace, c.attribute, c.value FROM {context_ui_block} cb JOIN {context_ui} c ON cb.cid = c.cid WHERE cb.module = '%s' AND cb.delta = '%s' AND c.status = %d", $module, $delta, 1);
+    $result = db_query("SELECT cb.cid, cb.region, c.namespace, c.attribute, c.value FROM {context_ui_block} cb JOIN {context_ui} c ON cb.cid = c.cid WHERE cb.module = '%s' AND cb.delta = '%s' AND c.status = %d", $module, $delta, CONTEXT_ENABLED);
 
     $rows = array();
     while ($row = db_fetch_object($result)) {
@@ -476,7 +492,7 @@ function context_ui_set($type, $id) {
   $result = db_query("
     SELECT c.namespace, c.attribute, c.value, c.cid FROM {context_ui_setter} ci
     JOIN {context_ui} c ON ci.cid = c.cid
-    WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = 1",
+    WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = ". CONTEXT_ENABLED,
     array_merge(array($type), $id));
   while ($context = db_fetch_object($result)) {
     // If this context already has a value, don't alter it.
@@ -549,7 +565,7 @@ function context_ui_block_list($region) {
               $block->$k = $v;
             }
             // Override default block title if a custom display title is present.
-            if ($block->title) {
+            if (!empty($block->title)) {
               // Check plain here to allow module generated titles to keep any markup.
               $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
             }
@@ -860,7 +876,7 @@ function _context_ui_node_links($resest = false) {
       // Iterate over active contexts
       foreach ($cids as $cid) {
         $context = context_ui_load($cid);
-        if (is_array($context->node)) {
+        if (!empty($context->node)) {
           foreach ($context->node as $type) {
             if (isset($types[$type]) && node_access('create', $type)) {
               $type_url = str_replace('_', '-', $type);
@@ -905,7 +921,7 @@ function context_ui_active_contexts($reset = FALSE) {
         $types[$k] = "'$v'";
       }
       $in = implode(', ', $types);
-      $result = db_query("SELECT * FROM {context_ui} WHERE status = 1");
+      $result = db_query("SELECT * FROM {context_ui} WHERE status = %d", CONTEXT_ENABLED);
       while ($context = db_fetch_object($result)) {
         if (context_get($context->namespace, $context->attribute) == $context->value) {
           $contexts[] = context_ui_load($context);

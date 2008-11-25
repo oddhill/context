@@ -35,23 +35,36 @@
 /**
  * Context admin listing page =========================================
  */
+table.context-ui,
+table.context-ui-overview {
+  width:100%;
+  }
+
 table.context-ui td {
   width:50%;
   }
 
-table.context-ui span.context-namespace {
+table.context-ui-overview td {
+  width: 25%;
+  }
+
+table.context-ui-overview td.context {
+  width: 50%;
+  }
+
+table.context-ui-overview span.context-namespace {
   font-weight:bold;
   }
 
-table.context-ui span.context-attribute {
+table.context-ui-overview span.context-attribute {
   margin-left:2em;
   }
 
-table.context-ui span.context-value {
+table.context-ui-overview span.context-value {
   margin-left:4em;
   }
 
-table.context-ui span.overridden {
+table.context-ui-overview span.disabled {
   color:#999;
   }
 
@@ -114,6 +127,11 @@ table#context-ui-trio td {
 /**
  * Setter/getter items ================================================
  */
+table#context-ui-blocks,
+table#context-ui-items {
+  width:100%;
+  }
+
 table#context-ui-blocks td,
 table#context-ui-items td {
   width:50%;

@@ -50,7 +50,7 @@ function context_ui_admin() {
  *   A form API element populated with default values.
  */
 function context_ui_populate_defaults($form, $data) {
-  if ($form['#tree']) {
+  if (!empty($form['#tree'])) {
     foreach (element_children($form) as $id) {
       if (isset($data[$id])) {
         $form[$id] = context_ui_populate_defaults($form[$id], $data[$id]);
@@ -141,7 +141,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
       '#required' => true,
       '#maxlength' => 64,
       '#size' => 20,
-      '#disabled' => isset($context->system) && $context->system ? true : false,
+      '#disabled' => !empty($context->system) ? true : false,
       '#default_value' => isset($context->{$field}) ? $context->{$field} : '',
     );
   }
@@ -176,7 +176,9 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     $form['items'][$id] = $info;
 
     // Disable element
-    $form['items'][$id]['#disabled'] = $context->system ? true : false;
+    if (isset($context->system) && $context->system) {
+      $form['items'][$id]['#disabled'] = true;
+    }
 
     // Default values
     if (isset($context->{$id})) {
@@ -279,7 +281,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     );
   }
 
-  if ($context->system) {
+  if (isset($context->system) && $context->system) {
     $form['back'] = array(
       '#type' => 'item',
       '#value' => l(t('Back'), 'admin/build/context'),
@@ -326,7 +328,7 @@ function context_ui_item_display($type, $element) {
       $items[] = array('data' => '', 'class' => 'empty');
     }
   }
-  else if (in_array($element['#type'], array('textfield', 'textarea'))) {
+  else if (isset($element['#type']) && in_array($element['#type'], array('textfield', 'textarea'))) {
     $items[] = !empty($element['#default_value']) ? $element['#default_value'] : array('data' => '', 'class' => 'empty');
   }
   return theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
@@ -398,25 +400,61 @@ function theme_context_ui_form($form) {
 }
 
 /**
- * Provide a form to confirm deletion of a context definition.
+ * Provide a form to confirm one of the provided actions.
  */
-function context_ui_delete_confirm(&$form_state, $context) {
+function context_ui_confirm(&$form_state, $op = 'delete', $context) {
+  $form = array();
   $form['cid'] = array('#type' => 'value', '#value' => $context->cid);
+  $form['action'] = array('#type' => 'value', '#value' => $op);
+  switch ($op) {
+    case 'delete':
+      $action = t('delete');
+      $message = t('This action will remove this context permanently from your site.');
+      break;
+    case 'disable':
+      $action = t('disable');
+      $message = '';
+      break;
+    case 'enable':
+      $action = t('enable');
+      $message = '';
+      break;
+  }
   $form = confirm_form($form,
-    t('Are you sure you want to delete %title?', array('%title' => $context->value)),
+    t('Are you sure you want to !action the context %title?', array('%title' => $context->value, '!action' => $action)),
     'admin/build/context',
-    t('This action cannot be undone.'),
-    t('Delete'), t('Cancel')
+    $message,
+    drupal_ucfirst($action), t('Cancel')
   );
   return $form;
 }
 
 /**
- * Submit hook for context_ui delete confirmation form.
+ * Submit handler for the context_ui_confirm form.
  */
-function context_ui_delete_confirm_submit($form, &$form_state) {
-  context_ui_delete($form_state['values']['cid']);
-  context_ui_rebuild();
+function context_ui_confirm_submit($form, &$form_state) {
+  switch ($form_state['values']['action']) {
+    case 'delete':
+      context_ui_delete($form_state['values']['cid']);
+      context_ui_rebuild();
+      break;
+    case 'disable':
+      $context = context_ui_load($form_state['values']['cid']);
+      if ($context) {
+        $context->status = CONTEXT_DISABLED;
+        context_ui_save($context);
+        context_ui_rebuild();
+      }
+      break;
+    case 'enable':
+      $context = context_ui_load($form_state['values']['cid']);
+      if ($context) {
+        $context->status = CONTEXT_ENABLED;
+        context_ui_save($context);
+        context_ui_rebuild();
+      }
+      break;
+  }
   $form_state['redirect'] = 'admin/build/context';
 }
 
@@ -601,17 +639,19 @@ function context_ui_rebuild() {
     if (!empty($c->namespace) && !empty($c->attribute)) {
       $context = context_ui_load($c);
 
-      // Check that the providing module has not explicitly set the status.
-      if (!isset($c->status)) {
-        $c->status = isset($ui[$c->namespace][$c->attribute][$c->value]) ? 0 : 1;
-      }
-
+      // If context is already present in db, merge salient fields from
+      // db version and use the rest from code.
       if ($context) {
         $c->cid = $context->cid;
+        $c->status = $context->status;
         context_ui_save($c);
         unset($system[$c->cid]); // remove this context from unused list
       }
       else {
+        // Check that the providing module has not explicitly set the status.
+        if (!isset($c->status)) {
+          $c->status = isset($ui[$c->namespace][$c->attribute][$c->value]) ? CONTEXT_OVERRIDDEN : CONTEXT_ENABLED;
+        }
         context_ui_save($c);
       }
     }
@@ -629,18 +669,20 @@ function context_ui_rebuild() {
 function theme_context_ui_admin($context_tree) {
   foreach ($context_tree as $namespace => $attributes) {
     $rows[] = array(
-      "<span class='context-namespace'>". $namespace ."</span>",
-      null
+      array('data' => "<span class='context-namespace'>". $namespace ."</span>", 'class' => 'context'),
+      null,
+      null,
     );
     foreach ($attributes as $attribute => $contexts) {
       if (is_array($contexts)) {
         $rows[] = array(
           "<span class='context-attribute'>". $attribute ."</span>",
-          null
+          null,
+          null,
         );
         foreach ($contexts as $value => $context) {
-          $links = array();
-          $class = '';
+          $links = array();          
+          $class = $enable = '';
           if ($context->system) {
             $links[] = l(t('View'), "admin/build/context/$context->cid");
             $links[] = l(t('Override'), "admin/build/context/$context->cid/clone");
@@ -651,38 +693,30 @@ function theme_context_ui_admin($context_tree) {
             $links[] = l(t('Clone'), "admin/build/context/$context->cid/clone");
             $links[] = l(t('Delete'), "admin/build/context/$context->cid/delete");
           }
-          if (!$context->status) {
-            $class = 'overridden';
-            $value = "$value (". t('Overridden') .")";
+          switch ($context->status) {
+            case CONTEXT_DISABLED:
+              $class = 'disabled';
+              $value = "$value (". t('Disabled') .")";
+              $enable = l(t('Enable'), "admin/build/context/$context->cid/enable");
+              break;
+            case CONTEXT_OVERRIDDEN:
+              $class = 'disabled';
+              $value = "$value (". t('Overridden') .")";
+              break;
+            default:
+              $enable = l(t('Disable'), "admin/build/context/$context->cid/disable");
+              break;
           }
           $rows[] = array(
             "<span class='context-value $class'>". $value ."</span>",
+            $enable,
             implode(' | ', $links),
           );
         }
       }
-      else {
-        $links = array();
-        $class = '';
-        if ($contexts->system) {
-          $links[] = l(t('View'), "admin/build/context/$contexts->cid");
-        }
-        else {
-          $links[] = l(t('Edit'), "admin/build/context/$contexts->cid");
-          $links[] = l(t('Delete'), "admin/build/context/$contexts->cid/delete");
-        }
-        if ($contexts->overridden) {
-          $class = 'overridden';
-          $key = "$key (". t('Overridden') .")";
-        }
-        $rows[] = array(
-          "<span class='context-key'>". $key ."</span>",
-          implode(' | ', $links),
-        );
-      }
     }
   }
-  return theme('table', array(t('Context'), t('Actions')), $rows, array('class' => 'context-ui'));
+  return theme('table', array(t('Context'),t('Status'),t('Actions')), $rows, array('class' => 'context-ui-overview'));
 }
 
 /**
@@ -884,7 +918,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
   $blocks = $system_blocks;
 
   // load context blocks if provided
-  if (is_object($context) && is_array($context->block)) {
+  if (is_object($context) && !empty($context->block)) {
     // iterate over context-associated blocks
     foreach ($context->block as $block) {
       $block = (object) $block;
