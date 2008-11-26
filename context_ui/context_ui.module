@@ -962,25 +962,27 @@ function context_ui_menu_set_active($links = array(), $reset = FALSE) {
   // Iterate through the provided links and build a new set of links
   // that includes active classes
   $new_links = array();
-  foreach ($links as $key => $link) {
-    if (in_array($link['href'], $active_paths)) {
-      if (isset($links['attributes'])) {
-        if (isset($links['attributes']['class'])) {
-          $link['attributes']['class'] .= ' active';
+  if (!empty($links)) {
+    foreach ($links as $key => $link) {
+      if (in_array($link['href'], $active_paths)) {
+        if (isset($links['attributes'])) {
+          if (isset($links['attributes']['class'])) {
+            $link['attributes']['class'] .= ' active';
+          }
+          else {
+            $link['attributes']['class'] = 'active';
+          }
         }
         else {
-          $link['attributes']['class'] = 'active';
+          $link['attributes'] = array('class' => 'active');
+        }
+        if (strpos(' active', $key) === FALSE) {
+          $new_links[$key .' active'] = $link;
         }
       }
       else {
-        $link['attributes'] = array('class' => 'active');
+        $new_links[$key] = $link;
       }
-      if (strpos(' active', $key) === FALSE) {
-        $new_links[$key .' active'] = $link;
-      }
-    }
-    else {
-      $new_links[$key] = $link;
     }
   }
 
