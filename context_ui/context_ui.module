@@ -867,7 +867,7 @@ function theme_context_ui_node_links() {
  * Generates an array of links (suitable for use with theme_links)
  * to the node forms of types associated with current active contexts.
  */
-function _context_ui_node_links($resest = false) {
+function _context_ui_node_links($reset = false) {
   static $links;
   if (!$links || $reset) {
     $links = array();
