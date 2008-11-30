@@ -17,6 +17,14 @@ function context_ui_exit() {
 }
 
 /**
+ * Implementation of hook_init().
+ */
+function context_ui_init() {
+  // context_ui integration against the sitewide setter
+  context_ui_set('sitewide', 1);
+}
+
+/**
  * Implementation of hook_flush_caches().
  */
 function context_ui_flush_caches() {
@@ -156,6 +164,14 @@ function context_ui_context_setters() {
       '#type' => 'checkboxes',
     );
   }
+
+  // Sitewide context
+  $items['sitewide'] = array(
+    '#title' => t('Sitewide context'),
+    '#type' => 'radios',
+    '#options' => array(0 => t('False'), 1 => t('True')),
+    '#description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
+  );
 
   return $items;
 }
