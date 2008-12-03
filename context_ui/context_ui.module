@@ -438,12 +438,21 @@ function context_ui_defaults($namespace = null) {
     $contexts = array();
     foreach (module_implements('context_define') as $module) {
       $function = $module .'_context_define';
-      $contexts = array_merge($contexts, $function());
+      $c = $function();
+      if (!empty($c)) {
+        foreach ($c as $context) {
+          $context = (object) $context;
+          $trio = "$context->namespace:$context->attribute:$context->value";
+          $contexts[$trio] = $context;
+        }
+      }
     }
+    // @TODO: Perhaps we need to cache this serialized-style!
+    // Allow other modules to alter contexts
+    drupal_alter('context_ui_defaults', $contexts);
     foreach ($contexts as $key => $context) {
-      $context = (object) $context;
       $contexts[$key] = $context;
-      $namespaces[$context->namespace][] = $context;
+      $namespaces[$context->namespace][$key] = $context;
     }
   }
   if ($namespace) {
@@ -874,7 +883,12 @@ function theme_context_ui_node_links() {
   $links = _context_ui_node_links();
   foreach ($links as $link) {
     $options = array_merge($link, array('attributes' => array('class' => 'button')));
-    $output .= l('+ '. t('Add !type', array('!type' => $link['title'])), $link['href'], $options);
+    if (!empty($link['custom'])) {
+      $output .= l($link['title'], $link['href'], $options);
+    }
+    else {
+      $output .= l('+ '. t('Add !type', array('!type' => $link['title'])), $link['href'], $options);
+    }
   }
   return $output;
 }
@@ -942,10 +956,12 @@ function context_ui_active_contexts($reset = FALSE) {
       $result = db_query("SELECT * FROM {context_ui} WHERE status = %d", CONTEXT_ENABLED);
       while ($context = db_fetch_object($result)) {
         if (context_get($context->namespace, $context->attribute) == $context->value) {
-          $contexts[] = context_ui_load($context);
+          $trio = "$context->namespace:$context->attribute:$context->value";
+          $contexts[$trio] = context_ui_load($context);
         }
       }
-    }    
+    }
+    drupal_alter('context_ui_active_contexts', $contexts);
   }
   return $contexts;
 }
