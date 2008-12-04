@@ -643,7 +643,7 @@ function context_prefix_goto($provider, $id, $path = '', $query = NULL, $fragmen
   switch ($method) {
     case CONTEXT_PREFIX_PATH:
       foreach ($prefixes as $key => $info) {
-        if ($info['id'] == $id) {
+        if ($info['id'] == $id && $info['provider'] == $provider) {
           clswitch('set', true); // Drop prefixing for context_prefix goto's
           $path = $key .'/'. $path;
           break;
@@ -653,11 +653,12 @@ function context_prefix_goto($provider, $id, $path = '', $query = NULL, $fragmen
     case CONTEXT_PREFIX_PAIR:
       clswitch('set', true);
       $prefixes = array_keys($prefixes);
+      // @TODO: this ($prefixes[0]) is really sketchy -- does it work?
       $path = $prefixes[0] .'/'. $id .'/'. $path;
       break;
     case CONTEXT_PREFIX_DOMAIN:
       foreach ($prefixes as $key => $info) {
-        if ($info['id'] == $id) {
+        if ($info['id'] == $id && $info['provider'] == $provider) {
           $path = 'http://'. $key .'/'. $path;
           break;
         }
