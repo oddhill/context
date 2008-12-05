@@ -737,7 +737,7 @@ function theme_context_ui_block_ui($form) {
   $output = '';
 
   foreach (element_children($form) as $region) {
-    $table_id = 'context-ui-region-'. $region;
+    $table_id = 'context-ui-region-'. str_replace('_', '-', $region);
     drupal_add_tabledrag($table_id, 'order', 'sibling', 'block-weight', NULL, NULL, FALSE);
     $rows = array();
     foreach (element_children($form[$region]) as $id) {
