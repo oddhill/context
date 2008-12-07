@@ -613,8 +613,8 @@ function context_ui_tree($op = '', $reset = FALSE) {
  * Cache system contexts
  */
 function context_ui_rebuild() {
-  cache_clear_all('context_setters');
-  cache_clear_all('context_getters');
+  cache_clear_all('context_setters', 'cache');
+  cache_clear_all('context_getters', 'cache');
   $default_contexts = context_ui_defaults();
 
   // Grab existing user defined contexts
