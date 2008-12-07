@@ -172,7 +172,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $theme_key = variable_get('theme_default', 'garland');
 
   // Generate settings for context item associations
-  foreach ((context_ui_setters() + context_ui_getters()) as $id => $info) {
+  foreach ((context_ui_setters(TRUE) + context_ui_getters(TRUE)) as $id => $info) {
     $form['items'][$id] = $info;
 
     // Disable element
@@ -613,6 +613,8 @@ function context_ui_tree($op = '', $reset = FALSE) {
  * Cache system contexts
  */
 function context_ui_rebuild() {
+  cache_clear_all('context_setters');
+  cache_clear_all('context_getters');
   $default_contexts = context_ui_defaults();
 
   // Grab existing user defined contexts

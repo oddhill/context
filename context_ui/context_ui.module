@@ -472,7 +472,14 @@ function context_ui_defaults($namespace = null) {
 function context_ui_setters($reset = FALSE) {
   static $setters;
   if (!isset($setters) || $reset) {
-    $setters = module_invoke_all('context_setters');
+    $cache = cache_get('context_setters', 'cache');
+    if ($cache && !$reset) {
+      $setters = $cache->data;
+    }
+    else {
+      $setters = module_invoke_all('context_setters');
+      cache_set('context_setters', $setters, 'cache', CACHE_TEMPORARY);
+    }
   }
   return $setters;
 }
@@ -484,14 +491,21 @@ function context_ui_getters($reset = FALSE) {
   static $getters;
   global $theme_key;
   if (!isset($getters) || $reset) {
-   $getters = module_invoke_all('context_getters');
+    $cache = cache_get('context_getters', 'cache');
+    if ($cache && !$reset) {
+      $getters = $cache->data;
+    }
+    else {
+      $getters = module_invoke_all('context_getters');
 
-    // Give theme developers a chance to integrate against context_ui
-    if (isset($theme_key)) {
-      $function = $theme_key .'_context_getters';
-      if (function_exists($function)) {
-        $getters = array_merge($getters, $function());
+      // Give theme developers a chance to integrate against context_ui
+      if (isset($theme_key)) {
+        $function = $theme_key .'_context_getters';
+        if (function_exists($function)) {
+          $getters = array_merge($getters, $function());
+        }
       }
+      cache_set('context_getters', $getters, 'cache', CACHE_TEMPORARY);
     }
   }
   return $getters;
