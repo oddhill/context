@@ -639,21 +639,27 @@ function context_ui_rebuild() {
 
     // Check that the context definition is reasonable
     if (!empty($c->namespace) && !empty($c->attribute)) {
-      $context = context_ui_load($c);
+      $context = context_ui_load($c, TRUE);
 
       // If context is already present in db, merge salient fields from
       // db version and use the rest from code.
-      if ($context) {
-        $c->cid = $context->cid;
+      if ($context) {        
+
         // If status has been stored as overridden but user context no longer
         // exists, we need to re-enable this system context.
-        if ($context->status == CONTEXT_OVERRIDDEN && !isset($ui[$c-namespace][$c->attribute][$c->value])) {
+        if ($context->status == CONTEXT_OVERRIDDEN && !isset($ui[$c->namespace][$c->attribute][$c->value])) {
           $c->status = CONTEXT_ENABLED;
+        }
+        // Set to overridden any contexts that were enabled
+        else if ($context->status == CONTEXT_ENABLED && isset($ui[$c->namespace][$c->attribute][$c->value])) {
+          $c->status = CONTEXT_OVERRIDDEN;
         }
         // Otherwise, just use the stored status.
         else {
           $c->status = $context->status;
         }
+
+        $c->cid = $context->cid;
         context_ui_save($c);
         unset($system[$c->cid]); // remove this context from unused list
       }

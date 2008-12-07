@@ -718,8 +718,8 @@ function context_ui_load($context, $reset = FALSE) {
 function context_ui_save($context) {
   // Insert or update the core context definition
   if (!isset($context->cid)) {
-    $existing = context_ui_load($context);
-    if ($existing && ($existing->system == $context->system)) {
+    $existing = context_ui_load($context, TRUE);
+    if ($existing && $existing->cid && ($existing->system == $context->system)) {
       return false;      
     }
     drupal_write_record('context_ui', $context);
@@ -781,7 +781,7 @@ function context_ui_save($context) {
  *   Returns true on success, false on failure.
  */
 function context_ui_delete($context) {
-  if ($context = context_ui_load($context)) {
+  if ($context = context_ui_load($context, TRUE)) {
     db_query("DELETE FROM {context_ui} WHERE cid = %d", $context->cid);
     db_query("DELETE FROM {context_ui_setter} WHERE cid = %d", $context->cid);
     db_query("DELETE FROM {context_ui_getter} WHERE cid = %d", $context->cid);
