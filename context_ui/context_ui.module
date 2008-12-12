@@ -493,7 +493,7 @@ function context_ui_normal_contexts($reset = FALSE) {
   static $normal;
   if (!$normal || $reset) {
     $normal = array();
-    $result = db_query("SELECT * FROM {context_ui} WHERE system = 0 ORDER BY namespace ASC, attribute ASC, value ASC");
+    $result = db_query("SELECT * FROM {context_ui} ORDER BY namespace ASC, attribute ASC, value ASC");
     while ($context = db_fetch_object($result)) {
       if ($context = context_ui_load($context)) {
         $normal["$context->namespace:$context->attribute:$context->value"] = $context;

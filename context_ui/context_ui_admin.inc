@@ -18,6 +18,7 @@ function context_ui_admin() {
   $output = "<h3>". t('User context definitions') ."</h3>";
   $normal = context_ui_normal_contexts();
   if ($normal) {
+    ksort($normal);
     foreach ($normal as $identifier => $context) {
       $normal[$identifier]->status = context_ui_is_enabled($context) ? 1 : -1;
     }
@@ -31,6 +32,7 @@ function context_ui_admin() {
   $output .= "<h3>". t('Module context definitions') ."</h3>";
   $default = context_ui_default_contexts();
   if ($default) {
+    ksort($default);
     foreach ($default as $identifier => $context) {
       if (context_ui_is_enabled($context)) {
         $default[$identifier]->status = empty($normal[$identifier]) ? 1 : 0;
@@ -447,7 +449,7 @@ function context_ui_confirm_submit($form, &$form_state) {
       $context = $form_state['values']['context'];
       if ($context) {
         $status = variable_get('context_status', array());
-        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_DISABLED;
+        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_UI_DISABLED;
         variable_set('context_status', $status);
         context_ui_invalidate_cache();
       }
@@ -456,7 +458,7 @@ function context_ui_confirm_submit($form, &$form_state) {
       $context = $form_state['values']['context'];
       if ($context) {
         $status = variable_get('context_status', array());
-        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_ENABLED;
+        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_UI_ENABLED;
         variable_set('context_status', $status);
         context_ui_invalidate_cache();
       }
