@@ -38,15 +38,34 @@ pressroom section.
    settings.
 6. Save the context.
 
-Menu integration
-----------------
-To enable "active" classes on your primary links menu when in a certain
-context, you need to push your menu links through
-theme_context_ui_links() instead of Drupal's regular theme_links().
-This usually can be done very easily in a theme's template.php 
-[theme]_preprocess_page hook by adding a line like the following:
+Hooks
+-----
+hook_context_ui_setters()
+  Provides an array of FormAPI definitions. Allows you to provide
+  additional conditions as context setters in the context UI form.
+  See context_ui_context_ui_setters() as an example.
 
-  $vars['primary_links'] = theme('context_ui_links', menu_primary_links());
+hook_context_ui_getters()
+  Provides an array of FormAPI definitions. Allows you to provide
+  additional context getters that respond to a set context in the
+  context UI form. See context_ui_context_ui_getters() as an
+  example.
+
+hook_context_ui_define()
+  Provides an array of exported context definitions. Allows you
+  to provide default contexts in your modules.
+
+hook_context_ui_default_contexts_alter()
+  A drupal_alter() that acts on the collected array of default
+  contexts before they are cached.
+
+hook_context_ui_active_contexts_alter()
+  A drupal_alter() that acts on the collected array of active
+  contexts on a given page load.
+
+hook_context_ui_node_links_alter()
+  A drupal_alter() that acts on the a links array of node
+  creation and other contextual links for a given page load.
 
 Maintainers
 -----------

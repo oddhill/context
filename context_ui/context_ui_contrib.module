@@ -4,7 +4,7 @@
 /**
  * Implementation of hook_context_setters().
  */
-function context_ui_contrib_context_setters() {
+function context_ui_contrib_context_ui_setters() {
   $items = array();
 
   // Views
@@ -40,7 +40,7 @@ function context_ui_contrib_context_setters() {
 /**
  * Implementation of hook_context_getters().
  */
-function context_ui_contrib_context_getters() {
+function context_ui_contrib_context_ui_getters() {
   $items = array();
   // CSS Injector
   if (module_exists('css_injector')) {
@@ -80,7 +80,7 @@ function context_ui_contrib_nodeapi(&$node, $op, $teaser, $page) {
 }
 
 /**
- * Implementation of hook_views_pre_query().
+ * Implementation of hook_views_pre_view().
  */
 function context_ui_contrib_views_pre_view($display_id, $args) {
   if ($display_id->display_handler->display->display_plugin == 'page') {

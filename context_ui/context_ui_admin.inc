@@ -1,5 +1,6 @@
 <?php
 // $Id$
+
 /**
  * Page callback for context_ui admin landing page.
  */
@@ -10,24 +11,35 @@ function context_ui_admin() {
   // rebuild blocks
   _block_rehash();
 
-  // rebuild default contexts
-  context_ui_rebuild();
+  // rebuild context cache
+  context_ui_invalidate_cache();
 
-  // User defined contexts
+  // user defined contexts
   $output = "<h3>". t('User context definitions') ."</h3>";
-  $contexts = context_ui_tree('ui');
-  if ($contexts) {
-    $output .= theme('context_ui_admin', $contexts);
+  $normal = context_ui_normal_contexts();
+  if ($normal) {
+    foreach ($normal as $identifier => $context) {
+      $normal[$identifier]->status = context_ui_is_enabled($context) ? 1 : -1;
+    }
+    $output .= theme('context_ui_admin', $normal);
   }
   else {
     $output .= "<p>". t('Please !add_context to get started.', array('!add_context' => l(t('add a context'), 'admin/build/context/add'))) ."</p>";
   }
 
-  // Module defined contexts
+  // module defined contexts
   $output .= "<h3>". t('Module context definitions') ."</h3>";
-  $contexts = context_ui_tree('system');
-  if ($contexts) {
-    $output .= theme('context_ui_admin', $contexts);
+  $default = context_ui_default_contexts();
+  if ($default) {
+    foreach ($default as $identifier => $context) {
+      if (context_ui_is_enabled($context)) {
+        $default[$identifier]->status = empty($normal[$identifier]) ? 1 : 0;
+      }
+      else {
+        $default[$identifier]->status = -1;
+      }
+    }
+    $output .= theme('context_ui_admin', $default);
   }
   else {
     $output .= "<p>". t('There are currently no module defined contexts.') ."</p>";
@@ -49,11 +61,11 @@ function context_ui_admin() {
  * @return
  *   A form API element populated with default values.
  */
-function context_ui_populate_defaults($form, $data) {
+function context_ui_default_values($form, $data) {
   if (!empty($form['#tree'])) {
     foreach (element_children($form) as $id) {
       if (isset($data[$id])) {
-        $form[$id] = context_ui_populate_defaults($form[$id], $data[$id]);
+        $form[$id] = context_ui_default_values($form[$id], $data[$id]);
       }
     }
   }
@@ -92,13 +104,7 @@ function context_ui_populate_defaults($form, $data) {
 function context_ui_form(&$form_state, $op, $context = NULL) {
   switch ($op) {
     case 'add':
-      if (is_object($context)) {
-        $context->system = true;
-        if ($exists = context_ui_load($context)) {
-          drupal_set_message(t('A module is already providing a context with this space/key/value identifier. Your context definition will override its settings.'));
-        }
-        $context->system = false;
-      }
+      drupal_set_title(t('Add a new context'));
       break;
     case 'edit':
       if (!$context->system) {
@@ -182,7 +188,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
     // Default values
     if (isset($context->{$id})) {
-      $form['items'][$id] = context_ui_populate_defaults($form['items'][$id], $context->{$id});
+      $form['items'][$id] = context_ui_default_values($form['items'][$id], $context->{$id});
     }
   }
 
@@ -281,7 +287,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     );
   }
 
-  if (isset($context->system) && $context->system) {
+  if (!empty($context->system)) {
     $form['back'] = array(
       '#type' => 'item',
       '#value' => l(t('Back'), 'admin/build/context'),
@@ -294,7 +300,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     );
   }
 
-  if ($op == 'edit') {
+  if (empty($context->system) && $op == 'edit') {
     $form['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete'),
@@ -404,7 +410,7 @@ function theme_context_ui_form($form) {
  */
 function context_ui_confirm(&$form_state, $op = 'delete', $context) {
   $form = array();
-  $form['cid'] = array('#type' => 'value', '#value' => $context->cid);
+  $form['context'] = array('#type' => 'value', '#value' => $context);
   $form['action'] = array('#type' => 'value', '#value' => $op);
   switch ($op) {
     case 'delete':
@@ -435,23 +441,24 @@ function context_ui_confirm(&$form_state, $op = 'delete', $context) {
 function context_ui_confirm_submit($form, &$form_state) {
   switch ($form_state['values']['action']) {
     case 'delete':
-      context_ui_delete($form_state['values']['cid']);
-      context_ui_rebuild();
+      context_ui_delete($form_state['values']['context']);
       break;
     case 'disable':
-      $context = context_ui_load($form_state['values']['cid']);
+      $context = $form_state['values']['context'];
       if ($context) {
-        $context->status = CONTEXT_DISABLED;
-        context_ui_save($context);
-        context_ui_rebuild();
+        $status = variable_get('context_status', array());
+        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_DISABLED;
+        variable_set('context_status', $status);
+        context_ui_invalidate_cache();
       }
       break;
     case 'enable':
-      $context = context_ui_load($form_state['values']['cid']);
+      $context = $form_state['values']['context'];
       if ($context) {
-        $context->status = CONTEXT_ENABLED;
-        context_ui_save($context);
-        context_ui_rebuild();
+        $status = variable_get('context_status', array());
+        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_ENABLED;
+        variable_set('context_status', $status);
+        context_ui_invalidate_cache();
       }
       break;
   }
@@ -511,7 +518,6 @@ function context_ui_import_submit($form, &$form_state) {
   }
   if (is_array($context)) {
     $context = (object) $context;
-    $context->system = FALSE;
     if ($exists = context_ui_load($context)) {
       drupal_set_message(t('A user-defined context definition with this space/key/value identifier already exists. Please remove the existing context before importing this definition.'), 'error');
       $form_state['redirect'] = 'admin/build/context';
@@ -581,158 +587,64 @@ function theme_context_ui_export_form($form) {
 }
 
 /**
- * Generates an array tree representation of available space/key/value context definitions.
- */
-function context_ui_tree($op = '', $reset = FALSE) {
-  static $tree;
-  if (!$tree || $reset) {
-    $tree = array(
-      'system' => array(),
-      'ui' => array(),
-    );
-    $result = db_query("
-      SELECT *
-      FROM {context_ui}
-      ORDER BY system ASC, namespace ASC, attribute ASC, value ASC");
-    while ($context = db_fetch_object($result)) {
-      $branch = $context->system ? 'system' : 'ui';
-      $tree[$branch][$context->namespace][$context->attribute][$context->value] = $context;
-    }
-  }
-  switch ($op) {
-    case 'ui':
-      return $tree['ui'];
-    case 'system':
-      return $tree['system'];
-    default:
-      return $tree;
-  }
-}
-
-/**
- * Cache system contexts
- */
-function context_ui_rebuild() {
-  cache_clear_all('context_setters', 'cache');
-  cache_clear_all('context_getters', 'cache');
-  $default_contexts = context_ui_defaults();
-
-  // Grab existing user defined contexts
-  // Always reset this static cache -- since this could be called
-  // before a user-defined context is inserted on submit.
-  $ui = context_ui_tree('ui', TRUE);
-
-  // Retrieve existing system contexts
-  $system = array();
-  $result = db_query("SELECT * FROM {context_ui} WHERE system = 1");
-  while ($existing = db_fetch_object($result)) {
-    $system[$existing->cid] = true;
-  }
-
-  // Insert or update system contexts
-  foreach ($default_contexts as $c) {
-    // Check that the providing module has not explicitly set system flag.
-    // If it has, we trust that the module knows what it is doing.
-    if (!isset($c->system)) {
-      $c->system = 1;
-    }
-
-    // Check that the context definition is reasonable
-    if (!empty($c->namespace) && !empty($c->attribute)) {
-      $context = context_ui_load($c, TRUE);
-
-      // If context is already present in db, merge salient fields from
-      // db version and use the rest from code.
-      if ($context) {        
-
-        // If status has been stored as overridden but user context no longer
-        // exists, we need to re-enable this system context.
-        if ($context->status == CONTEXT_OVERRIDDEN && !isset($ui[$c->namespace][$c->attribute][$c->value])) {
-          $c->status = CONTEXT_ENABLED;
-        }
-        // Set to overridden any contexts that were enabled
-        else if ($context->status == CONTEXT_ENABLED && isset($ui[$c->namespace][$c->attribute][$c->value])) {
-          $c->status = CONTEXT_OVERRIDDEN;
-        }
-        // Otherwise, just use the stored status.
-        else {
-          $c->status = $context->status;
-        }
-
-        $c->cid = $context->cid;
-        context_ui_save($c);
-        unset($system[$c->cid]); // remove this context from unused list
-      }
-      else {
-        // Check that the providing module has not explicitly set the status.
-        if (!isset($c->status)) {
-          $c->status = isset($ui[$c->namespace][$c->attribute][$c->value]) ? CONTEXT_OVERRIDDEN : CONTEXT_ENABLED;
-        }
-        context_ui_save($c);
-      }
-    }
-  }
-  
-  // Remove any unused contexts
-  foreach ($system as $c => $dummy) {
-    context_ui_delete($c);
-  }
-}
-
-/**
  * Generates the main context_ui admin page with a tiered context listing.
  */
-function theme_context_ui_admin($context_tree) {
-  foreach ($context_tree as $namespace => $attributes) {
-    $rows[] = array(
-      array('data' => "<span class='context-namespace'>". $namespace ."</span>", 'class' => 'context'),
-      null,
-      null,
-    );
-    foreach ($attributes as $attribute => $contexts) {
-      if (is_array($contexts)) {
-        $rows[] = array(
-          "<span class='context-attribute'>". $attribute ."</span>",
-          null,
-          null,
-        );
-        foreach ($contexts as $value => $context) {
-          $links = array();          
-          $class = $enable = '';
-          if ($context->system) {
-            $links[] = l(t('View'), "admin/build/context/$context->cid");
-            $links[] = l(t('Override'), "admin/build/context/$context->cid/clone");
-          }
-          else {
-            $links[] = l(t('Edit'), "admin/build/context/$context->cid");
-            $links[] = l(t('Export'), "admin/build/context/$context->cid/export");
-            $links[] = l(t('Clone'), "admin/build/context/$context->cid/clone");
-            $links[] = l(t('Delete'), "admin/build/context/$context->cid/delete");
-          }
-          switch ($context->status) {
-            case CONTEXT_DISABLED:
-              $class = 'disabled';
-              $value = "$value (". t('Disabled') .")";
-              $enable = l(t('Enable'), "admin/build/context/$context->cid/enable");
-              break;
-            case CONTEXT_OVERRIDDEN:
-              $class = 'disabled';
-              $value = "$value (". t('Overridden') .")";
-              break;
-            default:
-              $enable = l(t('Disable'), "admin/build/context/$context->cid/disable");
-              break;
-          }
-          $rows[] = array(
-            "<span class='context-value $class'>". $value ."</span>",
-            $enable,
-            implode(' | ', $links),
-          );
-        }
-      }
+function theme_context_ui_admin($contexts) {
+  $rows =
+  $headings = array();
+  foreach ($contexts as $key => $context) {
+    $row = array();
+
+    $namespace = $context->namespace;
+    $attribute = $context->attribute;
+    $value = $context->value;
+    if ($context->system) {
+      $identifier = str_replace(':', '-', $key);
     }
+    else {
+      $identifier = $context->cid;
+    }
+
+    // If no heading has been printed for this n/a pair, do so
+    if (!isset($rows["$namespace:$attribute"])) {
+      $row = array("<span class='context-namespace'>$namespace &gt; $attribute</span>", '', '');
+      $rows["$namespace:$attribute"] = $row;
+    }
+
+    // Add row for context
+    $links = array();          
+    $class = $enable = '';
+    if ($context->system) {
+      $links[] = l(t('View'), "admin/build/context/$identifier");
+      $links[] = l(t('Override'), "admin/build/context/$identifier/clone");
+    }
+    else {
+      $links[] = l(t('Edit'), "admin/build/context/$identifier");
+      $links[] = l(t('Export'), "admin/build/context/$identifier/export");
+      $links[] = l(t('Clone'), "admin/build/context/$identifier/clone");
+      $links[] = l(t('Delete'), "admin/build/context/$identifier/delete");
+    }
+    switch ($context->status) {
+      case CONTEXT_UI_DISABLED:
+        $class = 'disabled';
+        $value = "$value (". t('Disabled') .")";
+        $enable = l(t('Enable'), "admin/build/context/$identifier/enable");
+        break;
+      case CONTEXT_UI_OVERRIDDEN:
+        $class = 'disabled';
+        $value = "$value (". t('Overridden') .")";
+        break;
+      default:
+        $enable = l(t('Disable'), "admin/build/context/$identifier/disable");
+        break;
+    }
+    $rows[$key] = array(
+      "<span class='context-value $class'>". $value ."</span>",
+      $enable,
+      implode(' | ', $links),
+    );
   }
-  return theme('table', array(t('Context'),t('Status'),t('Actions')), $rows, array('class' => 'context-ui-overview'));
+  return theme('table', array(t('Context'),t('Status'),t('Actions')), $rows, array('class' => 'context-ui-overview')); 
 }
 
 /**
@@ -786,7 +698,6 @@ function context_ui_form_validate($form, &$form_state) {
       $context->namespace = $form_state['values']['namespace'];
       $context->attribute = $form_state['values']['attribute'];
       $context->value = $form_state['values']['value'];
-      $context->system = 0;
       if ($exists = context_ui_load($context)) {
         form_set_error($form_state['values']['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
       }
@@ -881,8 +792,6 @@ function context_ui_form_submit($form, &$form_state) {
       }
       break;
   }
-  // rebuild cache
-  context_ui_rebuild();
   $form_state['redirect'] = 'admin/build/context';
 }
 

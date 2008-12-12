@@ -27,22 +27,6 @@ function context_ui_schema() {
         'unsigned' => TRUE,
         'not null' => TRUE,
       ),
-      'system' => array(
-        'description' => t('?'),
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => TRUE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
-      'status' => array(
-        'description' => t('?'),
-        'type' => 'int',
-        'size' => 'tiny',
-        'unsigned' => FALSE,
-        'not null' => TRUE,
-        'default' => 0,
-      ),
       'namespace' => array(
         'description' => t('?'),
         'type' => 'varchar',
@@ -66,7 +50,7 @@ function context_ui_schema() {
       ),
     ),
     'unique keys' => array(
-      'key1' => array('system', 'namespace', 'attribute', 'value'),
+      'key1' => array('namespace', 'attribute', 'value'),
     ),
     'primary key' => array('cid'),
   );
@@ -224,6 +208,32 @@ function context_ui_update_6001() {
     db_drop_unique_key($ret, 'context_ui', 'key1');
     db_change_field($ret, 'context_ui', 'status', 'status', $schema['context_ui']['fields']['status'], array('unique keys' => $schema['context_ui']['unique keys']));
   }
+
+  return $ret;
+}
+
+function context_ui_update_6002() {
+  $ret = array();
+
+  $result = db_query("SELECT cid FROM {context_ui} WHERE system = 1");
+  $cids = array();
+  while ($row = db_fetch_object($result)) {
+    $cids[] = $row->cid;
+  }
+  $cids = implode(',', $cids);
+  $ret[] = update_sql("DELETE FROM {context_ui} WHERE cid IN ($cids)");
+  $ret[] = update_sql("DELETE FROM {context_ui_setter} WHERE cid IN ($cids)");
+  $ret[] = update_sql("DELETE FROM {context_ui_getter} WHERE cid IN ($cids)");
+  $ret[] = update_sql("DELETE FROM {context_ui_block} WHERE cid IN ($cids)");
+
+  db_drop_field($ret, 'context_ui', 'system');
+  db_drop_field($ret, 'context_ui', 'status');
+
+  $schema = context_ui_schema();
+
+  // Update status field
+  db_drop_unique_key($ret, 'context_ui', 'key1');
+  db_add_unique_key($ret, 'context_ui', 'key1', $schema['context_ui']['unique keys']['key1']);
 
   return $ret;
 }

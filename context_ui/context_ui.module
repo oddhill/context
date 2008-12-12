@@ -1,9 +1,9 @@
 <?php
 // $Id$
 
-define('CONTEXT_DISABLED', -1);
-define('CONTEXT_OVERRIDDEN', 0);
-define('CONTEXT_ENABLED', 1);
+define('CONTEXT_UI_DISABLED', -1);
+define('CONTEXT_UI_OVERRIDDEN', 0);
+define('CONTEXT_UI_ENABLED', 1);
 
 /**
  * Implementation of hook_exit().
@@ -11,8 +11,7 @@ define('CONTEXT_ENABLED', 1);
 function context_ui_exit() {
   // Rebuild context_ui "cache".
   if ($_GET['q'] == 'admin/build/modules') {
-    module_load_include('inc', 'context_ui', 'context_ui_admin');
-    context_ui_rebuild();
+    context_ui_invalidate_cache();
   }
 }
 
@@ -28,8 +27,7 @@ function context_ui_init() {
  * Implementation of hook_flush_caches().
  */
 function context_ui_flush_caches() {
-  module_load_include('inc', 'context_ui', 'context_ui_admin');
-  context_ui_rebuild();
+  context_ui_invalidate_cache();
   return array();
 }
 
@@ -112,7 +110,7 @@ function context_ui_block($op = 'list', $delta = 0, $edit = array()) {
 }
 
 /**
- * Implementation of hook_context_setters().
+ * Implementation of hook_context_ui_setters().
  *
  * Allows modules to integrate with context_ui and provide their native
  * objects as options for setting a context definition. The
@@ -128,7 +126,7 @@ function context_ui_block($op = 'list', $delta = 0, $edit = array()) {
  *   stored and passed to context_ui_set(), so the integrating module
  *   should use a unique (within its namespace) / usable identifier.
  */
-function context_ui_context_setters() {
+function context_ui_context_ui_setters() {
   $items = array();
 
   // Content Types
@@ -197,7 +195,7 @@ function context_ui_context_setters() {
  *   stored and passed to context_ui_set(), so the integrating module
  *   should use a unique (within its namespace) / usable identifier.
  */
-function context_ui_context_getters() {
+function context_ui_context_ui_getters() {
   $items = array();
 
   // Menu
@@ -284,47 +282,47 @@ function context_ui_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
-  $items['admin/build/context/%context_ui'] = array(
+  $items['admin/build/context/%context_ui_menu'] = array(
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_form', 'edit', 3),
     'type' => MENU_CALLBACK,
   );
-  $items['admin/build/context/%context_ui/edit'] = array(
+  $items['admin/build/context/%context_ui_menu/edit'] = array(
     'title' => t('Edit'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_form', 'edit', 3),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -1,
   );
-  $items['admin/build/context/%context_ui/edit/items'] = array(
+  $items['admin/build/context/%context_ui_menu/edit/items'] = array(
     'title' => t('Core attributes'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
-  $items['admin/build/context/%context_ui/clone'] = array(
+  $items['admin/build/context/%context_ui_menu/clone'] = array(
     'title' => t('Clone'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_form', 'clone', 3),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context_ui/export'] = array(
+  $items['admin/build/context/%context_ui_menu/export'] = array(
     'title' => t('Export'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_export', 3),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context_ui/delete'] = array(
+  $items['admin/build/context/%context_ui_menu/delete'] = array(
     'title' => t('Delete'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_confirm', 'delete', 3),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context_ui/disable'] = array(
+  $items['admin/build/context/%context_ui_menu/disable'] = array(
     'title' => t('Disable'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_confirm', 'disable', 3),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context_ui/enable'] = array(
+  $items['admin/build/context/%context_ui_menu/enable'] = array(
     'title' => t('Enable'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_confirm', 'enable', 3),
@@ -335,8 +333,23 @@ function context_ui_menu() {
     $items[$path]['access arguments'] = array('administer site configuration');
     $items[$path]['file'] = 'context_ui_admin.inc';
   }
-
   return $items;
+}
+
+/**
+ * Helper loader to parse menu arguments and load contexts accordingly.
+ */
+function context_ui_menu_load($arg) {
+  if (is_numeric($arg)) {
+    return context_ui_load($arg);
+  }
+  else {
+    $identifier = str_replace('-', ':', $arg);
+    $default = context_ui_default_contexts();
+    if (!empty($default[$identifier])) {
+      return $default[$identifier];
+    }
+  }
 }
 
 /**
@@ -423,7 +436,7 @@ function context_ui_user($op, &$edit, &$account, $category = NULL) {
 }
 
 /**
- * Invokes hook_context_define() to collect all contexts provided in code by modules.
+ * Invokes hook_context_ui_define() to collect all contexts provided in code by modules.
  *
  * @param $space
  *   An optional string namespace identifier. If provided, only context definitions with the
@@ -432,53 +445,233 @@ function context_ui_user($op, &$edit, &$account, $category = NULL) {
  * @return
  *   An array of context objects.
  */
-function context_ui_defaults($namespace = null) {
-  static $contexts, $namespaces;
-  if (!$contexts) {
+function context_ui_default_contexts($reset = FALSE) {
+  static $contexts;
+  if (!$contexts || $reset) {
     $contexts = array();
+    foreach (module_implements('context_ui_define') as $module) {
+      $function = $module .'_context_ui_define';
+      $c = $function();
+      if (!empty($c)) {
+        foreach ($c as $context) {
+          $context = (object) $context;
+          $context->system = 1;
+          $identifier = "$context->namespace:$context->attribute:$context->value";
+          $contexts[$identifier] = $context;
+        }
+      }
+    }
+    // Backwards-compatibility support -- this is not hugely detrimental as
+    // for most page loads the result of this function is cached.
+    // @TODO: will be removed for 1.0 stable release.
     foreach (module_implements('context_define') as $module) {
+      drupal_set_message(t('The module <strong>!modulename</strong> is using <em>hook_context_define()</em> which has been renamed to <em>hook_context_ui_define()</em>. Support for this will be dropped soon -- please update your modules.', array('!modulename' => $module)), 'warning');
       $function = $module .'_context_define';
       $c = $function();
       if (!empty($c)) {
         foreach ($c as $context) {
           $context = (object) $context;
-          $trio = "$context->namespace:$context->attribute:$context->value";
-          $contexts[$trio] = $context;
+          $context->system = 1;
+          $identifier = "$context->namespace:$context->attribute:$context->value";
+          $contexts[$identifier] = $context;
         }
       }
     }
-    // @TODO: Perhaps we need to cache this serialized-style!
     // Allow other modules to alter contexts
-    drupal_alter('context_ui_defaults', $contexts);
+    drupal_alter('context_ui_default_contexts', $contexts);
     foreach ($contexts as $key => $context) {
       $contexts[$key] = $context;
-      $namespaces[$context->namespace][$key] = $context;
-    }
-  }
-  if ($namespace) {
-    if (isset($namespaces[$namespace])) {
-      return $namespaces[$namespace];
-    }
-    else {
-      return array();
     }
   }
   return $contexts;
 }
 
 /**
- * Invokes hook_context_setters() to provide an array of setters that may be associated with a context.
+ * Generates an array tree representation of available space/key/value context definitions.
+ */
+function context_ui_normal_contexts($reset = FALSE) {
+  static $normal;
+  if (!$normal || $reset) {
+    $normal = array();
+    $result = db_query("SELECT * FROM {context_ui} WHERE system = 0 ORDER BY namespace ASC, attribute ASC, value ASC");
+    while ($context = db_fetch_object($result)) {
+      if ($context = context_ui_load($context)) {
+        $normal["$context->namespace:$context->attribute:$context->value"] = $context;
+      }
+    }
+  }
+  return $normal;
+}
+
+/**
+ * Wrapper around cache_get() to make it easier for context to pull different
+ * datastores from a single cache row.
+ */
+function context_ui_cache_get($key, $reset = FALSE) {
+  static $cache;
+  if (!isset($cache) || $reset) {
+    $cache = cache_get('context', 'cache');
+    $cache = $cache ? $cache->data : array();
+  }
+  return !empty($cache[$key]) ? $cache[$key] : FALSE;
+}
+
+/**
+ * Wrapper around cache_set() to make it easier for context to write different
+ * datastores to a single cache row.
+ */
+function context_ui_cache_set($key, $value) {
+  $cache = cache_get('context', 'cache');
+  $cache = $cache ? $cache->data : array();
+  $cache[$key] = $value;
+  cache_set('context', $cache, 'cache', CACHE_TEMPORARY);  
+}
+
+/**
+ * Retrieves all enabled contexts from the cache.
+ */
+function context_ui_enabled_contexts($namespace = NULL, $reset = FALSE) {
+  static $enabled;
+  static $namespaces;
+  if (!isset($enabled) || $reset) {
+    $cache = context_ui_cache_get('enabled');
+    if ($cache && !$reset) {
+      $enabled = $cache;
+    }
+    else {
+      $default_contexts = context_ui_default_contexts(NULL, TRUE);
+
+      // Grab existing user defined contexts
+      // Always reset this static cache -- since this could be called
+      // before a user-defined context is inserted on submit.
+      $normal_contexts = context_ui_normal_contexts(TRUE);
+
+      foreach ($normal_contexts as $context) {
+        if (context_ui_is_enabled($context)) {
+          $identifier = "$context->namespace:$context->attribute:$context->value";
+          $enabled[$identifier] = $context;
+        }
+      }
+
+      foreach ($default_contexts as $context) {
+        if (context_ui_is_enabled($context)) {
+          $identifier = "$context->namespace:$context->attribute:$context->value";
+          if (!isset($enabled[$identifier])) {
+            $enabled[$identifier] = $context;
+          }
+        }
+      }
+
+      // Set the cache
+      context_ui_cache_set('enabled', $enabled);
+    }
+    foreach ($enabled as $identifier => $context) {
+      if (!isset($namespaces[$context->namespace])) {
+        $namespaces[$context->namespace] = array();
+      }
+      $namespaces[$context->namespace][$identifier] = $context;
+    }
+  }
+  if (!empty($namespace)) {
+    return !empty($namespaces[$namespace]) ? $namespaces[$namespace] : array();
+  }
+  return $enabled;
+}
+
+/**
+ * Loads any active contexts with associated getter items. This should be run
+ * at a late stage of the page load to ensure that relevant contexts have been set.
+ */
+function context_ui_active_contexts($reset = FALSE) {
+  static $contexts;
+  if (!isset($contexts) || $reset) {
+    $contexts = array();
+    $types = array_keys(context_ui_getters());
+    if ($types) {
+      foreach ($types as $k => $v) {
+        $types[$k] = "'$v'";
+      }
+      $in = implode(', ', $types);
+      $cache = context_ui_enabled_contexts();
+      foreach ($cache as $context) {
+        if (context_get($context->namespace, $context->attribute) == $context->value) {
+          $identifier = "$context->namespace:$context->attribute:$context->value";
+          $contexts[$identifier] = $context;
+        }
+      }
+    }
+    drupal_alter('context_ui_active_contexts', $contexts);
+  }
+  return $contexts;
+}
+
+/**
+ * Loads an associative array of setters => context identifiers to allow
+ * contexts to be set by different setter conditions. Called by context_ui_set().
+ */
+function context_ui_setter_map($reset = FALSE) {
+  static $setter_map;
+  if (!isset($setter_map) || $reset) {
+    $cache = context_ui_cache_get('setter_map');
+    if ($cache && !$reset) {
+      $setter_map = $cache;
+    }
+    else {
+      $enabled = context_ui_enabled_contexts();
+      foreach (array_keys(context_ui_setters()) as $setter) {
+        $setter_map[$setter] = array();
+        foreach ($enabled as $identifier => $context) {
+          if (!empty($context->{$setter})) {
+            if (is_array($context->{$setter})) {
+              foreach ($context->{$setter} as $value) {
+                $setter_map[$setter][$value] = $identifier;
+              }
+            }
+            else if (is_string($context->{$setter})) {
+              $value = $context->{$setter};
+              $setter_map[$setter][$value] = $identifier;
+            }
+          }
+        }
+      }
+      context_ui_cache_set('setter_map', $setter_map);
+    }
+  }
+  return $setter_map;
+}
+
+/**
+ * Returns TRUE or FALSE based on whether a given context definition is enabled.
+ */
+function context_ui_is_enabled($context) {
+  $status = variable_get('context_status', array());
+  $identifier = "$context->namespace:$context->attribute:$context->value";
+  if (isset($status[$identifier]) && $status[$identifier] == CONTEXT_UI_DISABLED) {
+    return FALSE;
+  }
+  return TRUE;
+}
+
+/**
+ * Invalidates all context caches().
+ */
+function context_ui_invalidate_cache() {
+  cache_clear_all('context', 'cache');
+}
+
+/**
+ * Invokes hook_context_ui_setters() to provide an array of setters that may be associated with a context.
  */
 function context_ui_setters($reset = FALSE) {
   static $setters;
   if (!isset($setters) || $reset) {
-    $cache = cache_get('context_setters', 'cache');
+    $cache = context_ui_cache_get('setters');
     if ($cache && !$reset) {
-      $setters = $cache->data;
+      $setters = $cache;
     }
     else {
-      $setters = module_invoke_all('context_setters');
-      cache_set('context_setters', $setters, 'cache', CACHE_TEMPORARY);
+      $setters = module_invoke_all('context_ui_setters');
+      context_ui_cache_set('setters', $setters);
     }
   }
   return $setters;
@@ -491,21 +684,21 @@ function context_ui_getters($reset = FALSE) {
   static $getters;
   global $theme_key;
   if (!isset($getters) || $reset) {
-    $cache = cache_get('context_getters', 'cache');
+    $cache = context_ui_cache_get('getters');
     if ($cache && !$reset) {
-      $getters = $cache->data;
+      $getters = $cache;
     }
     else {
-      $getters = module_invoke_all('context_getters');
+      $getters = module_invoke_all('context_ui_getters');
 
       // Give theme developers a chance to integrate against context_ui
       if (isset($theme_key)) {
-        $function = $theme_key .'_context_getters';
+        $function = $theme_key .'_context_ui_getters';
         if (function_exists($function)) {
           $getters = array_merge($getters, $function());
         }
       }
-      cache_set('context_getters', $getters, 'cache', CACHE_TEMPORARY);
+      context_ui_cache_set('getters', $getters);
     }
   }
   return $getters;
@@ -518,36 +711,33 @@ function context_ui_getters($reset = FALSE) {
  *   The item type to be matched. Any of the currently supported context items types ("view",
  *   "node", etc.) can be specified.
  * @param $id
- *   An array of string or integer ids of the context item to match. Individual ids are also accepted.
+ *   A string value to match against.
  *
  * @return
  *   True if one or more contexts were set. False if no items/contexts matched.
  */
 function context_ui_set($type, $id) {
-  if (!is_array($id)) {
-    $id = array($id);
-  }
-  $set = false;
-  $result = db_query("
-    SELECT c.namespace, c.attribute, c.value, c.cid FROM {context_ui_setter} ci
-    JOIN {context_ui} c ON ci.cid = c.cid
-    WHERE ci.type = '%s' AND ci.id IN (". substr(str_repeat("'%s',", count($id)), 0, -1) .") AND c.status = ". CONTEXT_ENABLED,
-    array_merge(array($type), $id));
-  while ($context = db_fetch_object($result)) {
-    // If this context already has a value, don't alter it.
-    if (!context_isset($context->namespace, $context->attribute)) {
-      context_set($context->namespace, $context->attribute, $context->value);
+  $map = context_ui_setter_map();
+  if (!empty($map[$type]) && !empty($map[$type][$id])) {
+    $contexts = context_ui_enabled_contexts(); 
 
-      // Allow getters to respond to the set context
-      $context = context_ui_load($context);
-      module_invoke_all('context_getter', $context);
+    $identifier = $map[$type][$id];
+    $context = !empty($contexts[$identifier]) ? $contexts[$identifier] : FALSE;
 
-      // Store the cid of set contexts. Other parts of the stack may be interested.
-      $cid = context_get('context_ui', 'cid');
-      $cid = $cid ? $cid : array();
-      $cid[] = $context->cid;
-      context_set('context_ui', 'cid', $cid);
-      $set = true;
+    if ($context) {
+      // If this context already has a value, don't alter it.
+      if (!context_isset($context->namespace, $context->attribute)) {
+        context_set($context->namespace, $context->attribute, $context->value);
+
+        // DEPRECATED @TODO: remove this invocation of hook_context_getter()...
+        $identifier = "$context->namespace:$context->attribute:$context->value";
+        if (!empty($contexts[$identifier])) {
+          $context = $contexts[$identifier];
+          // Allow getters to respond to the set context
+          module_invoke_all('context_getter', $context);
+        }
+        $set = true;
+      }
     }
   }
   return $set;
@@ -584,6 +774,7 @@ function context_ui_block_list($region) {
     foreach (context_ui_active_contexts() as $context) {
       if (isset($context->block) && is_array($context->block)) {
         foreach ($context->block as $block) {
+          $block = (object) $block;
           if (!isset($context_blocks[$block->region])) {
             $context_blocks[$block->region] = array();
           }
@@ -609,8 +800,7 @@ function context_ui_block_list($region) {
               $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
             }
             $context_blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
-          }          
-
+          }
         }
       }
     }
@@ -643,11 +833,10 @@ function context_ui_block_list($region) {
  */
 function context_ui_load($context, $reset = FALSE) {
   static $cache = array();
-
   // Argument is a cid
-  if (is_numeric($context)) {
+  if (is_numeric($context)) {    
     $cid = $context;
-    if (!isset($cache[$context])) {
+    if (!isset($normal[$context])) {
       $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE cid = %d", $cid));
     }
     else {
@@ -657,7 +846,7 @@ function context_ui_load($context, $reset = FALSE) {
   }
   // Context object has an associated cid
   else if (is_object($context) && isset($context->cid)) {
-    if (!isset($cache[$context->cid])) {
+    if (!isset($normal[$context->cid])) {
       $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE cid = %d", $context->cid));
     }
   }
@@ -665,10 +854,6 @@ function context_ui_load($context, $reset = FALSE) {
   else if (is_object($context) && $context->namespace && $context->attribute && $context->value) {
     $args = array($context->namespace, $context->attribute, $context->value);
     $where = '';
-    if (isset($context->system)) {
-      $args[] = $context->system;
-      $where .= " AND system = %d ";
-    }
     if (isset($context->status) && $context->status != 0) {
       $args[] = $context->status;
       $where .= " AND status = %d ";
@@ -719,7 +904,7 @@ function context_ui_save($context) {
   // Insert or update the core context definition
   if (!isset($context->cid)) {
     $existing = context_ui_load($context, TRUE);
-    if ($existing && $existing->cid && ($existing->system == $context->system)) {
+    if ($existing && $existing->cid) {
       return false;      
     }
     drupal_write_record('context_ui', $context);
@@ -767,6 +952,8 @@ function context_ui_save($context) {
     }
   }
 
+  // Invalidate context cache
+  cache_clear_all('context', 'cache');
   return $result;
 }
 
@@ -786,35 +973,13 @@ function context_ui_delete($context) {
     db_query("DELETE FROM {context_ui_setter} WHERE cid = %d", $context->cid);
     db_query("DELETE FROM {context_ui_getter} WHERE cid = %d", $context->cid);
     db_query("DELETE FROM {context_ui_block} WHERE cid = %d", $context->cid);
+
+    // Invalidate context cache
+    cache_clear_all('context', 'cache');
+
     return true;
   }
   return false;
-}
-
-/**
- * Provides simple operations (load/insert/update/etc.) on a core context space/key/value definition.
- * This function is deprecated! Use the API functions above -- this wrapper is only provided for
- * backwards-compatibility
- *
- * @param $op
- *   Operation to perform on a context. May be one of load/insert/update/delete.
- * @param $context
- *   A context object. Optionally, can be an integer cid for the "load" operation.
- *
- * @return
- *   If loading, returns a full context item. All other operations return true on success and false on failure.
- */
-function context_ui_context($op, $context) {
-  switch ($op) {
-    case 'load':
-      return context_ui_load($context);
-    case 'insert':
-      return context_ui_save($context);
-    case 'update':
-      return context_ui_save($context);
-    case 'delete':
-      return context_ui_delete($context);
-  }
 }
 
 /**
@@ -866,29 +1031,6 @@ function theme_context_devel_recurse($value) {
 }
 
 /**
- * This function is largely deprecated -- it need not be used for
- * theming $primary_links or $secondary_links any longer in a theme's
- * template.php as this is now handled by context_ui_preprocess_page().
- * 
- * You can still use this function, however, to get context-based
- * active classes on any other link arrays you would like to theme.
- */
-function theme_context_ui_links($links, $attributes = array('class' => 'links')) {
-  $links = context_ui_menu_set_active($links);
-
-  // Pass modified links onto theme_links() for actual theming duties
-  return theme('links', $links, $attributes);
-}
-
-/**
- * Deprecated name, now that theme_menu_links() no longer exists.
- * Included for backwards compatibility.
- */
-function theme_context_ui_menu_links($links, $attributes = array('class' => 'links')) {
-  return theme('context_ui_links', $links, $attributes);
-}
-
-/**
  * Generates a themed set of links for node types associated with
  * the current active contexts.
  */
@@ -915,12 +1057,11 @@ function _context_ui_node_links($reset = false) {
   static $links;
   if (!$links || $reset) {
     $links = array();
-    if ($cids = context_get('context_ui', 'cid')) {
+    if ($contexts = context_ui_active_contexts()) {
       // Collect types
       $types = node_get_types();
       // Iterate over active contexts
-      foreach ($cids as $cid) {
-        $context = context_ui_load($cid);
+      foreach ($contexts as $context) {
         if (!empty($context->node)) {
           foreach ($context->node as $type) {
             $type_url = str_replace('_', '-', $type);
@@ -950,34 +1091,6 @@ function context_ui_preprocess_page(&$vars) {
   $vars['secondary_links'] = context_ui_menu_set_active($vars['secondary_links']);
 
   $vars['context_links'] = theme('context_ui_node_links');
-}
-
-/**
- * Queries for and loads any active contexts with associated getter items.
- * This should be run at a late stage of the page load to ensure that
- * relevant contexts have been set.
- */
-function context_ui_active_contexts($reset = FALSE) {
-  static $contexts;
-  if (!isset($contexts) || $reset) {
-    $contexts = array();
-    $types = array_keys(context_ui_getters());
-    if ($types) {
-      foreach ($types as $k => $v) {
-        $types[$k] = "'$v'";
-      }
-      $in = implode(', ', $types);
-      $result = db_query("SELECT * FROM {context_ui} WHERE status = %d", CONTEXT_ENABLED);
-      while ($context = db_fetch_object($result)) {
-        if (context_get($context->namespace, $context->attribute) == $context->value) {
-          $trio = "$context->namespace:$context->attribute:$context->value";
-          $contexts[$trio] = context_ui_load($context);
-        }
-      }
-    }
-    drupal_alter('context_ui_active_contexts', $contexts);
-  }
-  return $contexts;
 }
 
 /**
@@ -1080,4 +1193,72 @@ function context_ui_menu_navigation_links($menu_name, $level = 0) {
   // Repair and get out
   menu_set_active_item($original_path);
   return $links;
+}
+
+/**
+ * DEPRECATED FUNCTIONS ===============================================
+ */
+
+/**
+ * This function is largely deprecated -- it need not be used for
+ * theming $primary_links or $secondary_links any longer in a theme's
+ * template.php as this is now handled by context_ui_preprocess_page().
+ * 
+ * You can still use this function, however, to get context-based
+ * active classes on any other link arrays you would like to theme.
+ */
+function theme_context_ui_links($links, $attributes = array('class' => 'links')) {
+  $links = context_ui_menu_set_active($links);
+
+  // Pass modified links onto theme_links() for actual theming duties
+  return theme('links', $links, $attributes);
+}
+
+/**
+ * Deprecated name, now that theme_menu_links() no longer exists.
+ * Included for backwards compatibility.
+ */
+function theme_context_ui_menu_links($links, $attributes = array('class' => 'links')) {
+  return theme('context_ui_links', $links, $attributes);
+}
+
+/**
+ * Provides simple operations (load/insert/update/etc.) on a core context space/key/value definition.
+ * This function is deprecated! Use the API functions above -- this wrapper is only provided for
+ * backwards-compatibility
+ *
+ * @param $op
+ *   Operation to perform on a context. May be one of load/insert/update/delete.
+ * @param $context
+ *   A context object. Optionally, can be an integer cid for the "load" operation.
+ *
+ * @return
+ *   If loading, returns a full context item. All other operations return true on success and false on failure.
+ */
+function context_ui_context($op, $context) {
+  switch ($op) {
+    case 'load':
+      return context_ui_load($context);
+    case 'insert':
+      return context_ui_save($context);
+    case 'update':
+      return context_ui_save($context);
+    case 'delete':
+      return context_ui_delete($context);
+  }
+}
+
+/**
+ * Deprecated -- renamed to context_ui_default_contexts().
+ */
+function context_ui_defaults($reset = FALSE) {
+  return context_ui_default_contexts($reset = FALSE);
+}
+
+/**
+ * Deprecated -- please use context_ui_invalidate_cache().
+ */
+function context_ui_rebuild() {
+  context_ui_invalidate_cache();
+  return context_ui_enabled_contexts();
 }
