@@ -187,9 +187,12 @@ function context_prefix_prefixes($requested_method = CONTEXT_PREFIX_PATH) {
   if (!isset($prefixes)) {
     $prefixes = array();
 
+    $providers = module_invoke_all('context_prefix_prefixes');
+
     // Invoke context_prefix_prefixes() and gather all prefixes
     // provided "in code" (or stored by their respective modules)
-    foreach (module_invoke_all('context_prefix_prefixes') as $provider => $items) {
+    foreach ($providers as $provider => $items) {
+      // Store providers for use when retrieving db prefixes
       $method = variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH);
       
       // If using a prefix pair we don't need to cache the valid prefixes.
@@ -214,22 +217,24 @@ function context_prefix_prefixes($requested_method = CONTEXT_PREFIX_PATH) {
       }
     }
 
-    // Gather database prefixes.
-    $result = db_query("SELECT DISTINCT(provider) FROM {context_prefix}");
-    while ($item = db_fetch_object($result)) {
-      $method = variable_get('context_prefix_method_'. $item->provider, CONTEXT_PREFIX_PATH);
+    // Gather database prefixes -- we exclude providers that we have
+    // already collected prefixes for through code.
+    $providers = array_diff_key(context_prefix_providers(), $providers);
+
+    foreach ($providers as $provider => $info) {
+      $method = variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH);
       // Don't load all data base prefixes for keyed pairs.
       if ($method == CONTEXT_PREFIX_PAIR) {
-        $prefix = variable_get('context_prefix_method_'. $item->provider .'_key', false);
+        $prefix = variable_get('context_prefix_method_'. $provider .'_key', false);
         if ($prefix != false) {
           $prefixes[$method][$prefix] = array(
-            'provider' => $item->provider,
+            'provider' => $provider,
             'id' => null,
           );
         }
       }
       else {
-        $result = db_query("SELECT * FROM {context_prefix} WHERE provider = '%s'", $item->provider);
+        $result = db_query("SELECT * FROM {context_prefix} WHERE provider = '%s'", $provider);
         while ($row = db_fetch_object($result)) {
           $prefixes[$method][$row->prefix] = array(
             'provider' => $row->provider,
