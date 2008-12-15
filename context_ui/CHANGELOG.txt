@@ -12,6 +12,8 @@ context_ui DRUPAL-6--1
 - Major refactoring of context storage schema. Contexts are now cached
   for performance and default contexts are no longer stored in the
   database.
+- Updated context_ui_block_list() to respect block visbility
+  and title customizations made through the block module.
 
 context_ui DRUPAL-6--1-0-alpha-2
 --------------------------------

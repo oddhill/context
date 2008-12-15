@@ -77,9 +77,15 @@ function context_ui_theme() {
  * Implementation of hook_theme_registry_alter().
  */
 function context_ui_theme_registry_alter(&$theme_registry) {
+  // Push theme_page() through a context_ui_preprocess to provide
+  // context-sensitive menus and variables.
   if (!in_array('context_ui_preprocess_page', $theme_registry['page']['preprocess functions'])) {
     $theme_registry['page']['preprocess functions'][] = 'context_ui_preprocess_page';
   }
+  // Reroute theme_blocks() through context_ui_blocks to determine block
+  // visibility by context.
+  unset($theme_registry['blocks']['preprocess functions']);
+  $theme_registry['blocks']['function'] = 'context_ui_blocks';
 }
 
 /**
@@ -586,18 +592,11 @@ function context_ui_active_contexts($reset = FALSE) {
   static $contexts;
   if (!isset($contexts) || $reset) {
     $contexts = array();
-    $types = array_keys(context_ui_getters());
-    if ($types) {
-      foreach ($types as $k => $v) {
-        $types[$k] = "'$v'";
-      }
-      $in = implode(', ', $types);
-      $cache = context_ui_enabled_contexts();
-      foreach ($cache as $context) {
-        if (context_get($context->namespace, $context->attribute) == $context->value) {
-          $identifier = "$context->namespace:$context->attribute:$context->value";
-          $contexts[$identifier] = $context;
-        }
+    $cache = context_ui_enabled_contexts();
+    foreach ($cache as $context) {
+      if (context_get($context->namespace, $context->attribute) == $context->value) {
+        $identifier = "$context->namespace:$context->attribute:$context->value";
+        $contexts[$identifier] = $context;
       }
     }
     drupal_alter('context_ui_active_contexts', $contexts);
@@ -744,12 +743,14 @@ function context_ui_set($type, $id) {
 }
 
 /**
- * In order to add blocks we need to intercept theme_blocks and build the block
- * content using an diffrent process. The current implementation assumes that
- * the theme layer isn't going to define either 'phptemplate_blocks' or
- * 'themename_blocks'.
+ * BLOCK HANDLING =====================================================
  */
-function phptemplate_blocks($region) {
+
+/**
+ * This override of theme_blocks() is called because of an alter of the
+ * theme registry. See context_ui_theme_registry_alter().
+ */
+function context_ui_blocks($region) {
   $output = "";
   if ($list = context_ui_block_list($region)) {
     foreach ($list as $key => $block) {
@@ -765,19 +766,107 @@ function phptemplate_blocks($region) {
  * An alternative version of block_list() that provides any context_ui enabled blocks.
  */
 function context_ui_block_list($region) {
-  static $all_blocks;
+  static $blocks;
   static $context_blocks;
-  // Store all active context blocks when first called
+
   if (!isset($context_blocks)) {
-    $all_blocks = array();
+    $blocks = array();
     $context_blocks = array();
+
+    // Store all active context blocks when first called
     foreach (context_ui_active_contexts() as $context) {
       if (isset($context->block) && is_array($context->block)) {
         foreach ($context->block as $block) {
           $block = (object) $block;
-          if (!isset($context_blocks[$block->region])) {
-            $context_blocks[$block->region] = array();
+          $context_blocks["{$block->module}_{$block->delta}"] = $block;
+        }
+      }
+    }
+
+    global $user, $theme_key;
+    $rids = array_keys($user->roles);
+
+    // This query is identical to the one in block_list(), but status = 1 is excluded to
+    // retain blocks that may be enabled via context.
+    $result = db_query(db_rewrite_sql("SELECT DISTINCT b.* FROM {blocks} b LEFT JOIN {blocks_roles} r ON b.module = r.module AND b.delta = r.delta WHERE b.theme = '%s' AND (r.rid IN (". db_placeholders($rids) .") OR r.rid IS NULL) ORDER BY b.region, b.weight, b.module", 'b', 'bid'), array_merge(array($theme_key), $rids));
+
+    while ($block = db_fetch_object($result)) {
+      $bid = "{$block->module}_{$block->delta}";
+
+      // If block is not enabled & not enabled via context, skip it
+      if (!empty($context_blocks[$bid])) {
+        $block->region = $context_blocks[$bid]->region;
+        $block->weight = $context_blocks[$bid]->weight;
+        $enabled = TRUE;
+      }
+      else if (!$block->status) {
+        continue;
+      }
+
+      // Initialize region key
+      if (!isset($blocks[$block->region])) {
+        $blocks[$block->region] = array();
+      }
+
+      // Use the user's block visibility setting, if necessary
+      if ($block->custom != 0) {
+        if ($user->uid && isset($user->block[$block->module][$block->delta])) {
+          $enabled = $user->block[$block->module][$block->delta];
+        }
+        else {
+          $enabled = ($block->custom == 1);
+        }
+      }
+      else {
+        $enabled = TRUE;
+      }
+
+      // Match path if necessary
+      if ($block->pages) {
+        if ($block->visibility < 2) {
+          $path = drupal_get_path_alias($_GET['q']);
+          // Compare with the internal and path alias (if any).
+          $page_match = drupal_match_path($path, $block->pages);
+          if ($path != $_GET['q']) {
+            $page_match = $page_match || drupal_match_path($_GET['q'], $block->pages);
           }
+          // When $block->visibility has a value of 0, the block is displayed on
+          // all pages except those listed in $block->pages. When set to 1, it
+          // is displayed only on those pages listed in $block->pages.
+          $page_match = !($block->visibility xor $page_match);
+        }
+        else {
+          $page_match = drupal_eval($block->pages);
+        }
+      }
+      else {
+        $page_match = TRUE;
+      }
+
+      $block->enabled = $enabled;
+      $block->page_match = $page_match;
+      $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
+    }
+  }
+
+  // ==================================================================
+  // The block rendering code below is identical to block_list().
+  // ==================================================================
+
+  // Create an empty array if there were no entries
+  if (!isset($blocks[$region])) {
+    $blocks[$region] = array();
+  }
+
+  foreach ($blocks[$region] as $key => $block) {
+    // Render the block content if it has not been created already.
+    if (!isset($block->content)) {
+      // Erase the block from the static array - we'll put it back if it has content.
+      unset($blocks[$region][$key]);
+      if ($block->enabled && $block->page_match) {
+        // Check the current throttle status and see if block should be displayed
+        // based on server load.
+        if (!($block->throttle && (module_invoke('throttle', 'status') > 0))) {
           // Try fetching the block from cache. Block caching is not compatible with
           // node_access modules. We also preserve the submission of forms in blocks,
           // by fetching from cache only if the request method is 'GET'.
@@ -790,31 +879,29 @@ function context_ui_block_list($region) {
               cache_set($cid, $array, 'cache_block', CACHE_TEMPORARY);
             }
           }
-          if (isset($array) && is_array($array) && isset($array['content'])) {
+
+          if (isset($array) && is_array($array)) {
             foreach ($array as $k => $v) {
               $block->$k = $v;
             }
-            // Override default block title if a custom display title is present.
-            if (!empty($block->title)) {
-              // Check plain here to allow module generated titles to keep any markup.
-              $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
-            }
-            $context_blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
           }
+        }
+        if (isset($block->content) && $block->content) {
+          // Override default block title if a custom display title is present.
+          if ($block->title) {
+            // Check plain here to allow module generated titles to keep any markup.
+            $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
+          }
+          if (!isset($block->subject)) {
+            $block->subject = '';
+          }
+          $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
         }
       }
     }
   }
-  // Retrieve the standard blocks for the specified region and merge
-  // with those enabled by context.
-  if (!isset($all_blocks[$region])) {
-    $all_blocks[$region] = block_list($region);
-    if (isset($context_blocks[$region])) {
-      $all_blocks[$region] = $all_blocks[$region] + $context_blocks[$region];
-      uasort($all_blocks[$region], create_function('$a, $b', 'return ($a->weight - $b->weight);'));
-    }
-  }
-  return $all_blocks[$region];
+
+  return $blocks[$region];
 }
 
 /**
@@ -1162,9 +1249,12 @@ function context_ui_section_info($reset = FALSE) {
   if (!isset($info) || $reset) {
     $info = array();
     foreach (context_ui_active_contexts() as $context) {
-      if (isset($context->theme_section) && !empty($context->theme_section)) {
-        $info = $context->theme_section;
-        break;
+      if (isset($context->theme_section)) {
+        $test = implode('', $context->theme_section);
+        if (!empty($test)) {
+          $info = $context->theme_section;
+          break;
+        }
       }
     }
   }
