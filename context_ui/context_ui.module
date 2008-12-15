@@ -847,6 +847,12 @@ function context_ui_block_list($region) {
       $block->page_match = $page_match;
       $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
     }
+
+    // Sort blocks -- we must do this here since blocks provided via
+    // context may have overridden or altered weights.
+    foreach ($blocks as $r => $dummy) {
+      uasort($blocks[$r], create_function('$a, $b', 'return ($a->weight - $b->weight);'));
+    }
   }
 
   // ==================================================================
