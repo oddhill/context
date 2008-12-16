@@ -395,41 +395,76 @@ function context_ui_form_alter(&$form, $form_state, $form_id) {
   if (isset($form['#node']) && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
     context_ui_set('node', $form['#node']->type);
   }
-  else if ($form_id == 'comment_form' && $nid = $form['nid']['#value']) {
+}
+
+/**
+ * Implementation of hook_form_alter() for comment_form.
+ */
+function context_ui_form_comment_form_alter(&$form, $form_state) {
+  if ($nid = $form['nid']['#value']) {
     $node = node_load($nid);
     context_ui_set('node', $node->type);
   }
-  else if ($form_id == 'block_admin_configure') {
-    // Display context_ui visibility information on block configuration pages
-    $module = $form['module']['#value'];
-    $delta = $form['delta']['#value'];
+}
 
-    $result = db_query("SELECT cb.cid, cb.region, c.namespace, c.attribute, c.value FROM {context_ui_block} cb JOIN {context_ui} c ON cb.cid = c.cid WHERE cb.module = '%s' AND cb.delta = '%s' AND c.status = %d", $module, $delta, CONTEXT_ENABLED);
+/**
+ * Implementation of hook_form_alter() for block_admin_configure.
+ */
+function context_ui_form_block_admin_configure_alter(&$form, $form_state) {
+  // Display context_ui visibility information on block configuration pages
+  $module = $form['module']['#value'];
+  $delta = $form['delta']['#value'];
 
-    $rows = array();
-    while ($row = db_fetch_object($result)) {
-      $rows[] = array($row->namespace, $row->attribute, $row->value, $row->region, l(t('Edit visibility'), 'admin/build/context/edit/'. $row->cid, array('fragment' => 'context-ui-blocks')));
-    }
-    if ($rows) {
-      $content = theme('table', array(t('Namespace'), t('Attribute'), t('Value'), t('Region'), ''), $rows);
-    }
-    else {
-      $content = "<p>". t('No visibility rules have been set for this block using context_ui.') ."</p>";
-    }
+  $rows = array();
 
-    $form['context_ui'] = array(
-      '#type' => 'fieldset',
-      '#title' => t('Context UI visibility'),
-      '#weight' => -1,
-      '#collapsible' => true,
-    );
-    $form['context_ui']['contexts'] = array(
-      '#type' => 'item',
-      '#value' => $content,
-      '#description' => t('To add or remove block visibility rules based on context, use the !context_admin.', array('!context_admin' => l(t('context administration page'), 'admin/build/context'))),
-    );
-    $form['block_settings']['#weight'] = -5;
+  $contexts = context_ui_enabled_contexts();
+  foreach ($contexts as $context) {
+    if (!empty($context->block)) {
+      foreach ($context->block as $block) {
+        // @TODO: normalize this to either an array or object. I apolgize for this sloppy shiz : |
+        $block = (object) $block;
+        if ($block->module == $module && $block->delta == $delta) {
+          $row = array();
+          $row[] = $context->namespace;
+          $row[] = $context->attribute;
+          $row[] = $context->value;
+          $row[] = $block->region;          
+          $identifier = "{$context->namespace}-{$context->attribute}-{$context->value}";
+          $options = array(
+            'fragment' => 'context-ui-blocks',
+            'query' => 'destination='. $_GET['q'],
+          );
+          if ($context->system) {            
+            $row[] = l(t('Override visibility'), "admin/build/context/$identifier/clone", $options);
+          }
+          else {
+            $row[] = l(t('Edit visibility'), "admin/build/context/{$context->cid}", $options);
+          }
+          $rows[] = $row;
+        }
+      }
+    }
   }
+
+  if ($rows) {
+    $content = theme('table', array(t('Namespace'), t('Attribute'), t('Value'), t('Region'), ''), $rows);
+  }
+  else {
+    $content = "<p>". t('No visibility rules have been set for this block using context_ui.') ."</p>";
+  }
+
+  $form['context_ui'] = array(
+    '#type' => 'fieldset',
+    '#title' => t('Context UI visibility'),
+    '#weight' => -1,
+    '#collapsible' => true,
+  );
+  $form['context_ui']['contexts'] = array(
+    '#type' => 'item',
+    '#value' => $content,
+    '#description' => t('To add or remove block visibility rules based on context, use the !context_admin.', array('!context_admin' => l(t('context administration page'), 'admin/build/context'))),
+  );
+  $form['block_settings']['#weight'] = -5;
 }
 
 /**
