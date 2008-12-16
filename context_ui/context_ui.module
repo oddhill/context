@@ -540,6 +540,7 @@ function context_ui_enabled_contexts($namespace = NULL, $reset = FALSE) {
   static $enabled;
   static $namespaces;
   if (!isset($enabled) || $reset) {
+    $enabled = array();
     $cache = context_ui_cache_get('enabled');
     if ($cache && !$reset) {
       $enabled = $cache;
