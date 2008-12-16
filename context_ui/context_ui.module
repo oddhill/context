@@ -947,12 +947,7 @@ function context_ui_load($context, $reset = FALSE) {
   // Context object has no cid -- we'll try to load by ns/attr/val
   else if (is_object($context) && $context->namespace && $context->attribute && $context->value) {
     $args = array($context->namespace, $context->attribute, $context->value);
-    $where = '';
-    if (isset($context->status) && $context->status != 0) {
-      $args[] = $context->status;
-      $where .= " AND status = %d ";
-    }
-    $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE namespace = '%s' AND attribute = '%s' AND value = '%s' $where", $args));
+    $context = db_fetch_object(db_query("SELECT * FROM {context_ui} WHERE namespace = '%s' AND attribute = '%s' AND value = '%s'", $args));
   }
 
   // If the cid has been discovered, load all the context's associations.
