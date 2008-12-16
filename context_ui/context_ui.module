@@ -1211,6 +1211,12 @@ function context_ui_preprocess_page(&$vars) {
   $vars['section_subtitle'] = !empty($info['subtitle']) ? $info['subtitle'] : '';
   $vars['body_classes'] .= !empty($info['class']) ? ' '. $info['class'] : '';
 
+  // If primary + secondary links are pointed at the same menu, provide
+  // contextual trailing by default.
+  if (variable_get('menu_primary_links_source', 'primary-links') == variable_get('menu_secondary_links_source', 'secondary-links')) {
+    $vars['secondary_links'] = context_ui_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1);
+  }
+
   $vars['primary_links'] = context_ui_menu_set_active($vars['primary_links']);
   $vars['secondary_links'] = context_ui_menu_set_active($vars['secondary_links']);
 
