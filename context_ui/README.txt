@@ -70,7 +70,7 @@ hook_context_ui_node_links_alter()
 Maintainers
 -----------
 yhahn (Young Hahn)
-jmiiccolis (Jeff Miccolis)
+jmiccolis (Jeff Miccolis)
 
 Contributors
 ------------
