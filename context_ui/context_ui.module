@@ -659,12 +659,18 @@ function context_ui_setter_map($reset = FALSE) {
           if (!empty($context->{$setter})) {
             if (is_array($context->{$setter})) {
               foreach ($context->{$setter} as $value) {
-                $setter_map[$setter][$value] = $identifier;
+                if (!isset($setter_map[$setter][$value])) {
+                  $setter_map[$setter][$value] = array();
+                }
+                $setter_map[$setter][$value][] = $identifier;
               }
             }
             else if (is_string($context->{$setter})) {
               $value = $context->{$setter};
-              $setter_map[$setter][$value] = $identifier;
+              if (!isset($setter_map[$setter][$value])) {
+                $setter_map[$setter][$value] = array();
+              }
+              $setter_map[$setter][$value][] = $identifier;
             }
           }
         }
@@ -756,22 +762,24 @@ function context_ui_set($type, $id) {
   if (!empty($map[$type]) && !empty($map[$type][$id])) {
     $contexts = context_ui_enabled_contexts(); 
 
-    $identifier = $map[$type][$id];
-    $context = !empty($contexts[$identifier]) ? $contexts[$identifier] : FALSE;
+    $identifiers = $map[$type][$id];
+    foreach ($identifiers as $identifier) {
+      $context = !empty($contexts[$identifier]) ? $contexts[$identifier] : FALSE;
 
-    if ($context) {
-      // If this context already has a value, don't alter it.
-      if (!context_isset($context->namespace, $context->attribute)) {
-        context_set($context->namespace, $context->attribute, $context->value);
+      if ($context) {
+        // If this context already has a value, don't alter it.
+        if (!context_isset($context->namespace, $context->attribute)) {
+          context_set($context->namespace, $context->attribute, $context->value);
 
-        // DEPRECATED @TODO: remove this invocation of hook_context_getter()...
-        $identifier = "$context->namespace:$context->attribute:$context->value";
-        if (!empty($contexts[$identifier])) {
-          $context = $contexts[$identifier];
-          // Allow getters to respond to the set context
-          module_invoke_all('context_getter', $context);
+          // DEPRECATED @TODO: remove this invocation of hook_context_getter()...
+          $identifier = "$context->namespace:$context->attribute:$context->value";
+          if (!empty($contexts[$identifier])) {
+            $context = $contexts[$identifier];
+            // Allow getters to respond to the set context
+            module_invoke_all('context_getter', $context);
+          }
+          $set = true;
         }
-        $set = true;
       }
     }
   }
@@ -1293,10 +1301,19 @@ function context_ui_section_info($reset = FALSE) {
     $info = array();
     foreach (context_ui_active_contexts() as $context) {
       if (isset($context->theme_section)) {
-        $test = implode('', $context->theme_section);
-        if (!empty($test)) {
-          $info = $context->theme_section;
-          break;
+        if (!empty($context->theme_section['title']) && !isset($info['title'])) {
+          $info['title'] = $context->theme_section['title'];
+        }
+        if (!empty($context->theme_section['subtitle']) && !isset($info['subtitle'])) {
+          $info['subtitle'] = $context->theme_section['subtitle'];
+        }
+        if (!empty($context->theme_section['class'])) {
+          if (!isset($info['class'])) {
+            $info['class'] = $context->theme_section['class'];
+          }
+          else {
+            $info['class'] .= ' '. $context->theme_section['class'];
+          }
         }
       }
     }
