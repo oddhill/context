@@ -254,6 +254,15 @@ function context_ui_context_ui_getters() {
     ),
   );
 
+  // Implements context-based region disabling
+  $theme_key = variable_get('theme_default', 'garland');
+  $regions = system_region_list($theme_key);
+  $items['theme_regiontoggle'] = array(
+    '#title' => t('Disabled regions'),
+    '#type' => 'checkboxes',
+    '#options' => $regions,
+  );
+
   return $items;
 }
 
@@ -812,10 +821,12 @@ function context_ui_blocks($region) {
 function context_ui_block_list($region) {
   static $blocks;
   static $context_blocks;
+  static $disabled_regions;
 
   if (!isset($context_blocks)) {
     $blocks = array();
     $context_blocks = array();
+    $disabled_regions = array();
 
     // Store all active context blocks when first called
     foreach (context_ui_active_contexts() as $context) {
@@ -823,6 +834,13 @@ function context_ui_block_list($region) {
         foreach ($context->block as $block) {
           $block = (object) $block;
           $context_blocks["{$block->module}_{$block->delta}"] = $block;
+        }
+      }
+      if (!empty($context->theme_regiontoggle)) {
+        foreach ($context->theme_regiontoggle as $region => $enabled) {
+          if (!empty($enabled)) {
+            $disabled_regions[$region] = $region;
+          }
         }
       }
     }
@@ -897,6 +915,11 @@ function context_ui_block_list($region) {
     foreach ($blocks as $r => $dummy) {
       uasort($blocks[$r], create_function('$a, $b', 'return ($a->weight - $b->weight);'));
     }
+  }
+
+  // Kill blocks in disabled regions
+  foreach (array_keys($disabled_regions) as $r) {
+    unset($blocks[$r]);
   }
 
   // ==================================================================
