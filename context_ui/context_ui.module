@@ -837,9 +837,9 @@ function context_ui_block_list($region) {
         }
       }
       if (!empty($context->theme_regiontoggle)) {
-        foreach ($context->theme_regiontoggle as $region => $enabled) {
+        foreach ($context->theme_regiontoggle as $r => $enabled) {
           if (!empty($enabled)) {
-            $disabled_regions[$region] = $region;
+            $disabled_regions[$r] = $r;
           }
         }
       }
