@@ -481,7 +481,9 @@ function context_ui_form_block_admin_configure_alter(&$form, $form_state) {
  */
 function context_ui_user($op, &$edit, &$account, $category = NULL) {
   if ($op == 'view') {
-    context_ui_set('user', array_keys($account->roles));
+    if (!empty($account->roles)) {
+      context_ui_set('user', array_keys($account->roles));
+    }
   }
 }
 
