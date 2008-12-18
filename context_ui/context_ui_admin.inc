@@ -558,10 +558,19 @@ function context_ui_export(&$form_state, $context) {
   unset($context->system);
   $context = (array) $context;
 
+  // clear out empty associations
+  foreach ($context as $key => $item) {
+    if (context_ui_empty($item)) {
+      unset($context[$key]);
+    }
+  }
+
   // clean up blocks
-  foreach ($context['block'] as $bid => $block) {
-    unset($block->bid);
-    $context['block'][$bid] = (array) $block;
+  if (!empty($context['block'])) {
+    foreach ($context['block'] as $bid => $block) {
+      unset($block->bid);
+      $context['block'][$bid] = (array) $block;
+    }
   }
 
   // build the form
@@ -731,7 +740,7 @@ function context_ui_form_process($form) {
   foreach (array_keys(context_ui_setters()) as $id) {
     if (is_array($form['items'][$id])) {
       foreach ($form['items'][$id] as $option => $value) {
-        if ($value) {
+        if (!empty($value)) {
           $context->{$id}[] = $option;
         }
       }
@@ -743,13 +752,12 @@ function context_ui_form_process($form) {
 
   // Retrieve values for getters -- preserve key => val associations
   foreach (array_keys(context_ui_getters()) as $id) {
-    if (isset($form['items'][$id]) && !empty($form['items'][$id])) {
+    if (isset($form['items'][$id]) && !context_ui_empty($form['items'][$id])) {
       $context->{$id} = $form['items'][$id];
     }
   }
 
   // Blocks must be done by region
-  $context->block = array();
   $theme_key = variable_get('theme_default', 'garland');
   // Get list of "valid" available blocks
   $valid = _context_ui_get_blocks();
@@ -759,6 +767,11 @@ function context_ui_form_process($form) {
       $blocks = explode(',', $blocks);
       $midpoint = array_search('system', $blocks);
       foreach ($blocks as $position => $bid) {
+        // Don't initialize the block array until we're actually sure
+        // the context contains blocks.
+        if (!isset($context->block)) {
+          $context->block = array();
+        }
         if ($bid != 'system') {
           $block = $valid[$bid];
           $modifier = $position < $midpoint ? -10 : 10;

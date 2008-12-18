@@ -798,6 +798,23 @@ function context_ui_set($type, $id) {
 }
 
 /**
+ * Recursive helper function to determine whether an array and its
+ * children are entirely empty.
+ */
+function context_ui_empty($element) {
+  $empty = TRUE;
+  if (is_array($element)) {
+    foreach ($element as $child) {
+      $empty = $empty && context_ui_empty($child);
+    }
+  }
+  else {
+    $empty = $empty && empty($element);
+  }
+  return $empty;
+}
+
+/**
  * BLOCK HANDLING =====================================================
  */
 
@@ -1032,9 +1049,11 @@ function context_ui_load($context, $reset = FALSE) {
         $context->{$row->type} = unserialize($row->data);
       }
       // Load blocks
-      $result = db_query("SELECT module, delta, region, weight FROM {context_ui_block} WHERE cid = %d", $context->cid);
-      $context->block = array();
+      $result = db_query("SELECT module, delta, region, weight FROM {context_ui_block} WHERE cid = %d", $context->cid);      
       while ($block = db_fetch_object($result)) {
+        if (!isset($context->block)) {
+          $context->block = array();
+        }
         $block->bid = $block->module ."_". $block->delta;
         $context->block[$block->bid] = $block;
       }
