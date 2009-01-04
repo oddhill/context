@@ -15,9 +15,6 @@ function context_prefix_theme($existing, $type, $theme, $path) {
     'context_prefix_settings_form' => array(
       'arguments' => array('form' => NULL),
     ),
-    'context_links' => array(
-      'arguments' => array('links' => NULL, 'attributes' => array('class' => 'links')),
-    ),
   );
 }
 
@@ -135,10 +132,10 @@ if (!function_exists('custom_url_rewrite_outbound')) {
 function context_prefix_url_rewrite(&$path, &$options, $original) {
   $working_path = $path; // preserve original path
   $args = array();
+  $disabled = context_prefix_disable();
 
-  // Check to see whether url rewriting has been disabled for this one
-  // instance -- currently only possible through cl()
-  if (!clswitch('get')) {
+  // Check to see whether url rewriting has been disabled.
+  if (empty($options['unprefix']) && !$disabled) {
     $active_path_prefixes = array();
     
     // Retrieve the path prefixes for the current page that were
@@ -158,12 +155,22 @@ function context_prefix_url_rewrite(&$path, &$options, $original) {
         $args = $args + $active_path_prefixes;
       }
     }
-  }
 
-  if ($working_path) {
-    $args[] = $working_path;
+    if ($working_path) {
+      $args[] = $working_path;
+    }
+    $path = is_array($args) ? implode('/', $args) : '';
   }
-  $path = is_array($args) ? implode('/', $args) : '';
+  else {
+    // Handle domains -- need to force domain onto the path and push through as absolute url
+    $options['absolute'] = TRUE;
+    if ($path == '<front>') {
+      $path = variable_get('site_frontpage', 'node');
+    }
+    if ($domain = variable_get('context_prefix_base_domain', '')) {
+      $path = $domain .'/'. $path; // REPLACE BASE_URL with the hub domain.
+    }  
+  }
 }
 
 /**
@@ -585,7 +592,8 @@ function context_prefix_api($op = 'insert', $context) {
       }
       break;
     case 'validate':
-      if (check_plain($context['provider']) && preg_match('!^[a-z0-9_-]+$!', $context['prefix'])) {
+      // Check that the prefix is valid
+      if (check_plain($context['provider']) && preg_match('!^[a-z0-9_-]+$!', $context['prefix']) && !menu_get_item($context['prefix'])) {        
         $id = db_result(db_query("SELECT id FROM {context_prefix} WHERE prefix = '%s'", $context['prefix']));
         if (!$id) {
           return true;
@@ -644,19 +652,17 @@ function context_prefix_goto($provider, $id, $path = '', $query = NULL, $fragmen
    */
   $method = variable_get('context_prefix_method_'. $provider, CONTEXT_PREFIX_PATH);
   $prefixes = context_prefix_prefixes($method);
-  
+
   switch ($method) {
     case CONTEXT_PREFIX_PATH:
       foreach ($prefixes as $key => $info) {
         if ($info['id'] == $id && $info['provider'] == $provider) {
-          clswitch('set', true); // Drop prefixing for context_prefix goto's
           $path = $key .'/'. $path;
           break;
         }
       }
       break;
     case CONTEXT_PREFIX_PAIR:
-      clswitch('set', true);
       $prefixes = array_keys($prefixes);
       // @TODO: this ($prefixes[0]) is really sketchy -- does it work?
       $path = $prefixes[0] .'/'. $id .'/'. $path;
@@ -674,119 +680,17 @@ function context_prefix_goto($provider, $id, $path = '', $query = NULL, $fragmen
 }
 
 /**
- * Custom l wrapper for links that need to leave all group contexts
- *
- * TODO: Like context_prefix_goto(), this function needs to allow the
- * selective dropping/adding of contexts.
- */
-function cl($text, $path, $attributes = array(), $query = NULL, $fragment = NULL, $absolute = FALSE, $html = FALSE, $dropcontext = FALSE) {
-  global $base_url;
-  clswitch('set', $dropcontext);
-  // Handle domains -- need to force domain onto the path and push through as absolute url
-  if ($dropcontext) {
-    $absolute = TRUE;
-    if ($path == '<front>') {
-      $path = variable_get('site_frontpage', 'node');
-    }
-    if ($domain = variable_get('context_prefix_base_domain', '')) {
-      $path = $domain .'/'. $path; // REPLACE BASE_URL with the hub domain.
-    }
-  }
-  $l = l($text, $path, $attributes, $query, $fragment, $absolute, $html);
-  clswitch('reset');
-  return $l;
-}
-
-/**
  * Returns whether the current l/url call should use context rewriting or not
  */
-function clswitch($op, $absolute = null) {
+function context_prefix_disable($set = FALSE) {
   static $drop;
-  switch ($op) {
-    case 'set';
-      $drop = $absolute;
-      break;
-    case 'get':
-      return $drop;
-      break;
-    case 'reset':
-      $drop = null;
-      break;
+  if (!isset($drop)) {
+    $drop = FALSE;
   }
-}
-
-/**
- * Like theme_links, but handles context warping.
- * theme_links couldn't believe it.
- */
-function theme_context_links($links, $attributes = array('class' => 'links')) {
-  $output = '';
-
-  if (count($links) > 0) {
-    $output = '<ul'. drupal_attributes($attributes) .'>';
-
-    $num_links = count($links);
-    $i = 1;
-
-    foreach ($links as $key => $link) {
-      $class = '';
-
-      // Automatically add a class to each link and also to each LI
-      if (isset($link['attributes']) && isset($link['attributes']['class'])) {
-        $link['attributes']['class'] .= ' '. $key;
-        $class = $key;
-      }
-      else {
-        $link['attributes']['class'] = $key;
-        $class = $key;
-      }
-
-      // Add active class for active menu items
-      if (stristr($key, 'active')) {
-        $class .= " active";
-      }
-
-      // Add first and last classes to the list of links to help out themers.
-      $extra_class = '';
-      if ($i == 1) {
-        $extra_class .= 'first ';
-      }
-      if ($i == $num_links) {
-        $extra_class .= 'last ';
-      }
-      $output .= '<li class="'. $extra_class . $class .'">';
-
-      // Is the title HTML?
-      $html = isset($link['html']) && $link['html'];
-
-      // Initialize fragment and query variables.
-      $link['query'] = isset($link['query']) ? $link['query'] : NULL;
-      $link['fragment'] = isset($link['fragment']) ? $link['fragment'] : NULL;
-
-      if (isset($link['href'])) {
-        if ($link['warp']) {
-          $output .= cl($link['title'], $link['href'], $link['attributes'], $link['query'], $link['fragment'], FALSE, $html, TRUE);
-        }
-        else {
-          $output .= l($link['title'], $link['href'], $link['attributes'], $link['query'], $link['fragment'], FALSE, $html);
-        }
-      }
-      else if ($link['title']) {
-        //Some links are actually not links, but we wrap these in <span> for adding title and class attributes
-        if (!$html) {
-          $link['title'] = check_plain($link['title']);
-        }
-        $output .= '<span'. drupal_attributes($link['attributes']) .'>'. $link['title'] .'</span>';
-      }
-
-      $i++;
-      $output .= "</li>\n";
-    }
-
-    $output .= '</ul>';
+  if ($set) {
+    $drop = TRUE;
   }
-
-  return $output;
+  return $drop;
 }
 
 /**

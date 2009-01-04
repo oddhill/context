@@ -77,7 +77,7 @@ The details:
 5. Context_prefix rewrites all url's on the page to contain the
    'knitting' prefix.
    NOTE: certain links can be excluded from prefixing by using the
-   cl() function.
+   'unprefix' parameter in the $options array passed to l().
 
 Maintainers
 -----------
