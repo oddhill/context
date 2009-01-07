@@ -317,7 +317,13 @@ function context_prefix_unprefix($q, $method, $providers = array()) {
   $args = explode('/', $q);
   switch ($method) {
     case CONTEXT_PREFIX_PATH:
-      $args = array_diff($args, $parsed);
+      // Remove the first occurrence of each prefix value from the query string
+      foreach ($parsed as $prefix) {
+        $k = array_search($prefix, $args);
+        if ($k !== FALSE) {
+          unset($args[$k]);
+        }
+      }
       break;
     case CONTEXT_PREFIX_PAIR:
       foreach ($parsed as $v) {
