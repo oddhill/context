@@ -221,10 +221,12 @@ function context_ui_update_6002() {
     $cids[] = $row->cid;
   }
   $cids = implode(',', $cids);
-  $ret[] = update_sql("DELETE FROM {context_ui} WHERE cid IN ($cids)");
-  $ret[] = update_sql("DELETE FROM {context_ui_setter} WHERE cid IN ($cids)");
-  $ret[] = update_sql("DELETE FROM {context_ui_getter} WHERE cid IN ($cids)");
-  $ret[] = update_sql("DELETE FROM {context_ui_block} WHERE cid IN ($cids)");
+  if ($cids != '') {
+    $ret[] = update_sql("DELETE FROM {context_ui} WHERE cid IN ($cids)");
+    $ret[] = update_sql("DELETE FROM {context_ui_setter} WHERE cid IN ($cids)");
+    $ret[] = update_sql("DELETE FROM {context_ui_getter} WHERE cid IN ($cids)");
+    $ret[] = update_sql("DELETE FROM {context_ui_block} WHERE cid IN ($cids)");
+  }
 
   db_drop_field($ret, 'context_ui', 'system');
   db_drop_field($ret, 'context_ui', 'status');
