@@ -1,6 +1,9 @@
 // $Id$
 context_ui DRUPAL-6--1
 ----------------------
+- #356960: Fix for context_ui_set() error where an array of IDs are
+  passed. context_ui_set() no longer accepts arrays for the $id
+  parameter. Reported by loze.
 - #356626: Adding patch to improve performance and integration with
   memcache & aggressive caching. From m3avrck.
 

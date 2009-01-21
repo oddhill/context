@@ -474,9 +474,9 @@ function context_ui_form_block_admin_configure_alter(&$form, $form_state) {
  * Implementation of hook_user().
  */
 function context_ui_user($op, &$edit, &$account, $category = NULL) {
-  if ($op == 'view') {
-    if (!empty($account->roles)) {
-      context_ui_set('user', array_keys($account->roles));
+  if ($op == 'view' && !empty($account->roles)) {
+    foreach (array_keys($account->roles) as $rid) {
+      context_ui_set('user', $rid);
     }
   }
 }
