@@ -6,16 +6,6 @@ define('CONTEXT_UI_OVERRIDDEN', 0);
 define('CONTEXT_UI_ENABLED', 1);
 
 /**
- * Implementation of hook_exit().
- */
-function context_ui_exit() {
-  // Rebuild context_ui "cache".
-  if ($_GET['q'] == 'admin/build/modules') {
-    context_ui_invalidate_cache();
-  }
-}
-
-/**
  * Implementation of hook_init().
  */
 function context_ui_init() {
@@ -404,6 +394,10 @@ function context_ui_form_alter(&$form, $form_state, $form_id) {
   if (isset($form['#node']) && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
     context_ui_set('node', $form['#node']->type);
   }
+  
+  if ($form_id == 'system_modules') {
+    $form['#submit'][] = 'context_ui_invalidate_cache';
+  }
 }
 
 /**
@@ -576,7 +570,7 @@ function context_ui_cache_set($key, $value) {
   $cache = cache_get('context', 'cache');
   $cache = $cache ? $cache->data : array();
   $cache[$key] = $value;
-  cache_set('context', $cache, 'cache', CACHE_TEMPORARY);  
+  cache_set('context', $cache);  
 }
 
 /**
