@@ -448,6 +448,7 @@ function context_prefix_admin() {
   $page = isset($_GET['page']) ? $_GET['page'] : 0;
   $element = 0;
   $limit = 20;
+  $providers = context_prefix_providers();
 
   // Convert $page to an array, used by other functions.
   $pager_page_array = array($page);
@@ -461,10 +462,11 @@ function context_prefix_admin() {
       $merged[] = $info;
     }
   }
-  $rows =array();
+
+  $rows = array();
   for ($i = $page * $limit; $i < ($page+1) * $limit && $i < count($merged); $i++) {
     $rows[] = array(
-      $merged[$i]['provider'],
+      $providers[$merged[$i]['provider']]['name'],
       $merged[$i]['prefix'],
       $merged[$i]['id'],
       $methods[variable_get('context_prefix_method_'. $merged[$i]['provider'], CONTEXT_PREFIX_PATH)],
