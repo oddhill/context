@@ -394,9 +394,8 @@ function context_ui_form_alter(&$form, $form_state, $form_id) {
   if (isset($form['#node']) && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
     context_ui_set('node', $form['#node']->type);
   }
-  
   if ($form_id == 'system_modules') {
-    $form['#submit'][] = 'context_ui_invalidate_cache';
+    context_ui_invalidate_cache();
   }
 }
 
@@ -764,6 +763,7 @@ function context_ui_getters($reset = FALSE) {
  */
 function context_ui_set($type, $id) {
   $map = context_ui_setter_map();
+  $set = FALSE;
   if (!empty($map[$type]) && !empty($map[$type][$id])) {
     $contexts = context_ui_enabled_contexts(); 
 
@@ -783,7 +783,7 @@ function context_ui_set($type, $id) {
             // Allow getters to respond to the set context
             module_invoke_all('context_getter', $context);
           }
-          $set = true;
+          $set = TRUE;
         }
       }
     }
@@ -1299,7 +1299,7 @@ function context_ui_menu_set_active($links = array(), $reset = FALSE) {
   $new_links = array();
   if (!empty($links)) {
     foreach ($links as $key => $link) {
-      if (in_array($link['href'], $active_paths)) {
+      if (!empty($link['href']) && in_array($link['href'], $active_paths)) {
         if (isset($links['attributes'])) {
           if (isset($links['attributes']['class'])) {
             $link['attributes']['class'] .= ' active';
