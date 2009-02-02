@@ -550,7 +550,7 @@ function context_ui_export(&$form_state, $context) {
   drupal_set_title(t('Export %title', array('%title' => $context->value)));
 
   // help text -- too bad the help module in 5 doesn't take wildcards
-  $help = t('You can use exported contexts in your modules by returning an array of defined contexts in <code>hook_context_define()</code>.');
+  $help = t('You can use exported contexts in your modules by returning an array of defined contexts in <code>hook_context_ui_define()</code>.');
 
   // prune system specific information and cast for Drupal's AOP (array oriented programming)
   unset($context->cid);
