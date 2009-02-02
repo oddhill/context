@@ -21,21 +21,21 @@ function context_prefix_schema() {
     'description' => t('context_prefix.'),
     'fields' => array(
       'prefix' => array(
-        'description' => t('?'),
+        'description' => t('The string to detect from incoming URLs and to use when rewriting outgoing URLs.'),
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'provider' => array(
-        'description' => t('?'),
+        'description' => t('The provider (usually a module\'s name) of the prefix/id pair.'),
         'type' => 'varchar',
         'length' => 255,
         'not null' => TRUE,
         'default' => '',
       ),
       'id' => array(
-        'description' => t('?'),
+        'description' => t('The ID given by the provider to associate with a corresponding prefix. This might be a group_nid (og), a language code (i18n) or some other unique identifier that the provider is interested in associating with the URL prefix.'),
         'type' => 'int',
         'unsigned' => TRUE,
         'not null' => TRUE,
