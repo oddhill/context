@@ -1260,6 +1260,7 @@ function context_ui_preprocess_page(&$vars) {
   // If primary + secondary links are pointed at the same menu, provide
   // contextual trailing by default.
   if (variable_get('menu_primary_links_source', 'primary-links') == variable_get('menu_secondary_links_source', 'secondary-links')) {
+    $vars['primary_links'] = context_ui_menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links'));
     $vars['secondary_links'] = context_ui_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1);
   }
 
