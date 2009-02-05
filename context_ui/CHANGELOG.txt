@@ -1,6 +1,11 @@
 // $Id$
 context_ui DRUPAL-6--1
 ----------------------
+- #367775: Consistifying use of namespace/attribute/value delimiters
+  in code. From dmitrig01.
+- Fixed for menu primary/secondary link menu active trail handling --
+  previously only secondary links would receive a context-based active
+  class when both were employed.
 - #356960: Fix for context_ui_set() error where an array of IDs are
   passed. context_ui_set() no longer accepts arrays for the $id
   parameter. Reported by loze.

@@ -449,7 +449,7 @@ function context_ui_confirm_submit($form, &$form_state) {
       $context = $form_state['values']['context'];
       if ($context) {
         $status = variable_get('context_status', array());
-        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_UI_DISABLED;
+        $status["$context->namespace-$context->attribute-$context->value"] = CONTEXT_UI_DISABLED;
         variable_set('context_status', $status);
         context_ui_invalidate_cache();
       }
@@ -458,7 +458,7 @@ function context_ui_confirm_submit($form, &$form_state) {
       $context = $form_state['values']['context'];
       if ($context) {
         $status = variable_get('context_status', array());
-        $status["$context->namespace:$context->attribute:$context->value"] = CONTEXT_UI_ENABLED;
+        $status["$context->namespace-$context->attribute-$context->value"] = CONTEXT_UI_ENABLED;
         variable_set('context_status', $status);
         context_ui_invalidate_cache();
       }
@@ -610,7 +610,7 @@ function theme_context_ui_admin($contexts) {
     $attribute = $context->attribute;
     $value = $context->value;
     if ($context->system) {
-      $identifier = str_replace(':', '-', $key);
+      $identifier = $key;
     }
     else {
       $identifier = $context->cid;

@@ -239,3 +239,15 @@ function context_ui_update_6002() {
 
   return $ret;
 }
+
+function context_ui_update_6003() {
+  $statuses = variable_get('context_status', array());
+  $new_statuses = array();
+  foreach ($statuses as $key => $status) {
+    $new_statuses[str_replace(':', '-', $key)] = $status;
+  }
+  variable_set('context_status', $new_statuses);
+  context_ui_invalidate_cache();
+
+  return array();
+}
