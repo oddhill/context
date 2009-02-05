@@ -88,7 +88,6 @@ Drupal.behaviors.context_ui = function(context) {
     // Hide blocks in the selector that are enabled
     var bid = $(this).parents('tr').eq(0).attr('id');
     $('div.context-ui-block-selector input[@value='+bid+']').parents('div.form-item').eq(0).hide();
-
     $(this).addClass('contextui-processed');
   });
 
@@ -129,6 +128,7 @@ Drupal.behaviors.context_ui = function(context) {
             Drupal.attachBehaviors($('table#'+base));
 
             Drupal.context_ui.regionblocks(region);
+            $(this).removeAttr('checked');
           }
         });
       }

@@ -194,6 +194,13 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     }
   }
 
+  $modules = array();
+  $query = db_query("SELECT name, info FROM {system} WHERE type = '%s'", 'module');
+  while ($result = db_fetch_object($query)) {
+    $info = unserialize($result->info);
+    $modules[$result->name] = $info['name'];
+  }
+
   // Control block visibility
   $block_options =
   $block_defaults = array();
@@ -201,7 +208,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $regions = system_region_list($theme_key);
   // $blocks in [0] have not been assigned a region
   foreach ($blocks[0] as $block) {
-    $block_options[$block->module][$block->bid] = $block->label ." ($block->bid)";
+    $block_options[$block->module][$block->bid] = $block->label;
   }
   ksort($block_options);
 
@@ -221,12 +228,14 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     '#suffix' => '</div>',
   );
   foreach ($block_options as $module => $module_blocks) {
-    $form['block']['selector'][$module] = array(
-      '#type' => 'checkboxes',
-      '#title' => $module,
-      '#options' => $module_blocks,
-      '#disabled' => isset($context->system) && $context->system ? true : false,
-    );
+    if (!empty($module_blocks)) {
+      $form['block']['selector'][$module] = array(
+        '#type' => 'checkboxes',
+        '#title' => $modules[$module],
+        '#options' => $module_blocks,
+        '#disabled' => isset($context->system) && $context->system ? true : false,
+      );
+    }
   }
 
   $form['block']['blocks'] = array(
@@ -246,7 +255,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     if ($system) {
       $system_blocks = array();
       foreach ($system as $block) {
-        $system_blocks[] = $block->label ." ($block->bid)";
+        $system_blocks[] = $block->label;
       }
       $system_blocks = "<span class='system-blocks'>". implode(", ", $system_blocks) ."</span";
       $form['block']['blocks'][$region]['system'] = array(
@@ -673,7 +682,7 @@ function theme_context_ui_block_ui($form) {
     $rows = array();
     foreach (element_children($form[$region]) as $id) {
       $form[$region][$id]['weight']['#attributes'] = array('class' => 'block-weight');
-      $label = $form[$region][$id]['#value'] ." ($id)";
+      $label = $form[$region][$id]['#value'];
       if ($id == 'system') {
         $remove = '';
       }

@@ -1,6 +1,8 @@
 // $Id$
 context_ui DRUPAL-6--1
 ----------------------
+- #336469: Fixing sticky checkbox for hidden blocks and using more
+  human-friendly labels in block UI. From dmitrig01.
 - #367775: Consistifying use of namespace/attribute/value delimiters
   in code. From dmitrig01.
 - Fixed for menu primary/secondary link menu active trail handling --
