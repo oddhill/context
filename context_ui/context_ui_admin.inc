@@ -84,6 +84,12 @@ function context_ui_default_values($form, $data) {
         $form['#default_value'][] = $value;
       }
     }
+    else if (is_array($data) && $form['#type'] == 'textarea') {
+      $form['#default_value'] = implode("\n", $data);
+    }
+    else if (is_array($data) && $form['#type'] == 'textfield') {
+      $form['#default_value'] = implode(",", $data);
+    }
     else {
       $form['#default_value'] = is_array($data) ? current($data) : $data;
     }
@@ -792,6 +798,7 @@ function context_ui_form_process($form) {
       }
     }
   }
+
   return $context;
 }
 

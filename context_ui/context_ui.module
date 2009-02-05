@@ -11,6 +11,27 @@ define('CONTEXT_UI_ENABLED', 1);
 function context_ui_init() {
   // context_ui integration against the sitewide setter
   context_ui_set('sitewide', 1);
+
+  // context_ui integration against paths
+  $path = array();
+  $path['real'] = $_GET['q'];
+  $path['alias'] = drupal_get_path_alias($_GET['q']);
+  if ($path['real'] == $path['alias']) {
+    unset($path['alias']);
+  }
+  // Test each path option incrementally adding args
+  // as we go.
+  foreach ($path as $path_option) {
+    $args = explode('/', $path_option);
+    if (count($args)) {
+      $test = array_shift($args);
+      context_ui_set('path', $test);
+      while (count($args)) {
+        $test .= array_shift($args);
+        context_ui_set('path', $test);
+      }
+    }
+  }
 }
 
 /**
@@ -167,7 +188,49 @@ function context_ui_context_ui_setters() {
     '#description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
   );
 
+  // Path
+  $items['path'] = array(
+    '#title' => t('Path'),
+    '#description' => t('Set this context when any of the paths above match the beginning or all of the page path. Put each path on a separate line.'),
+    '#type' => 'textarea',
+    '#element_validate' => array('context_ui_setter_text_validate'),
+  );
+
   return $items;
+}
+
+/**
+ * Element validate handler for setter textareas and texfields.
+ * Will process and convert a string to an array of matchable
+ * elements by splitting on an appropriate delimiter ("\n" for
+ * textareas and "," for textfields).
+ */
+function context_ui_setter_text_validate($element, &$form_state) {
+  if (!empty($element['#value']) && in_array($element['#type'], array('textfield', 'textarea'))) {
+    switch ($element['#type']) {
+      case 'textfield':
+        $delimiter = ',';
+        break;
+      case 'textarea':
+        $delimiter = "\n";
+        break;
+    }
+
+    $items = $element['#value'];
+    $items = explode($delimiter, $items);
+
+    if (!empty($items)) {
+      $values = array();
+      foreach ($items as $k => $v) {
+        $v = trim($v);
+        if (!empty($v)) {
+          $values[$v] = TRUE;
+        }
+      }
+      $id = end($element['#parents']);
+      $form_state['values']['items'][$id] = $values;
+    }
+  }
 }
 
 /**
