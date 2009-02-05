@@ -27,7 +27,7 @@ function context_ui_init() {
       $test = array_shift($args);
       context_ui_set('path', $test);
       while (count($args)) {
-        $test .= array_shift($args);
+        $test .= '/'. array_shift($args);
         context_ui_set('path', $test);
       }
     }
