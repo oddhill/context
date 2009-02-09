@@ -74,5 +74,6 @@ jmiccolis (Jeff Miccolis)
 
 Contributors
 ------------
-Pasqualle
+dmitrig01 (Dmitri Gaskin)
+Pasqualle (Csuthy Bálint)
 

@@ -15,36 +15,14 @@ function context_ui_admin() {
   context_ui_invalidate_cache();
 
   // user defined contexts
-  $output = "<h3>". t('User context definitions') ."</h3>";
-  $normal = context_ui_normal_contexts();
+  $output = "<h3>". t('Context definitions') ."</h3>";
+  $normal = context_ui_contexts();
   if ($normal) {
     ksort($normal);
-    foreach ($normal as $identifier => $context) {
-      $normal[$identifier]->status = context_ui_is_enabled($context) ? 1 : -1;
-    }
     $output .= theme('context_ui_admin', $normal);
   }
   else {
     $output .= "<p>". t('Please !add_context to get started.', array('!add_context' => l(t('add a context'), 'admin/build/context/add'))) ."</p>";
-  }
-
-  // module defined contexts
-  $output .= "<h3>". t('Module context definitions') ."</h3>";
-  $default = context_ui_default_contexts();
-  if ($default) {
-    ksort($default);
-    foreach ($default as $identifier => $context) {
-      if (context_ui_is_enabled($context)) {
-        $default[$identifier]->status = empty($normal[$identifier]) ? 1 : 0;
-      }
-      else {
-        $default[$identifier]->status = -1;
-      }
-    }
-    $output .= theme('context_ui_admin', $default);
-  }
-  else {
-    $output .= "<p>". t('There are currently no module defined contexts.') ."</p>";
   }
 
   return $output;
@@ -461,19 +439,11 @@ function context_ui_confirm_submit($form, &$form_state) {
       context_ui_delete($form_state['values']['context']);
       break;
     case 'disable':
-      $context = $form_state['values']['context'];
-      if ($context) {
-        $status = variable_get('context_status', array());
-        $status["$context->namespace-$context->attribute-$context->value"] = CONTEXT_UI_DISABLED;
-        variable_set('context_status', $status);
-        context_ui_invalidate_cache();
-      }
-      break;
     case 'enable':
       $context = $form_state['values']['context'];
       if ($context) {
         $status = variable_get('context_status', array());
-        $status["$context->namespace-$context->attribute-$context->value"] = CONTEXT_UI_ENABLED;
+        $status["$context->namespace-$context->attribute-$context->value"] = ($form_state['values']['action'] == 'disable' ? CONTEXT_UI_DISABLED : CONTEXT_UI_ENABLED);
         variable_set('context_status', $status);
         context_ui_invalidate_cache();
       }
@@ -616,61 +586,82 @@ function theme_context_ui_export_form($form) {
  * Generates the main context_ui admin page with a tiered context listing.
  */
 function theme_context_ui_admin($contexts) {
-  $rows =
-  $headings = array();
+  $rows = $headings = array();
   foreach ($contexts as $key => $context) {
     $row = array();
 
     $namespace = $context->namespace;
     $attribute = $context->attribute;
     $value = $context->value;
-    if ($context->system) {
-      $identifier = $key;
+    if (isset($context->cid) && $context->cid) {
+      $identifier = $context->cid;
     }
     else {
-      $identifier = $context->cid;
+      $identifier = $key;
     }
 
     // If no heading has been printed for this n/a pair, do so
-    if (!isset($rows["$namespace:$attribute"])) {
-      $row = array("<span class='context-namespace'>$namespace &gt; $attribute</span>", '', '');
-      $rows["$namespace:$attribute"] = $row;
+    if (!isset($rows["$namespace-$attribute"])) {
+      $row = array(array('data' => "<span class='context-namespace'>$namespace &gt; $attribute</span>", 'colspan' => 2));
+      $rows["$namespace-$attribute"] = $row;
     }
 
     // Add row for context
-    $links = array();          
-    $class = $enable = '';
-    if ($context->system) {
-      $links[] = l(t('View'), "admin/build/context/$identifier");
-      $links[] = l(t('Override'), "admin/build/context/$identifier/clone");
-    }
-    else {
-      $links[] = l(t('Edit'), "admin/build/context/$identifier");
-      $links[] = l(t('Export'), "admin/build/context/$identifier/export");
-      $links[] = l(t('Clone'), "admin/build/context/$identifier/clone");
-      $links[] = l(t('Delete'), "admin/build/context/$identifier/delete");
+    $links = array();
+    $icon = theme('advanced_help_topic', 'context_ui', 'type');
+    switch ($context->type) {
+      case CONTEXT_UI_DEFAULT:
+        $type = 'Default';
+        $links[0] = l(t('Override'), "admin/build/context/$identifier/clone");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        break;
+      case CONTEXT_UI_OVERRIDDEN:
+        $type = 'Overridden';
+        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        $links[4] = l(t('Revert'), "admin/build/context/$identifier/delete");
+        break;
+      case CONTEXT_UI_USER:
+        $type = 'Normal';
+        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        $links[4] = l(t('Delete'), "admin/build/context/$identifier/delete");
     }
     switch ($context->status) {
       case CONTEXT_UI_DISABLED:
         $class = 'disabled';
-        $value = "$value (". t('Disabled') .")";
         $enable = l(t('Enable'), "admin/build/context/$identifier/enable");
         break;
-      case CONTEXT_UI_OVERRIDDEN:
-        $class = 'disabled';
-        $value = "$value (". t('Overridden') .")";
-        break;
-      default:
+      case CONTEXT_UI_ENABLED:
+        $class = 'enabled';
         $enable = l(t('Disable'), "admin/build/context/$identifier/disable");
-        break;
     }
+    $links[1] = $enable;
+    if ($icon) {
+      // These spans are used to work-around advanced help's default styling of
+      // floating the help icon left. We would like to display it after the text,
+      // so we put a series of floats next to each other.
+      $data = "<strong>$value</strong> <em><span>($type</span> $icon<span>)</span></em>";
+    }
+    else {
+      $data = "<strong>$value</strong> <em>($type)</em>";
+    }
+    ksort($links);
     $rows[$key] = array(
-      "<span class='context-value $class'>". $value ."</span>",
-      $enable,
-      implode(' | ', $links),
+      'data' => array(
+        array(
+          'data' => $data,
+          'class' => 'context-name '. ($icon? 'icon' : 'no-icon'),
+        ),
+        implode(' | ', $links),
+      ),
+      'class' => 'context-table-row ' . $class,
     );
   }
-  return theme('table', array(t('Context'),t('Status'),t('Actions')), $rows, array('class' => 'context-ui-overview')); 
+  return theme('table', array(t('Context'), t('Operations')), $rows, array('class' => 'context-ui-overview')); 
 }
 
 /**

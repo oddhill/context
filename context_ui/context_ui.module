@@ -1,9 +1,12 @@
 <?php
 // $Id$
 
-define('CONTEXT_UI_DISABLED', -1);
-define('CONTEXT_UI_OVERRIDDEN', 0);
+define('CONTEXT_UI_DISABLED', 0);
 define('CONTEXT_UI_ENABLED', 1);
+
+define('CONTEXT_UI_DEFAULT', 0);
+define('CONTEXT_UI_OVERRIDDEN', 1);
+define('CONTEXT_UI_USER', 2);
 
 /**
  * Implementation of hook_init().
@@ -412,9 +415,9 @@ function context_ui_menu_load($arg) {
     return context_ui_load($arg);
   }
   else {
-    $default = context_ui_default_contexts();
-    if (!empty($default[$arg])) {
-      return $default[$arg];
+    $contexts = context_ui_contexts();
+    if (!empty($contexts[$arg])) {
+      return $contexts[$arg];
     }
   }
 }
@@ -552,7 +555,7 @@ function context_ui_user($op, &$edit, &$account, $category = NULL) {
  * @return
  *   An array of context objects.
  */
-function context_ui_default_contexts($reset = FALSE) {
+function context_ui_contexts($reset = FALSE) {
   static $contexts;
   if (!$contexts || $reset) {
     $contexts = array();
@@ -562,7 +565,7 @@ function context_ui_default_contexts($reset = FALSE) {
       if (!empty($c)) {
         foreach ($c as $context) {
           $context = (object) $context;
-          $context->system = 1;
+          $context->type = CONTEXT_UI_DEFAULT;
           $identifier = "$context->namespace-$context->attribute-$context->value";
           $contexts[$identifier] = $context;
         }
@@ -578,7 +581,7 @@ function context_ui_default_contexts($reset = FALSE) {
       if (!empty($c)) {
         foreach ($c as $context) {
           $context = (object) $context;
-          $context->system = 1;
+          $context->type = CONTEXT_UI_DEFAULT;
           $identifier = "$context->namespace-$context->attribute-$context->value";
           $contexts[$identifier] = $context;
         }
@@ -589,25 +592,26 @@ function context_ui_default_contexts($reset = FALSE) {
     foreach ($contexts as $key => $context) {
       $contexts[$key] = $context;
     }
-  }
-  return $contexts;
-}
 
-/**
- * Generates an array tree representation of available space/key/value context definitions.
- */
-function context_ui_normal_contexts($reset = FALSE) {
-  static $normal;
-  if (!$normal || $reset) {
-    $normal = array();
     $result = db_query("SELECT * FROM {context_ui} ORDER BY namespace ASC, attribute ASC, value ASC");
     while ($context = db_fetch_object($result)) {
       if ($context = context_ui_load($context)) {
-        $normal["$context->namespace-$context->attribute-$context->value"] = $context;
+        $key = "$context->namespace-$context->attribute-$context->value";
+        if (isset($contexts[$key])) {
+          $contexts[$key] = $context;
+          $contexts[$key]->type = CONTEXT_UI_OVERRIDDEN;
+        }
+        else {
+          $contexts[$key] = $context;
+          $contexts[$key]->type = CONTEXT_UI_USER;
+        }
       }
     }
+    foreach ($contexts as $key => $context) {
+      $contexts[$key]->status = context_ui_status($context);
+    }
   }
-  return $normal;
+  return $contexts;
 }
 
 /**
@@ -647,29 +651,15 @@ function context_ui_enabled_contexts($namespace = NULL, $reset = FALSE) {
       $enabled = $cache;
     }
     else {
-      $default_contexts = context_ui_default_contexts(NULL, TRUE);
-
-      // Grab existing user defined contexts
-      // Always reset this static cache -- since this could be called
-      // before a user-defined context is inserted on submit.
-      $normal_contexts = context_ui_normal_contexts(TRUE);
-
-      foreach ($normal_contexts as $context) {
-        if (context_ui_is_enabled($context)) {
+      $contexts = context_ui_contexts(TRUE);
+     
+      foreach ($contexts as $context) {
+        if (context_ui_status($context) == CONTEXT_UI_ENABLED) {
           $identifier = "$context->namespace-$context->attribute-$context->value";
           $enabled[$identifier] = $context;
         }
       }
-
-      foreach ($default_contexts as $context) {
-        if (context_ui_is_enabled($context)) {
-          $identifier = "$context->namespace-$context->attribute-$context->value";
-          if (!isset($enabled[$identifier])) {
-            $enabled[$identifier] = $context;
-          }
-        }
-      }
-
+     
       // Set the cache
       context_ui_cache_set('enabled', $enabled);
     }
@@ -680,6 +670,7 @@ function context_ui_enabled_contexts($namespace = NULL, $reset = FALSE) {
       $namespaces[$context->namespace][$identifier] = $context;
     }
   }
+
   if (!empty($namespace)) {
     return !empty($namespaces[$namespace]) ? $namespaces[$namespace] : array();
   }
@@ -750,13 +741,13 @@ function context_ui_setter_map($reset = FALSE) {
 /**
  * Returns TRUE or FALSE based on whether a given context definition is enabled.
  */
-function context_ui_is_enabled($context) {
-  $status = variable_get('context_status', array());
-  $identifier = "$context->namespace-$context->attribute-$context->value";
-  if (isset($status[$identifier]) && $status[$identifier] == CONTEXT_UI_DISABLED) {
-    return FALSE;
-  }
-  return TRUE;
+function context_ui_status($context) {
+ $status = variable_get('context_status', array());
+ $identifier = "$context->namespace-$context->attribute-$context->value";
+  if (isset($status[$identifier]) && !$status[$identifier]) {
+    return CONTEXT_UI_DISABLED;
+ }
+  return CONTEXT_UI_ENABLED;
 }
 
 /**
@@ -1497,13 +1488,6 @@ function context_ui_context($op, $context) {
     case 'delete':
       return context_ui_delete($context);
   }
-}
-
-/**
- * Deprecated -- renamed to context_ui_default_contexts().
- */
-function context_ui_defaults($reset = FALSE) {
-  return context_ui_default_contexts($reset = FALSE);
 }
 
 /**

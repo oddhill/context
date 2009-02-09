@@ -1,6 +1,7 @@
 // $Id$
 context_ui DRUPAL-6--1
 ----------------------
+- #367057: Overhaul of admin/build/context interface by dmitrig01.
 - Added an experimental path-based context setter.
 - #336469: Fixing sticky checkbox for hidden blocks and using more
   human-friendly labels in block UI. From dmitrig01.

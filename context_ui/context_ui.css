@@ -35,33 +35,39 @@
 /**
  * Context admin listing page =========================================
  */
-table.context-ui,
-table.context-ui-overview {
-  width:100%;
-  }
 
-table.context-ui td {
-  width:50%;
-  }
-
-table.context-ui-overview td {
-  width: 25%;
-  }
-
-table.context-ui-overview td.context {
-  width: 50%;
+table.context-ui-overview a.advanced-help-link {
+  position: relative;
+  top: 3px;
+  margin-left: 3px;
   }
 
 table.context-ui-overview span.context-namespace {
   font-weight:bold;
   }
 
-table.context-ui-overview span.context-value {
-  margin-left:2em;
+table.context-ui-overview td.context-name {
+  padding-left:30px;
   }
 
-table.context-ui-overview span.disabled {
+table.context-ui-overview tr.disabled td.context-name {
   color:#999;
+  }
+
+table.context-ui-overview tr.context-table-row td.icon strong,
+table.context-ui-overview tr.context-table-row td.icon em,
+table.context-ui-overview tr.context-table-row td.icon span {
+  display: block;
+  float: left;
+  padding-right: 2px;
+  }
+
+table.context-ui-overview tr.context-table-row td.icon strong {
+  padding-right: 4px;
+  }
+
+table.context-ui-overview tr.context-table-row td.icon a span {
+  display: none;  
   }
 
 h3.context-space small {
