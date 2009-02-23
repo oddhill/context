@@ -1423,7 +1423,7 @@ function context_ui_menu_navigation_links($menu_name, $level = 0) {
 
   // Retrieve the first active menu path found.
   foreach (context_ui_active_contexts() as $context) {
-    if (isset($context->menu) && !empty($context->menu)) {
+    if (isset($context->menu) && !empty($context->menu) && menu_get_item($context->menu)) {
       menu_set_active_item($context->menu);
       break;
     }
