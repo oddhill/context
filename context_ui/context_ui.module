@@ -979,7 +979,7 @@ function context_ui_block_list($region) {
     // Sort blocks -- we must do this here since blocks provided via
     // context may have overridden or altered weights.
     foreach ($blocks as $r => $dummy) {
-      uasort($blocks[$r], create_function('$a, $b', 'return ($a->weight - $b->weight);'));
+      uasort($blocks[$r], '_context_ui_block_sort');
     }
   }
 
@@ -1041,6 +1041,13 @@ function context_ui_block_list($region) {
   }
 
   return $blocks[$region];
+}
+
+/**
+ * Helper function to sort blocks.
+ */
+function _context_ui_block_sort($a, $b) {
+  return ($a->weight - $b->weight);
 }
 
 /**
