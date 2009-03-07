@@ -783,7 +783,7 @@ function context_ui_form_process($form) {
         }
         if ($bid != 'system') {
           $block = $valid[$bid];
-          $modifier = $position < $midpoint ? -10 : 10;
+          $modifier = $position < $midpoint ? -20 : 20;
           $block->weight = $position - $midpoint + $modifier;
           $block->region = $region;
           $block->type = 'context_ui';
