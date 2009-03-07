@@ -546,11 +546,10 @@ function context_ui_user($op, &$edit, &$account, $category = NULL) {
 }
 
 /**
- * Invokes hook_context_ui_define() to collect all contexts provided in code by modules.
+ * Provides an array of all contexts provided by modules and in the database.
  *
- * @param $space
- *   An optional string namespace identifier. If provided, only context definitions with the
- *   specified namespace will be returned.
+ * @param $reset
+ *   Boolean to clear the static cached array of contexts.
  *
  * @return
  *   An array of context objects.
