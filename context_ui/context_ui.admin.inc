@@ -493,15 +493,15 @@ function context_ui_import() {
  * Import form submit handler. Evaluates import code and transfers to
  * context definition form.
  */
-function context_uiS_import_submit($form, &$form_state) {
+function context_ui_import_submit($form, &$form_state) {
   $items = array();
   if ($import = $form_state['values']['import']) {
+    if (strpos($import, 'return') !== 0) {
+      $import = "return {$import}";
+    }
     ob_start();
-    eval($import);
+    $context = eval($import);
     ob_end_clean();
-  }
-  if (is_array($items) && count($items)) {
-    $context = current($items);
   }
   if (is_array($context)) {
     $context = (object) $context;
@@ -511,7 +511,7 @@ function context_uiS_import_submit($form, &$form_state) {
     }
     else {
       drupal_set_title(t('Add context'));
-      $output = drupal_get_form('context_ui_form', 'add', null, (object) $context);
+      $output = drupal_get_form('context_ui_form', 'add', (object) $context);
       print theme('page', $output);
       exit;
     }
@@ -533,9 +533,6 @@ function context_uiS_import_submit($form, &$form_state) {
  */
 function context_ui_export(&$form_state, $context) {
   drupal_set_title(t('Export %title', array('%title' => $context->value)));
-
-  // help text -- too bad the help module in 5 doesn't take wildcards
-  $help = t('You can use exported contexts in your modules by returning an array of defined contexts in <code>hook_context_ui_define()</code>.');
 
   // prune system specific information and cast for Drupal's AOP (array oriented programming)
   $prune = array('cid', 'status', 'system', 'type');
@@ -563,10 +560,6 @@ function context_ui_export(&$form_state, $context) {
 
   // build the form
   $form = array();
-  $form['help'] = array(
-    '#type' => 'item',
-    '#value' => $help,
-  );
   $form['export'] = array(
     '#type' => 'textarea',
     '#rows' => 24,
@@ -580,9 +573,117 @@ function context_ui_export(&$form_state, $context) {
  * Themes a context value into an export friendly var_export().
  */
 function theme_context_ui_export_form($form) {
-  $form['#value'] =
-  $form['#default_value'] = '$items[] = '. var_export($form['#value'], true) .';';
+  $form['#value'] = $form['#default_value'] = context_ui_var_export($form['#value'], '', FALSE);
   return theme('textarea', $form);
+}
+
+/**
+ * Export multiple contexts
+ */
+function context_ui_bulk_export(&$form_state) {
+  $form = array();
+  $contexts = context_contexts();
+  if (isset($form_state['storage']['module_name'])) {
+    $code = "function ". $form_state['storage']['module_name'] ."_context_ui_define() {\n";
+    foreach ($form_state['storage']['contexts'] as $id) {
+      $context = (array) $contexts[$id];
+      unset($context['cid']);
+      $code .= '  $items[] = '. context_ui_var_export($context, '  ') .";\n\n";
+    }
+    $code .= "  return \$items;\n}";
+    $form['code'] = array(
+      '#type' => 'textarea',
+      '#title' => t('Code'),
+      '#description' => t('Put this in your module\'s .module file.'),
+      '#cols' => 60,
+      '#rows' => 30,
+      '#value' => $code,
+      '#default_value' => $code,
+    );
+  }
+  else {
+    $form['#contexts'] = $contexts;
+    $form['checkboxes']['#tree'] = TRUE;
+
+    foreach ($contexts as $context) {
+      $form['checkboxes']["$context->namespace-$context->attribute-$context->value"] = array(
+        '#title' => $context->value,
+        '#type' => 'checkbox',
+      );
+    }
+
+    $form['module_name'] = array(
+      '#type' => 'textfield',
+      '#title' => t('Module Name'),
+      '#description' => t('The name of the module for which to generate the hook.'),
+      '#size' => 40,
+      '#maxlength' => 255,
+    );
+
+    $form['submit'] = array(
+      '#type' => 'submit', 
+      '#value' => t('Export'),
+    );
+
+    $form['#theme'] = 'context_ui_bulk_export_table';
+  }
+
+  return $form;
+}
+
+function context_ui_bulk_export_submit($form, &$form_state) {
+  $form_state['storage']['module_name'] = $form_state['values']['module_name'];
+  foreach ($form_state['values']['checkboxes'] as $key => $value) {
+    if ($value) {
+      $form_state['storage']['contexts'][] = $key;
+    }
+  }
+}
+
+function theme_context_ui_bulk_export_table($form) {
+  // Add css
+  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
+
+  $rows = $headings = array();
+  foreach (element_children($form['checkboxes']) as $key) {
+    $context = $form['#contexts'][$key];
+    $row = array();
+
+    $namespace = $context->namespace;
+    $attribute = $context->attribute;
+    $value = $context->value;
+    if (isset($context->cid) && $context->cid) {
+      $identifier = $context->cid;
+    }
+    else {
+      $identifier = $key;
+    }
+
+    // If no heading has been printed for this n/a pair, do so
+    if (!isset($rows["$namespace-$attribute"])) {
+      $row = array('', array('data' => "<span class='context-namespace'>$namespace &gt; $attribute</span>", 'colspan' => 2));
+      $rows["$namespace-$attribute"] = $row;
+    }
+    unset($form['checkboxes'][$key]['#title']);
+
+    $rows[$key] = array(
+      'data' => array(
+        array(
+          'data' => drupal_render($form['checkboxes'][$key]),
+          'class' => 'context-ui-checkbox',
+        ),
+        array(
+          'data' => '<strong>'. $value .'</strong>',
+          'class' => 'context-name',
+        ),
+      ),
+      'class' => 'context-table-row ' . $class,
+    );
+  }
+  $output = theme('table', array(theme('table_select_header_cell'), t('Context')), $rows, array('class' => 'context-ui-bulk-export context-ui-overview'));
+  $output .= drupal_render($form);
+
+  return $output;
 }
 
 /**

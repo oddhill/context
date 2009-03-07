@@ -256,3 +256,10 @@ table#context-ui-blocks div.context-ui-block-selector {
   table#context-ui-blocks div.context-ui-block-selector label.option {
     background:transparent;
     }
+
+/**
+ * Bulk export ===================================================
+ */
+table.context-ui-bulk-export td.context-ui-checkbox {
+  width: 30px;
+}
