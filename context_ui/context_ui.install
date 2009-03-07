@@ -5,7 +5,10 @@
  * Implementation of hook_install().
  */
 function context_ui_install() {
-  drupal_install_schema('context_ui');
+  // Don't install the context_ui schema on install.
+  // Schema definition is still provided so that stale context_ui
+  // tables can be removed on uninstall.
+  // drupal_install_schema('context_ui');
 }
 
 /**
@@ -14,6 +17,7 @@ function context_ui_install() {
 function context_ui_uninstall() {
   drupal_uninstall_schema('context_ui');
 }
+
 /**
  * Implementation of hook_schema().
  */

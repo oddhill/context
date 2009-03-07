@@ -12,11 +12,11 @@ function context_ui_admin() {
   _block_rehash();
 
   // rebuild context cache
-  context_ui_invalidate_cache();
+  context_invalidate_cache();
 
   // user defined contexts
   $output = "<h3>". t('Context definitions') ."</h3>";
-  $normal = context_ui_contexts();
+  $normal = context_contexts();
   if ($normal) {
     ksort($normal);
     $output .= theme('context_ui_admin', $normal);
@@ -164,7 +164,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $theme_key = variable_get('theme_default', 'garland');
 
   // Generate settings for context item associations
-  foreach ((context_ui_setters(TRUE) + context_ui_getters(TRUE)) as $id => $info) {
+  foreach ((context_conditions(TRUE) + context_reactions(TRUE)) as $id => $info) {
     $form['items'][$id] = $info;
 
     // Disable element
@@ -369,12 +369,12 @@ function theme_context_ui_form($form) {
   // Render setters / getters as a two column split
   $widgets = '';
   $display = "<h1>". t('Set context') ."</h1>";
-  foreach (array_keys(context_ui_setters()) as $id) {
+  foreach (array_keys(context_conditions()) as $id) {
     $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
     $display .= context_ui_item_display($id, $form['items'][$id]);
   }
   $display .= "<h1>". t('Respond to context') ."</h1>";
-  foreach (array_keys(context_ui_getters()) as $id) {
+  foreach (array_keys(context_reactions()) as $id) {
     $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
     $display .= context_ui_item_display($id, $form['items'][$id]);
   }
@@ -436,16 +436,16 @@ function context_ui_confirm(&$form_state, $op = 'delete', $context) {
 function context_ui_confirm_submit($form, &$form_state) {
   switch ($form_state['values']['action']) {
     case 'delete':
-      context_ui_delete($form_state['values']['context']);
+      context_delete_context($form_state['values']['context']);
       break;
     case 'disable':
     case 'enable':
       $context = $form_state['values']['context'];
       if ($context) {
         $status = variable_get('context_status', array());
-        $status["$context->namespace-$context->attribute-$context->value"] = ($form_state['values']['action'] == 'disable' ? CONTEXT_UI_DISABLED : CONTEXT_UI_ENABLED);
+        $status["{$context->namespace}-{$context->attribute}-{$context->value}"] = ($form_state['values']['action'] == 'disable' ? CONTEXT_STATUS_DISABLED : CONTEXT_STATUS_ENABLED);
         variable_set('context_status', $status);
-        context_ui_invalidate_cache();
+        context_invalidate_cache();
       }
       break;
   }
@@ -493,7 +493,7 @@ function context_ui_import() {
  * Import form submit handler. Evaluates import code and transfers to
  * context definition form.
  */
-function context_ui_import_submit($form, &$form_state) {
+function context_uiS_import_submit($form, &$form_state) {
   $items = array();
   if ($import = $form_state['values']['import']) {
     ob_start();
@@ -505,7 +505,7 @@ function context_ui_import_submit($form, &$form_state) {
   }
   if (is_array($context)) {
     $context = (object) $context;
-    if ($exists = context_ui_load($context)) {
+    if ($exists = context_load_context($context)) {
       drupal_set_message(t('A user-defined context definition with this space/key/value identifier already exists. Please remove the existing context before importing this definition.'), 'error');
       $form_state['redirect'] = 'admin/build/context';
     }
@@ -548,7 +548,7 @@ function context_ui_export(&$form_state, $context) {
 
   // clear out empty associations
   foreach ($context as $key => $item) {
-    if (context_ui_empty($item)) {
+    if (context_empty($item)) {
       unset($context[$key]);
     }
   }
@@ -613,20 +613,20 @@ function theme_context_ui_admin($contexts) {
     $links = array();
     $icon = theme('advanced_help_topic', 'context_ui', 'type');
     switch ($context->type) {
-      case CONTEXT_UI_DEFAULT:
+      case CONTEXT_STORAGE_DEFAULT:
         $type = 'Default';
         $links[0] = l(t('Override'), "admin/build/context/$identifier/clone");
         $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
         $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
         break;
-      case CONTEXT_UI_OVERRIDDEN:
+      case CONTEXT_STORAGE_OVERRIDDEN:
         $type = 'Overridden';
         $links[0] = l(t('Edit'), "admin/build/context/$identifier");
         $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
         $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
         $links[4] = l(t('Revert'), "admin/build/context/$identifier/delete");
         break;
-      case CONTEXT_UI_USER:
+      case CONTEXT_STORAGE_NORMAL:
         $type = 'Normal';
         $links[0] = l(t('Edit'), "admin/build/context/$identifier");
         $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
@@ -634,11 +634,11 @@ function theme_context_ui_admin($contexts) {
         $links[4] = l(t('Delete'), "admin/build/context/$identifier/delete");
     }
     switch ($context->status) {
-      case CONTEXT_UI_DISABLED:
+      case CONTEXT_STATUS_DISABLED:
         $class = 'disabled';
         $enable = l(t('Enable'), "admin/build/context/$identifier/enable");
         break;
-      case CONTEXT_UI_ENABLED:
+      case CONTEXT_STATUS_ENABLED:
         $class = 'enabled';
         $enable = l(t('Disable'), "admin/build/context/$identifier/disable");
     }
@@ -718,7 +718,7 @@ function context_ui_form_validate($form, &$form_state) {
       $context->namespace = $form_state['values']['namespace'];
       $context->attribute = $form_state['values']['attribute'];
       $context->value = $form_state['values']['value'];
-      if ($exists = context_ui_load($context)) {
+      if ($exists = context_load_context($context)) {
         form_set_error($form_state['values']['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
       }
     }
@@ -745,8 +745,8 @@ function context_ui_form_process($form) {
   $context->value = isset($form['value']) ? $form['value'] : null;
   $context->status = 1; // all user defined contexts have status 1
 
-  // Retrieve values for setters
-  foreach (array_keys(context_ui_setters()) as $id) {
+  // Retrieve values for conditions
+  foreach (array_keys(context_conditions()) as $id) {
     if (is_array($form['items'][$id])) {
       foreach ($form['items'][$id] as $option => $value) {
         if (!empty($value)) {
@@ -759,9 +759,9 @@ function context_ui_form_process($form) {
     }
   }
 
-  // Retrieve values for getters -- preserve key => val associations
-  foreach (array_keys(context_ui_getters()) as $id) {
-    if (isset($form['items'][$id]) && !context_ui_empty($form['items'][$id])) {
+  // Retrieve values for reactions -- preserve key => val associations
+  foreach (array_keys(context_reactions()) as $id) {
+    if (isset($form['items'][$id]) && !context_empty($form['items'][$id])) {
       $context->{$id} = $form['items'][$id];
     }
   }
@@ -808,7 +808,7 @@ function context_ui_form_submit($form, &$form_state) {
     // Process form values and save and/or update the context in the db
     case 'edit-submit':
       $context = context_ui_form_process($form_state['values']);
-      $result = context_ui_save($context);
+      $result = context_save_context($context);
       if ($result) {
         drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
       }

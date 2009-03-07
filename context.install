@@ -1,0 +1,112 @@
+<?php
+
+/**
+ * Implementation of hook_install().
+ */
+function context_install() {
+  drupal_install_schema('context');
+}
+
+/**
+ * Implementation of hook_uninstall().
+ */
+function context_uninstall() {
+  drupal_uninstall_schema('context');
+}
+
+/**
+ * Implementation of hook_schema().
+ */
+function context_schema() {
+  $schema['context'] = array(
+    'description' => t('Storage for normal (user-defined) contexts.'),
+    'fields' => array(
+      'cid' => array(
+        'description' => t('The primary identifier for a context.'),
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'namespace' => array(
+        'description' => t('The namespace for a context.'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'attribute' => array(
+        'description' => t('The attribute for a context.'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'value' => array(
+        'description' => t('The value for a context.'),
+        'type' => 'varchar',
+        'length' => 64,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'data' => array(
+        'description' => t('Serialized storage of all associated context items.'),
+        'type' => 'text',
+        'size' => 'big',
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'unique keys' => array(
+      'key1' => array('namespace', 'attribute', 'value'),
+    ),
+    'primary key' => array('cid'),
+  );
+
+  return $schema;
+}
+
+/**
+ * Update script for context that installs the context schema and migrates
+ * any existing context data from deprecated context_ui tables.
+ */
+function context_update_6001() {
+  $ret = array();
+
+  if (!db_table_exists('context')) {
+    drupal_install_schema('context');
+  }
+
+  if (db_table_exists('context_ui')) {
+    // Clear the schema cache and rebuild
+    drupal_get_schema(NULL, TRUE);
+
+    // Migrate existing contexts to context table
+    $result = db_query("SELECT * FROM {context_ui}");
+    while ($context = db_fetch_object($result)) {
+      // Load setters
+      $setter_result = db_query("SELECT * FROM {context_ui_setter} WHERE cid = %d", $context->cid);
+      while ($row = db_fetch_object($setter_result)) {
+        $context->{$row->type}[$row->id] = $row->id;
+      }
+      // Load getters
+      $getter_result = db_query("SELECT * FROM {context_ui_getter} WHERE cid = %d", $context->cid);
+      while ($row = db_fetch_object($getter_result)) {
+        $context->{$row->type} = unserialize($row->data);
+      }
+      // Load blocks
+      $block_result = db_query("SELECT module, delta, region, weight FROM {context_ui_block} WHERE cid = %d", $context->cid);
+      while ($block = db_fetch_object($block_result)) {
+        if (!isset($context->block)) {
+          $context->block = array();
+        }
+        $block->bid = $block->module ."_". $block->delta;
+        $context->block[$block->bid] = $block;
+      }
+      // Clear out identifier
+      unset($context->cid);
+      context_save_context($context);
+    }
+  }
+
+  return $ret;
+}

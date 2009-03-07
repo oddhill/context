@@ -2,9 +2,9 @@
 // $Id$
 
 /**
- * Implementation of hook_context_setters().
+ * Implementation of hook_context_conditions().
  */
-function context_ui_contrib_context_ui_setters() {
+function context_ui_contrib_context_conditions() {
   $items = array();
 
   // Views
@@ -38,9 +38,9 @@ function context_ui_contrib_context_ui_setters() {
 }
 
 /**
- * Implementation of hook_context_getters().
+ * Implementation of hook_context_reactions().
  */
-function context_ui_contrib_context_ui_getters() {
+function context_ui_contrib_context_reactions() {
   $items = array();
   // CSS Injector
   if (module_exists('css_injector')) {
@@ -56,9 +56,9 @@ function context_ui_contrib_context_ui_getters() {
 }
 
 /**
- * Implementation of hook_context_getter().
+ * Implementation of hook_context_reaction().
  */
-function context_ui_contrib_context_getter($context) {
+function context_ui_contrib_context_reaction($context) {
   if (module_exists('css_injector')) {
     _context_ui_contrib_css_injector_response($context);
   }
@@ -73,7 +73,7 @@ function context_ui_contrib_nodeapi(&$node, $op, $teaser, $page) {
     if (module_exists('nodequeue')) {
       $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
       while($qid = db_fetch_object($result)) {
-        context_ui_set('nodequeue', $qid->qid);
+        context_set_by_condition('nodequeue', $qid->qid);
       }
     }
   }
@@ -86,10 +86,10 @@ function context_ui_contrib_views_pre_view($view, $args) {
   switch ($view->display_handler->display->display_plugin) {
     case 'page':
     case 'calendar':
-      context_ui_set('views', $view->name);
+      context_set_by_condition('views', $view->name);
       // Set any contexts associated with the current display
       if (!empty($view->current_display)) {
-        context_ui_set('views', "{$view->name}:{$view->current_display}");
+        context_set_by_condition('views', "{$view->name}:{$view->current_display}");
       }
       break;
   }
