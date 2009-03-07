@@ -1,6 +1,0 @@
-; $Id$
-name = Context Prefix
-description = "Provides generalized context prefixing"
-dependencies[] = context
-package = Context
-core = "6.x"
