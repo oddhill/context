@@ -62,6 +62,14 @@ table.context-ui-overview tr.context-table-row td.icon span {
   padding-right: 2px;
   }
 
+table.context-ui-overview tr.context-table-row td div.description {
+  margin-bottom: 0;
+  }
+
+table.context-ui-overview tr.context-table-row td div.description {
+  margin-bottom: 0;
+  }
+
 table.context-ui-overview tr.context-table-row td.icon strong {
   padding-right: 4px;
   }

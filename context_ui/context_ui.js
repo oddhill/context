@@ -26,35 +26,6 @@ if (typeof(Drupal) == "undefined" || !Drupal.context_ui) {
 }
 
 Drupal.behaviors.context_ui = function(context) {
-  // Advanced setting toggle
-  $('table#context-ui-trio a.advanced-toggle:not(.contextui-processed)').each(function() {
-    // Add click handler
-    $(this).click(function() {
-      $('table#context-ui-trio tr.trio').toggleClass('hidden');
-      if ($('table#context-ui-trio tr.trio').is('.hidden')) {
-        $('input#edit-section').removeAttr('disabled');
-      }
-      else {
-        $('input#edit-section').attr('disabled', true);
-      }
-      return false;
-    });
-    $(this).addClass('contextui-processed');
-  });
-
-  // Sync the value & section fields
-  $('input#edit-section:not(.contextui-processed), input#edit-value:not(.contextui-processed)').each(function() {
-    $(this).change(function() {
-      if ($(this).is('#edit-section')) {
-        $('input#edit-value').val($(this).val());
-      }
-      else {
-        $('input#edit-section').val($(this).val());
-      }
-    });
-    $(this).addClass('contextui-processed');
-  });
-
   // Tabledrag
   for (var base in Drupal.settings.tableDrag) {
     if (!$('#' + base + '.contextui-processed', context).size()) {

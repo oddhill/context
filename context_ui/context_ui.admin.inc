@@ -127,7 +127,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     '#value' => isset($context->system) ? $context->system : 0,
   );
 
-  foreach (array('value', 'attribute', 'namespace') as $field) {
+  foreach (array('value', 'attribute', 'namespace', 'description') as $field) {
     $form[$field] = array(
       '#type' => 'textfield',
       '#required' => true,
@@ -135,26 +135,22 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
       '#size' => 20,
       '#disabled' => !empty($context->system) ? true : false,
       '#default_value' => isset($context->{$field}) ? $context->{$field} : '',
+      '#title' => t(ucfirst($field)),
     );
   }
-  $form['section'] = $form['value'];
 
-  // The 'section' value is a field to make context definition creation
-  // less confusing for basic users.
-  $form['section']['#required'] = FALSE;
-  $form['section']['#title'] = t('Section');
-  $form['section']['#description'] = t('Your site\'s section. !advanced', array('!advanced' => l(t('Toggle advanced settings'), $_GET['q'], array('fragment' => 'advanced', 'attributes' => array('class' => 'advanced-toggle')))));
-
-  $form['value']['#title'] = t('Value');
-  $form['value']['#description'] = t('A system name for this context. May only contain lowercase letters, underscores, and numbers. Example: <b>science_blog</b>');
+  $form['value']['#description'] = t('A system name for this context. May only contain lowercase letters, underscores, and numbers. Example: <strong>science_blog</strong>');
   
-  $form['attribute']['#title'] = t('Attribute');
   $form['attribute']['#default_value'] = empty($form['attribute']['#default_value']) ? 'section' : $form['attribute']['#default_value'];
-  $form['attribute']['#description'] = t('The type of context information provided in this namespace. Example: <b>section</b>');
+  $form['attribute']['#description'] = t('The type of context information provided in this namespace. Example: <strong>section</strong>');
 
-  $form['namespace']['#title'] = t('Namespace');
   $form['namespace']['#default_value'] = empty($form['namespace']['#default_value']) ? 'context_ui' : $form['namespace']['#default_value'];
-  $form['namespace']['#description'] = t('The namespace for this context definition. Example: <b>context_ui</b>');
+  $form['namespace']['#description'] = t('The namespace for this context definition. Example: <strong>context_ui</strong>');
+
+  $form['description']['#required'] = FALSE;
+  $form['description']['#size'] = 40;
+  $form['description']['#maxlength'] = 255;
+  $form['description']['#description'] = t('The description of this context definition.');
 
   $form['items'] = array('#tree' => true);
 
@@ -344,25 +340,15 @@ function theme_context_ui_form($form) {
 
   $output = '';
 
-
   // Render space / key / value trio in a 3-column table
   $rows = array(
-    'section' => array('data' => array(), 'class' => 'section'),
-    'trio' => array('data' => array(), 'class' => 'trio'),
+    'trio' => array('class' => 'trio'),
+    'description' => array()
   );
-  if ($form['namespace']['#default_value'] == 'context_ui' && $form['attribute']['#default_value'] == 'section') {
-    $rows['trio']['class'] .= ' hidden';
-  }
-  else {
-    // Not sure why this first flag doesn't work -- hey are we too
-    // late in the rendering stack?
-    $form['section']['#disabled'] = true;
-    $form['section']['#attributes'] = array('disabled' => true);
-  }
-  $rows['section']['data'][] = array('data' => drupal_render($form['section']), 'colspan' => 3);
   $rows['trio']['data'][] = array('data' => drupal_render($form['namespace']), 'class' => 'namespace');
-  $rows['trio']['data'][] =  array('data' => drupal_render($form['attribute']), 'class' => 'attribute');
+  $rows['trio']['data'][] = array('data' => drupal_render($form['attribute']), 'class' => 'attribute');
   $rows['trio']['data'][] = array('data' => drupal_render($form['value']), 'class' => 'value');
+  $rows['description'] = array(array('data' => drupal_render($form['description']), 'colspan' => 3));
   $output .= theme('table', array(), $rows, array('id' => 'context-ui-trio'));
 
 
@@ -753,11 +739,13 @@ function theme_context_ui_admin($contexts) {
     else {
       $data = "<strong>$value</strong> <em>($type)</em>";
     }
+    $description = !empty($context->description) ? '<div class="description">'. filter_xss_admin($context->description) .'</div>' : '';
+
     ksort($links);
     $rows[$key] = array(
       'data' => array(
         array(
-          'data' => $data,
+          'data' => $data . $description,
           'class' => 'context-name '. ($icon? 'icon' : 'no-icon'),
         ),
         implode(' | ', $links),
@@ -839,11 +827,9 @@ function context_ui_form_process($form) {
   $context = new stdClass();
   
   // Context ns/attr/value definition
-  $context->cid = isset($form['cid']) ? $form['cid'] : null;
-  $context->system = isset($form['system']) ? $form['system'] : null;
-  $context->namespace = isset($form['namespace']) ? $form['namespace'] : null;
-  $context->attribute = isset($form['attribute']) ? $form['attribute'] : null;
-  $context->value = isset($form['value']) ? $form['value'] : null;
+  foreach (array('cid', 'system', 'namespace', 'attribute', 'value', 'description') as $item) {
+    $context->$item = isset($form[$item]) ? $form[$item] : NULL;
+  }
   $context->status = 1; // all user defined contexts have status 1
 
   // Retrieve values for conditions

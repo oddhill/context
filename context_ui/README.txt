@@ -29,7 +29,7 @@ like a contact block you've made to appear whenever a user is in the
 pressroom section.
 
 1. Add a new context on admin/build/context
-2. Set the section identifier / value to "pressroom"
+2. Set the value to "pressroom"
 3. Under the "set context" dialogue, associate the pressroom nodetype,
    the pressroom view, and the media kit book with the context.
 4. Choose the pressroom menu item to be set active under the "respond
