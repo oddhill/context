@@ -222,12 +222,12 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     '#tree' => true,
     '#theme' => 'context_ui_block_ui',
   );
-  foreach (array_keys($regions) as $region) {
+  foreach ($regions as $region => $label) {
     $defaults = array();
     $midpoint = false;
     $form['block']['blocks'][$region] = array(
       '#type' => 'item',
-      '#title' => $region,
+      '#title' => $label,
       '#tree' => TRUE,
     );
 
@@ -328,7 +328,9 @@ function context_ui_item_display($type, $element) {
   else if (isset($element['#type']) && in_array($element['#type'], array('textfield', 'textarea'))) {
     $items[] = !empty($element['#default_value']) ? $element['#default_value'] : array('data' => '', 'class' => 'empty');
   }
-  return theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
+  $output = '';
+  $output .= theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
+  return $output;
 }
 
 /**
@@ -354,12 +356,19 @@ function theme_context_ui_form($form) {
 
   // Render setters / getters as a two column split
   $widgets = '';
-  $display = "<h1>". t('Set context') ."</h1>";
+  $display = "<div class='label'>";
+  $display .= t('Conditions');
+  $display .= "<span class='description'>". t('trigger the activation of this context.') ."</span>";
+  $display .= "</div>";
   foreach (array_keys(context_conditions()) as $id) {
     $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
     $display .= context_ui_item_display($id, $form['items'][$id]);
   }
-  $display .= "<h1>". t('Respond to context') ."</h1>";
+
+  $display .= "<div class='label'>";
+  $display .= t('Reactions');
+  $display .= "<span class='description'>". t('fired when this context is active') ."</span>";
+  $display .= "</div>";
   foreach (array_keys(context_reactions()) as $id) {
     $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
     $display .= context_ui_item_display($id, $form['items'][$id]);
@@ -784,7 +793,10 @@ function theme_context_ui_block_ui($form) {
         'id' => $id,
       );
     }
-    $output .= "<h1>". l(t('+ Add'), $_GET['q'], array('fragment' => $region, 'attributes' => array('class' => 'add-block'))) . $region ."</h1>";
+    $output .= "<div class='label'>";
+    $output .= l(t('+ Add'), $_GET['q'], array('fragment' => $region, 'attributes' => array('class' => 'add-block')));
+    $output .= $form[$region]['#title'];
+    $output .= "</div>";
     $output .= theme('table', array(), $rows, array('id' => $table_id));
   }
   return $output;

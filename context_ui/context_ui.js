@@ -67,6 +67,9 @@ Drupal.behaviors.context_ui = function(context) {
     $(this).click(function() {
       var hash = Drupal.context_ui.getHash($(this).attr('href'));
 
+      $('table#context-ui-items td.display a').removeClass('selected');
+      $(this).addClass('selected');
+
       $("table#context-ui-items td.widget div.buttons").show();
       $("table#context-ui-items td.widget div.widget").removeClass('active');
       $("table#context-ui-items td.widget div#widget-"+ hash).addClass('active');

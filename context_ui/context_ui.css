@@ -150,17 +150,21 @@ table#context-ui-items td {
 
 form#context-ui-form td.display {}
 
-  form#context-ui-form td.display h1 {
+  form#context-ui-form td.display div.label {
     border-bottom:1px solid #ddd;
     padding:5px;
-    font: bold 9px/15px Arial,sans-serif;
-    text-transform:uppercase;
+    font: bold 13px/20px Arial,sans-serif;
     background:#eee;
     }
 
-  form#context-ui-form td.display h1 a {
-    float:right;
+  form#context-ui-form td.display div.label a,
+  form#context-ui-form td.display div.label span {
+    font-weight:normal;
+    margin-left:10px;
+    font-size:11px;
     }
+
+  form#context-ui-form td.display div.label a { float:right; }
 
   form#context-ui-form td.display tr,
   form#context-ui-form td.display div.item-list {
@@ -168,24 +172,32 @@ form#context-ui-form td.display {}
     border-bottom:1px solid #ddd;
     }
 
+    form#context-ui-form td.display div.item-list h3,
+    form#context-ui-form td.display div.item-list ul,
+    form#context-ui-form td.display div.item-list li {
+      margin:0px;
+      padding:0px;
+      }
+
     form#context-ui-form td.display div.item-list h3 a {
       display:block;
       padding:5px;
-      font: bold 13px/15px Arial,sans-serif;
+      font: bold 11px/15px Arial,sans-serif;
       }
+
+      form#context-ui-form td.display div.item-list h3 a.selected {
+        background:#eee;
+        color:#000;
+        }
 
     form#context-ui-form td.display div.item-list li {
       padding:5px 5px 5px 15px;
       font: 9px/10px Arial,sans-serif;
       }
 
-    form#context-ui-form td.display div.item-list li.empty {
-      display:none;
-      }
+    form#context-ui-form td.display div.item-list li.empty { display:none; }
 
-    form#context-ui-form td.display tr td {
-      padding:5px;
-      }
+    form#context-ui-form td.display tr td { padding:5px; }
 
 form#context-ui-form td.widget {
   background:#eee;
