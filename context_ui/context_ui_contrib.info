@@ -1,7 +1,0 @@
-; $Id$
-name = Context UI Contrib
-description = "Provides integration with Context UI on behalf of the following contrib modules: Nodequeue, Views, CSS Injector."
-dependencies[] = context
-dependencies[] = context_ui
-package = Context
-core = "6.x"
