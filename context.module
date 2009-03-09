@@ -577,7 +577,6 @@ function context_conditions($reset = FALSE) {
  */
 function context_reactions($reset = FALSE) {
   static $reactions;
-  global $theme_key;
   if (!isset($reactions) || $reset) {
     $cache = context_cache_get('reactions');
     if ($cache && !$reset) {
@@ -585,14 +584,6 @@ function context_reactions($reset = FALSE) {
     }
     else {
       $reactions = module_invoke_all('context_reactions');
-
-      // Give theme developers a chance to integrate against context
-      if (isset($theme_key)) {
-        $function = $theme_key .'_context_reactions';
-        if (function_exists($function)) {
-          $reactions = array_merge($reactions, $function());
-        }
-      }
       context_cache_set('reactions', $reactions);
     }
   }
