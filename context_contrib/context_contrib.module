@@ -4,7 +4,7 @@
 /**
  * Implementation of hook_context_conditions().
  */
-function context_ui_contrib_context_conditions() {
+function context_contrib_context_conditions() {
   $items = array();
 
   // Views
@@ -12,7 +12,7 @@ function context_ui_contrib_context_conditions() {
     $items['views'] = array(
       '#title' => t('Views'),
       '#description' => t('Set this context when displaying the page of one of these views.'),
-      '#options' => _context_ui_contrib_get_views(),
+      '#options' => _context_contrib_get_views(),
       '#type' => 'checkboxes',
     );
   }
@@ -38,14 +38,14 @@ function context_ui_contrib_context_conditions() {
 /**
  * Implementation of hook_context_reactions().
  */
-function context_ui_contrib_context_reactions() {
+function context_contrib_context_reactions() {
   $items = array();
   // CSS Injector
   if (module_exists('css_injector')) {
     $items['css_injector'] = array(
       '#title' => t('CSS injector'),
       '#description' => t('Inject the selected css when this context is set.'),
-      '#options' => _context_ui_contrib_get_css_injector(),
+      '#options' => _context_contrib_get_css_injector(),
       '#type' => 'checkboxes',
     );
   }
