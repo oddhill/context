@@ -52,7 +52,7 @@ function context_context_conditions() {
     $nodetypes[$type->type] = t(drupal_ucfirst($type->name));
   }
   $items['node'] = array(
-    '#title' => t('Content Types'),
+    '#title' => t('Node pages'),
     '#description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
     '#options' => $nodetypes,
     '#type' => 'checkboxes',
@@ -60,7 +60,7 @@ function context_context_conditions() {
 
   // User
   $items['user'] = array(
-    '#title' => t('User Pages'),
+    '#title' => t('User pages'),
     '#description' => t('Set this context when a user with selected role(s) is viewed'),
     '#options' => user_roles(true),
     '#type' => 'checkboxes',
@@ -176,7 +176,7 @@ function context_context_reactions() {
     }
     array_unshift($menus, '<strong>&lt;'. t('None') .'&gt;</strong>');
     $items['menu'] = array(
-      '#title' => t('Menus'),
+      '#title' => t('Active menu'),
       '#description' => t('Display the selected menu item as active when this context is set. To use this feature, you must use <strong>theme_context_links()</strong> to theme your links. Please see README.txt for more information.'),
       '#options' => $menus,
       '#type' => 'radios',
@@ -186,7 +186,7 @@ function context_context_reactions() {
   // Implements context-based theme improvements
   $items['theme_section'] = array(
     '#tree' => true,
-    '#title' => t('Section info'),
+    '#title' => t('Theme variables'),
     'title' => array(
       '#title' => t('Section title'),
       '#description' => t('Provides this text as a <strong>$section_title</strong> variable for display in page.tpl.php when this context is active.'),
@@ -304,21 +304,12 @@ function context_block_list($region) {
     $disabled_regions = array();
 
     // Store all active context blocks when first called
-    foreach (context_active_contexts() as $context) {
-      if (isset($context->block) && is_array($context->block)) {
-        foreach ($context->block as $block) {
-          $block = (object) $block;
-          $context_blocks["{$block->module}_{$block->delta}"] = $block;
-        }
-      }
-      if (!empty($context->theme_regiontoggle)) {
-        foreach ($context->theme_regiontoggle as $r => $enabled) {
-          if (!empty($enabled)) {
-            $disabled_regions[$r] = $r;
-          }
-        }
-      }
+    $context_blocks = array();
+    foreach (context_active_values('block') as $block) {
+      $block = (object) $block;
+      $context_blocks["{$block->module}-{$block->delta}"] = $block;
     }
+    $disabled_regions = context_active_values('theme_regiontoggle');
 
     global $user, $theme_key;
     $rids = array_keys($user->roles);
@@ -328,7 +319,7 @@ function context_block_list($region) {
     $result = db_query(db_rewrite_sql("SELECT DISTINCT b.* FROM {blocks} b LEFT JOIN {blocks_roles} r ON b.module = r.module AND b.delta = r.delta WHERE b.theme = '%s' AND (r.rid IN (". db_placeholders($rids) .") OR r.rid IS NULL) ORDER BY b.region, b.weight, b.module", 'b', 'bid'), array_merge(array($theme_key), $rids));
 
     while ($block = db_fetch_object($result)) {
-      $bid = "{$block->module}_{$block->delta}";
+      $bid = "{$block->module}-{$block->delta}";
 
       // If block is not enabled & not enabled via context, skip it
       if (!empty($context_blocks[$bid])) {
@@ -489,19 +480,16 @@ function context_links($reset = false) {
   static $links;
   if (!$links || $reset) {
     $links = array();
-    if ($contexts = context_active_contexts()) {
+    $active_types = context_active_values('node');
+    if (!empty($active_types)) {
       // Collect types
       $types = node_get_types();
       // Iterate over active contexts
-      foreach ($contexts as $context) {
-        if (!empty($context->node)) {
-          foreach ($context->node as $type) {
-            $type_url = str_replace('_', '-', $type);
-            $add_url = 'node/add/'. $type_url;
-            if (isset($types[$type]) && strpos($_GET['q'], $add_url) === FALSE && node_access('create', $type)) {
-              $links[$type_url] = array('title' => $types[$type]->name, 'href' => $add_url);
-            }
-          }
+      foreach ($active_types as $type) {
+        $type_url = str_replace('_', '-', $type);
+        $add_url = 'node/add/'. $type_url;
+        if (isset($types[$type]) && strpos($_GET['q'], $add_url) === FALSE && node_access('create', $type)) {
+          $links[$type_url] = array('title' => $types[$type]->name, 'href' => $add_url);
         }
       }
     }
@@ -514,7 +502,7 @@ function context_links($reset = false) {
  * Implementation of preprocess_page().
  */
 function context_preprocess_page(&$vars) {
-  $info = context_section_info();
+  $info = context_active_values('theme_section');
   $vars['section_title'] = !empty($info['title']) ? $info['title'] : '';
   $vars['section_subtitle'] = !empty($info['subtitle']) ? $info['subtitle'] : '';
   $vars['body_classes'] .= !empty($info['class']) ? ' '. $info['class'] : '';
@@ -548,16 +536,7 @@ function context_preprocess_page(&$vars) {
  *   A modified links array.
  */
 function context_menu_set_active($links = array(), $reset = FALSE) {
-  // Build a list of active paths & static cache it
-  static $active_paths;
-  if (!isset($active_paths) || $reset) {
-    $active_paths = array();
-    foreach (context_active_contexts() as $context) {
-      if (isset($context->menu)) {
-        $active_paths[] = $context->menu;
-      }
-    }
-  }
+  $active_paths = context_active_values('menu');
 
   // Iterate through the provided links and build a new set of links
   // that includes active classes
@@ -565,16 +544,11 @@ function context_menu_set_active($links = array(), $reset = FALSE) {
   if (!empty($links)) {
     foreach ($links as $key => $link) {
       if (!empty($link['href']) && in_array($link['href'], $active_paths)) {
-        if (isset($links['attributes'])) {
-          if (isset($links['attributes']['class'])) {
-            $link['attributes']['class'] .= ' active';
-          }
-          else {
-            $link['attributes']['class'] = 'active';
-          }
+        if (isset($links['attributes']['class'])) {
+          $link['attributes']['class'] .= ' active';
         }
         else {
-          $link['attributes'] = array('class' => 'active');
+          $link['attributes']['class'] = 'active';
         }
         if (strpos(' active', $key) === FALSE) {
           $new_links[$key .' active'] = $link;
@@ -590,41 +564,6 @@ function context_menu_set_active($links = array(), $reset = FALSE) {
 }
 
 /**
- * Retrieves an array of current section information and static caches it.
- *
- * @param $reset
- *   A boolean flag to reset the static cache.
- *
- * @return
- *   A section title string.
- */
-function context_section_info($reset = FALSE) {
-  static $info;
-  if (!isset($info) || $reset) {
-    $info = array();
-    foreach (context_active_contexts() as $context) {
-      if (isset($context->theme_section)) {
-        if (!empty($context->theme_section['title']) && !isset($info['title'])) {
-          $info['title'] = $context->theme_section['title'];
-        }
-        if (!empty($context->theme_section['subtitle']) && !isset($info['subtitle'])) {
-          $info['subtitle'] = $context->theme_section['subtitle'];
-        }
-        if (!empty($context->theme_section['class'])) {
-          if (!isset($info['class'])) {
-            $info['class'] = $context->theme_section['class'];
-          }
-          else {
-            $info['class'] .= ' '. $context->theme_section['class'];
-          }
-        }
-      }
-    }
-  }
-  return $info;
-}
-
-/**
  * Wrapper around menu_navigation_links() that gives themers the option of
  * building navigation links based on an active context trail.
  */
@@ -633,10 +572,11 @@ function context_menu_navigation_links($menu_name, $level = 0) {
   $original_path = $_GET['q'];
 
   // Retrieve the first active menu path found.
-  foreach (context_active_contexts() as $context) {
-    if (isset($context->menu) && !empty($context->menu) && menu_get_item($context->menu)) {
-      menu_set_active_item($context->menu);
-      break;
+  $active_paths = context_active_values('menu');
+  if (!empty($active_paths)) {
+    $path = current($active_paths);
+    if (menu_get_item($path)) {
+      menu_set_active_item($path);
     }
   }
 

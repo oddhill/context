@@ -493,6 +493,49 @@ function context_condition_map($reset = FALSE) {
 }
 
 /**
+ * Builds an array of values based on the current active contexts and group
+ * by conditions/reactions.
+ *
+ * @param $type
+ *   The condition or reaction type to pull values for.
+ * @param $reset
+ *   Boolean value for resetting the static cache.
+ *
+ * @return
+ *   Returns a keyed array of reactions and values.
+ */
+function context_active_values($type = NULL, $reset = FALSE) {
+  static $value_map;
+  if (!isset($value_map) || $reset) {
+    $value_map = array();
+
+    // This sucks... @TODO: fix it!!!
+    $keys = array_merge(array_keys(context_reactions()), array_keys(context_conditions()));
+    $keys[] = 'block';
+
+    foreach ($keys as $key) {
+      foreach (context_active_contexts() as $identifier => $context) {
+        if (!empty($context->{$key})) {
+          if (!isset($value_map[$key])) {
+            $value_map[$key] = array();
+          }
+          if (is_array($context->{$key})) {
+            $value_map[$key] = array_merge($value_map[$key], $context->{$key});
+          }
+          else {
+            $value_map[$key][] = $context->{$key};
+          }
+        }
+      }
+    }
+  }
+  if (!empty($type)) {
+    return !empty($value_map[$type]) ? $value_map[$type] : array();
+  }
+  return $value_map;
+}
+
+/**
  * Returns status for whether a given context definition is enabled.
  */
 function context_status($context) {

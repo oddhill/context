@@ -358,7 +358,7 @@ function theme_context_ui_form($form) {
   $widgets = '';
   $display = "<div class='label'>";
   $display .= t('Conditions');
-  $display .= "<span class='description'>". t('trigger the activation of this context.') ."</span>";
+  $display .= "<span class='description'>". t('trigger the activation of this context') ."</span>";
   $display .= "</div>";
   foreach (array_keys(context_conditions()) as $id) {
     $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
@@ -367,7 +367,7 @@ function theme_context_ui_form($form) {
 
   $display .= "<div class='label'>";
   $display .= t('Reactions');
-  $display .= "<span class='description'>". t('fired when this context is active') ."</span>";
+  $display .= "<span class='description'>". t('respond when this context is active') ."</span>";
   $display .= "</div>";
   foreach (array_keys(context_reactions()) as $id) {
     $widgets .= "<div id='widget-$id' class='widget'>". drupal_render($form['items'][$id]) ."</div>";
