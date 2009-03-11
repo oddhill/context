@@ -568,7 +568,7 @@ function context_ui_export(&$form_state, $context) {
  * Themes a context value into an export friendly var_export().
  */
 function theme_context_ui_export_form($form) {
-  $form['#value'] = $form['#default_value'] = context_ui_var_export($form['#value'], '', FALSE);
+  $form['#value'] = $form['#default_value'] = context_var_export($form['#value'], '', FALSE);
   return theme('textarea', $form);
 }
 
@@ -583,7 +583,7 @@ function context_ui_bulk_export(&$form_state) {
     foreach ($form_state['storage']['contexts'] as $id) {
       $context = (array) $contexts[$id];
       unset($context['cid']);
-      $code .= '  $items[] = '. context_ui_var_export($context, '  ') .";\n\n";
+      $code .= '  $items[] = '. context_var_export($context, '  ') .";\n\n";
     }
     $code .= "  return \$items;\n}";
     $form['code'] = array(
