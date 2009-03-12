@@ -318,7 +318,13 @@ function context_ui_item_display($type, $element) {
         }
       }
       else if (is_string($element['#default_value']) && $k = $element['#default_value']) {
-        $items[] = $element['#options'][$k];
+        if (!empty($element['#options'][$k])) {
+          $items[] = $element['#options'][$k];
+        }
+        else {
+          // Fallback to the actual value
+          $items[] = $k;
+        }
       }
     }
     if (empty($items)) {

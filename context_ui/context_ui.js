@@ -128,4 +128,21 @@ Drupal.behaviors.context_ui = function(context) {
       $(this).addClass('contextui-processed');
     }
   });
+
+  // Select widgets get their own logic
+  $("table#context-ui-items td.widget select").each(function() {
+    if (!$(this).is('.contextui-processed')) {
+      $(this).change(function() {
+        var parent = $(this).parents('div.widget');
+        var hash = parent.attr('id').substr(7); // 7 == strlen('widget-');
+        var list = '';
+        $('option:selected', this).each(function() {
+          var label = $(this).val();
+          list = list + "<li>"+ label +"</li>";
+        });
+        $("table#context-ui-items td.display #display-"+ hash).html(list);
+      });
+      $(this).addClass('contextui-processed');
+    }
+  });
 }

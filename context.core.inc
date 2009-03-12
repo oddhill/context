@@ -160,26 +160,25 @@ function context_context_reactions() {
   // Menu
   if (module_exists('menu')) {
     $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
+    $root_menus = array();
     foreach ($menus as $key => $name) {
       $id = explode(':', $key);
-      // @TODO: choose a good convention for excluding root menus from
-      // being selectable items
       if ($id[1] == '0') {
-        // this is required because root menu names are displayed inside <> and will not be displayed otherwise
-        $menus['_'. $key] = '<strong>'. check_plain($name) .'</strong>';
+        $root_menus[$id[0]] = check_plain($name);
       }
       else {
         $link = menu_link_load($id[1]);
-        $menus[$link['link_path']] = $name;
+        $root_menu = $root_menus[$id[0]];
+        $menus[$root_menu][$link['link_path']] = $name;
       }
       unset($menus[$key]);
     }
-    array_unshift($menus, '<strong>&lt;'. t('None') .'&gt;</strong>');
+    array_unshift($menus, "-- ". t('None') ." --");
     $items['menu'] = array(
       '#title' => t('Active menu'),
       '#description' => t('Display the selected menu item as active when this context is set. To use this feature, you must use <strong>theme_context_links()</strong> to theme your links. Please see README.txt for more information.'),
       '#options' => $menus,
-      '#type' => 'radios',
+      '#type' => 'select',
     );
   }
 
