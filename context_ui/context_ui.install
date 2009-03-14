@@ -255,11 +255,3 @@ function context_ui_update_6003() {
 
   return array();
 }
-
-function context_ui_update_6004() {
-  $ret = array();
-
-  db_add_field($ret, 'context_ui', 'description', array('type' => 'varchar', 'length' => 255, 'not null' => TRUE, 'default' => ''));
-
-  return $ret;
-}
