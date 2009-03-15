@@ -597,11 +597,14 @@ function context_reactions($reset = FALSE) {
  *   The condition type to be matched.
  * @param $id
  *   A value to match against.
+ * @param $force
+ *   Boolean param to force the setting of a context value even if a value for
+ *   the found namespace/attribute is already set. Defaults to FALSE.
  *
  * @return
  *   True if one or more contexts were set. False if no items/contexts matched.
  */
-function context_set_by_condition($type, $id) {
+function context_set_by_condition($type, $id, $force = FALSE) {
   $map = context_condition_map();
   $set = FALSE;
   if (!empty($map[$type]) && !empty($map[$type][$id])) {
@@ -613,7 +616,7 @@ function context_set_by_condition($type, $id) {
 
       if ($context) {
         // If this context already has a value, don't alter it.
-        if (!context_isset($context->namespace, $context->attribute)) {
+        if (!context_isset($context->namespace, $context->attribute) || $force) {
           context_set($context->namespace, $context->attribute, $context->value);
           $set = TRUE;
         }
