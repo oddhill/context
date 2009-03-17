@@ -1,6 +1,8 @@
 <?php
 // $Id$
 
+require('context.core.inc');
+
 define('CONTEXT_GET', 0);
 define('CONTEXT_SET', 1);
 define('CONTEXT_ISSET', 2);
@@ -136,8 +138,6 @@ function context_clear() {
  * Implementation of hook_init().
  */
 function context_init() {
-  module_load_include('inc', 'context', 'context.core');
-
   // context integration against the sitewide setter
   context_set_by_condition('sitewide', 1);
 
