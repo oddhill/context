@@ -196,7 +196,7 @@ function context_ui_form_block_admin_configure_alter(&$form, $form_state) {
 
   $rows = array();
 
-  $contexts = context_ui_enabled_contexts();
+  $contexts = context_enabled_contexts();
   foreach ($contexts as $context) {
     if (!empty($context->block)) {
       foreach ($context->block as $block) {
