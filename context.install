@@ -108,5 +108,7 @@ function context_update_6001() {
     }
   }
 
+  module_enable(array('context_contrib'));
+
   return $ret;
 }
