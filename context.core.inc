@@ -485,10 +485,10 @@ function context_links($reset = false) {
       $types = node_get_types();
       // Iterate over active contexts
       foreach ($active_types as $type) {
-        $type_url = str_replace('_', '-', $type);
-        $add_url = 'node/add/'. $type_url;
-        if (isset($types[$type]) && strpos($_GET['q'], $add_url) === FALSE && node_access('create', $type)) {
-          $links[$type_url] = array('title' => $types[$type]->name, 'href' => $add_url);
+        $add_url = 'node/add/'. str_replace('_', '-', $type);
+        $item = menu_get_item($add_url);
+        if ($item && $item['access'] && strpos($_GET['q'], $add_url) !== 0) {
+          $links[$type] = array('title' => $types[$type]->name, 'href' => $add_url);
         }
       }
     }
