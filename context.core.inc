@@ -21,9 +21,14 @@ function context_theme_registry_alter(&$theme_registry) {
     $theme_registry['page']['preprocess functions'][] = 'context_preprocess_page';
   }
   // Reroute theme_blocks() through context_blocks to determine block
-  // visibility by context.
-  unset($theme_registry['blocks']['preprocess functions']);
-  $theme_registry['blocks']['function'] = 'context_blocks';
+  // visibility by context. Only override theme_blocks() if a theme
+  // has not overridden it. It is the responsibility of any themes
+  // implementing theme_blocks() to take advantage of context block
+  // visibility on their own.
+  if (!isset($theme_registry['blocks']['type']) || !in_array($theme_registry['blocks']['type'], array('base_theme_engine', 'theme_engine'))) {
+    unset($theme_registry['blocks']['preprocess functions']);
+    $theme_registry['blocks']['function'] = 'context_blocks';
+  }
 }
 
 /**
