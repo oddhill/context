@@ -110,42 +110,42 @@ function context_ui_menu() {
     'type' => MENU_CALLBACK,
   );
   $items['admin/build/context/%context_ui_menu/edit'] = array(
-    'title' => t('Edit'),
+    'title' => 'Edit',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_form', 'edit', 3),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -1,
   );
   $items['admin/build/context/%context_ui_menu/edit/items'] = array(
-    'title' => t('Core attributes'),
+    'title' => 'Core attributes',
     'type' => MENU_DEFAULT_LOCAL_TASK,
   );
   $items['admin/build/context/%context_ui_menu/clone'] = array(
-    'title' => t('Clone'),
+    'title' => 'Clone',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_form', 'clone', 3),
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/build/context/%context_ui_menu/export'] = array(
-    'title' => t('Export'),
+    'title' => 'Export',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_export', 3),
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/build/context/%context_ui_menu/delete'] = array(
-    'title' => t('Delete'),
+    'title' => 'Delete',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_confirm', 'delete', 3),
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/build/context/%context_ui_menu/disable'] = array(
-    'title' => t('Disable'),
+    'title' => 'Disable',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_confirm', 'disable', 3),
     'type' => MENU_LOCAL_TASK,
   );
   $items['admin/build/context/%context_ui_menu/enable'] = array(
-    'title' => t('Enable'),
+    'title' => 'Enable',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('context_ui_confirm', 'enable', 3),
     'type' => MENU_LOCAL_TASK,
