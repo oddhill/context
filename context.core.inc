@@ -465,7 +465,7 @@ function _context_block_sort($a, $b) {
 function theme_context_links($links) {
   $output = '';
   foreach ($links as $link) {
-    $options = array_merge($link, array('attributes' => array('class' => 'button')));
+    $options = array_merge_recursive($link, array('attributes' => array('class' => 'button')));
     if (!empty($link['custom'])) {
       $output .= l($link['title'], $link['href'], $options);
     }
