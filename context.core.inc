@@ -555,8 +555,8 @@ function context_context_page_alter(&$vars) {
   // Menu trail condition integration
   $trail = menu_get_active_trail();
   foreach ($trail as $item) {
-    if (!empty($item['link_path'])) {
-      context_set_by_condition('menu_trail', $item['link_path']);
+    if (!empty($item['href'])) {
+      context_set_by_condition('menu_trail', $item['href']);
     }
   }
 }
