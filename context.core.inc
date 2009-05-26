@@ -20,6 +20,12 @@ function context_theme_registry_alter(&$theme_registry) {
   if (!in_array('context_preprocess_page', $theme_registry['page']['preprocess functions'])) {
     $theme_registry['page']['preprocess functions'][] = 'context_preprocess_page';
   }
+  // Add a page preprocess function to the very top of the theme_page()
+  // stack so that we can actually set contexts *before* the page theming
+  // is executed.
+  if (!in_array('context_page_alter', $theme_registry['page']['preprocess functions'])) {
+    array_unshift($theme_registry['page']['preprocess functions'], 'context_page_alter');
+  }
   // Reroute theme_blocks() through context_blocks to determine block
   // visibility by context. Only override theme_blocks() if a theme
   // has not overridden it. It is the responsibility of any themes
@@ -100,6 +106,36 @@ function context_context_conditions() {
     '#type' => 'textarea',
     '#element_validate' => array('context_condition_text_validate'),
   );
+
+  // Menu trail
+  // @TODO: Implement a real handler system : (
+  // This condition most clearly shows the architecture problem of
+  // storing both conditions and reactions as first-level children
+  // on the context object.
+  if (module_exists('menu')) {
+    $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
+    $root_menus = array();
+    foreach ($menus as $key => $name) {
+      $id = explode(':', $key);
+      if ($id[1] == '0') {
+        $root_menus[$id[0]] = check_plain($name);
+      }
+      else {
+        $link = menu_link_load($id[1]);
+        $root_menu = $root_menus[$id[0]];
+        $menus[$root_menu][$link['link_path']] = $name;
+      }
+      unset($menus[$key]);
+    }
+    array_unshift($menus, "-- ". t('None') ." --");
+    $items['menu_trail'] = array(
+      '#title' => t('Menu trail'),
+      '#description' => t('Set this context when any of the selected menu items belong to the current active menu trail.'),
+      '#options' => $menus,
+      '#type' => 'select',
+      '#multiple' => TRUE,
+    );
+  }
 
   return $items;
 }
@@ -500,6 +536,29 @@ function context_links($reset = false) {
     drupal_alter('context_links', $links);
   }
   return $links;
+}
+
+/**
+ * A preprocess_page() function that is called *before* all other
+ * preprocessors (including template_preprocess_page()). This allows
+ * any final context conditions to be set before transitioning into
+ * the "reaction" phase of the page load.
+ */
+function context_page_alter(&$vars) {
+  drupal_alter('context_page', $vars);
+}
+
+/**
+ * Implementation of hook_context_page_alter().
+ */
+function context_context_page_alter(&$vars) {
+  // Menu trail condition integration
+  $trail = menu_get_active_trail();
+  foreach ($trail as $item) {
+    if (!empty($item['link_path'])) {
+      context_set_by_condition('menu_trail', $item['link_path']);
+    }
+  }
 }
 
 /**
