@@ -334,6 +334,9 @@ function context_ui_item_display($type, $element) {
   else if (isset($element['#type']) && in_array($element['#type'], array('textfield', 'textarea'))) {
     $items[] = !empty($element['#default_value']) ? $element['#default_value'] : array('data' => '', 'class' => 'empty');
   }
+  foreach ($items as $k => $v) {
+    $items[$k] = check_plain($v);
+  }
   $output = '';
   $output .= theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
   return $output;

@@ -141,6 +141,11 @@ function context_init() {
   // context integration against the sitewide setter
   context_set_by_condition('sitewide', 1);
 
+  // If this is the front page, set <front> as condition.
+  if (drupal_is_front_page()) {
+    context_set_by_condition('path', '<front>');
+  }
+
   // context integration against paths
   $path = array();
   $path['real'] = $_GET['q'];

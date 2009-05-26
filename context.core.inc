@@ -96,7 +96,7 @@ function context_context_conditions() {
   // Path
   $items['path'] = array(
     '#title' => t('Path'),
-    '#description' => t('Set this context when any of the paths above match the beginning or all of the page path. Put each path on a separate line.'),
+    '#description' => t('Set this context when any of the paths above match the beginning or all of the page path. Put each path on a separate line. Use &lt;front&gt; for the front page.'),
     '#type' => 'textarea',
     '#element_validate' => array('context_condition_text_validate'),
   );
