@@ -138,17 +138,20 @@ function context_clear() {
  * Implementation of hook_init().
  */
 function context_init() {
-  // context integration against the sitewide setter
-  context_set_by_condition('sitewide', 1);
-
-  // context integration against paths
+  // In general it is advisable to avoid using context_set_by_condition() at
+  // this stage of the Drupal page load as it caches the condition map.
   $current_path = drupal_get_path_alias($_GET['q']);
   foreach (context_enabled_contexts() as $identifier => $context) {
+    // context integration against paths
     if (!empty($context->path) && is_array($context->path)) {
       $paths = implode("\n", $context->path);
       if (drupal_match_path($current_path, $paths)) {
         context_set($context->namespace, $context->attribute, $context->value);
       }
+    }
+    // context integration for sitewide context
+    if (!empty($context->sitewide)) {
+      context_set($context->namespace, $context->attribute, $context->value);
     }
   }
 }
