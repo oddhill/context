@@ -112,3 +112,27 @@ function context_update_6001() {
 
   return $ret;
 }
+
+/**
+ * Update script for API change in path condition.
+ */
+function context_update_6002() {
+  // Iterate through all DB-stored contexts and incorporate path
+  // wildcards into their path conditions. Any exported/default
+  // contexts will need to be updated by hand.
+  $contexts = context_enabled_contexts();
+  foreach ($contexts as $context) {
+    if (($context->type == CONTEXT_STORAGE_NORMAL || $context->type == CONTEXT_STORAGE_OVERRIDDEN) && (!empty($context->path) && is_array($context->path))) {
+      $changed = FALSE;
+      foreach ($context->path as $k => $v) {
+        if ($v != '<front>' && strpos($v, '*') === FALSE) {
+          $changed = TRUE;
+          $context->path[$k] = "{$v}*";
+        }
+      }
+      if ($changed) {
+        context_save_context($context);
+      }
+    }
+  }
+}

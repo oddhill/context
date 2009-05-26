@@ -141,27 +141,13 @@ function context_init() {
   // context integration against the sitewide setter
   context_set_by_condition('sitewide', 1);
 
-  // If this is the front page, set <front> as condition.
-  if (drupal_is_front_page()) {
-    context_set_by_condition('path', '<front>');
-  }
-
   // context integration against paths
-  $path = array();
-  $path['real'] = $_GET['q'];
-  $path['alias'] = drupal_get_path_alias($_GET['q']);
-  if ($path['real'] == $path['alias']) {
-    unset($path['alias']);
-  }
-  // Test each path option incrementally adding args as we go.
-  foreach ($path as $path_option) {
-    $args = explode('/', $path_option);
-    if (count($args)) {
-      $test = array_shift($args);
-      context_set_by_condition('path', $test);
-      while (count($args)) {
-        $test .= '/'. array_shift($args);
-        context_set_by_condition('path', $test);
+  $current_path = drupal_get_path_alias($_GET['q']);
+  foreach (context_enabled_contexts() as $identifier => $context) {
+    if (!empty($context->path) && is_array($context->path)) {
+      $paths = implode("\n", $context->path);
+      if (drupal_match_path($current_path, $paths)) {
+        context_set($context->namespace, $context->attribute, $context->value);
       }
     }
   }
