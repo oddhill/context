@@ -314,7 +314,7 @@ function context_ui_item_display($type, $element) {
     if (isset($element['#default_value'])) {
       if (is_array($element['#default_value'])) {
         foreach ($element['#default_value'] as $k) {
-          $items[] = $element['#options'][$k];
+          $items[] = isset($element['#options'][$k]) ? $element['#options'][$k] : $k;
         }
       }
       else if (is_string($element['#default_value']) && $k = $element['#default_value']) {
