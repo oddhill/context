@@ -942,33 +942,40 @@ function context_ui_form_submit($form, &$form_state) {
  *   A keyed (by "module_delta" convention) array of blocks.
  */
 function _context_ui_get_blocks($region = null, $context = null) {
-  $theme_key = variable_get('theme_default', 'garland');
   static $block_info, $valid, $system_blocks;
+
   // we don't static cache context blocks
   $context_blocks = $blocks = array();
 
   if (!$system_blocks) {
+    // Rebuild block "cache"
+    _block_rehash();
+
     // initialize regions
     foreach (system_region_list($theme_key) as $r => $l) {
       $system_blocks[$r] = array();
     }
     // load blocks from database
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme = '%s' ORDER BY weight, module, delta", $theme_key);
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} GROUP BY module, delta ORDER BY weight, module, delta");
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = isset($block_info[$block->module]) ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
-      $block->label = $block_info[$block->module][$block->delta]['info'];
-      $block->type = 'system';
-      $block->bid = $block->module .'_'. $block->delta;
-      // add block to region
-      if ($block->region && $block->status) {
-        $system_blocks[$block->region][$block->bid] = $block;
+
+      // ensure DB entry wasn't stale before making block usable
+      if (!empty($block_info[$block->module][$block->delta]['info'])) {
+        $block->label = $block_info[$block->module][$block->delta]['info'];
+        $block->type = 'system';
+        $block->bid = $block->module .'_'. $block->delta;
+        // add block to region
+        if ($block->region && $block->status) {
+          $system_blocks[$block->region][$block->bid] = $block;
+        }
+        else {
+          $system_blocks[0][$block->bid] = $block;
+        }
+        // mark block as available in DB
+        $valid[$block->module ."_". $block->delta] = true;
       }
-      else {
-        $system_blocks[0][$block->bid] = $block;
-      }
-      // mark block as available in DB
-      $valid[$block->module ."_". $block->delta] = true;
     }
   }
 
