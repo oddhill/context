@@ -135,4 +135,5 @@ function context_update_6002() {
       }
     }
   }
+  return array();
 }
