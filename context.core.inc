@@ -365,6 +365,7 @@ function context_block_list($region) {
       if (!empty($context_blocks[$bid])) {
         $block->region = $context_blocks[$bid]->region;
         $block->weight = $context_blocks[$bid]->weight;
+        unset($context_blocks[$bid]);
         $enabled = TRUE;
       }
       else if (!$block->status) {
@@ -414,6 +415,17 @@ function context_block_list($region) {
       $block->enabled = $enabled;
       $block->page_match = $page_match;
       $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
+    }
+    // It's possible that there are still some leftover blocks in the enabled contexts.
+    // Add these in as well.
+    if (!empty($context_blocks)) {
+      foreach ($context_blocks as $block) {
+        $block = (object) $block;
+        $block->status = 1;
+        $block->enabled = TRUE;
+        $block->page_match = TRUE;
+        $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
+      }
     }
 
     // Sort blocks -- we must do this here since blocks provided via
