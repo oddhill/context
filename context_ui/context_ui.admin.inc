@@ -335,7 +335,7 @@ function context_ui_item_display($type, $element) {
     $items[] = !empty($element['#default_value']) ? $element['#default_value'] : array('data' => '', 'class' => 'empty');
   }
   foreach ($items as $k => $v) {
-    $items[$k] = check_plain($v);
+    $items[$k] = is_string($v) ? check_plain($v) : $v; 
   }
   $output = '';
   $output .= theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
@@ -947,15 +947,13 @@ function _context_ui_get_blocks($region = null, $context = null) {
   // we don't static cache context blocks
   $context_blocks = $blocks = array();
 
-  if (!$system_blocks) {
+  if (!isset($system_blocks)) {
+    $system_blocks = array();
+
     // Rebuild block "cache"
     _block_rehash();
 
-    // initialize regions
-    foreach (system_region_list($theme_key) as $r => $l) {
-      $system_blocks[$r] = array();
-    }
-    // load blocks from database
+    // Load blocks from database
     $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} GROUP BY module, delta ORDER BY weight, module, delta");
     while ($block = db_fetch_object($result)) {
       // load block info
@@ -1015,5 +1013,8 @@ function _context_ui_get_blocks($region = null, $context = null) {
     }
   }
 
-  return $region ? $blocks[$region] : $blocks;
+  if (!empty($region)) {
+    return isset($blocks[$region]) ? $blocks[$region] : array();
+  }
+  return $blocks;
 }
