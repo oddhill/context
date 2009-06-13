@@ -51,7 +51,7 @@ hook_context_ui_getters()
   context UI form. See context_ui_context_ui_getters() as an
   example.
 
-hook_context_ui_define()
+hook_context_default_contexts()
   Provides an array of exported context definitions. Allows you
   to provide default contexts in your modules.
 
