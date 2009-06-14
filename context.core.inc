@@ -217,7 +217,7 @@ function context_context_reactions() {
     array_unshift($menus, "-- ". t('None') ." --");
     $items['menu'] = array(
       '#title' => t('Active menu'),
-      '#description' => t('Display the selected menu item as active when this context is set. To use this feature, you must use <strong>theme_context_links()</strong> to theme your links. Please see README.txt for more information.'),
+      '#description' => t('Display the selected menu item as active in the <strong>$primary_links</strong> or <strong>$secondary_links</strong> of page.tpl.php when this context is set.'),
       '#options' => $menus,
       '#type' => 'select',
     );
