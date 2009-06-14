@@ -251,7 +251,7 @@ function context_ui_update_6003() {
     $new_statuses[str_replace(':', '-', $key)] = $status;
   }
   variable_set('context_status', $new_statuses);
-  context_ui_invalidate_cache();
+  context_invalidate_cache();
 
   return array();
 }
