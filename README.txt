@@ -1,24 +1,29 @@
 $Id$
 
-context_ui for Drupal 6.x
+Context for Drupal 6.x
 
 Installation
 ------------
-context_ui can be installed like any other Drupal module -- place it in
+Context can be installed like any other Drupal module -- place it in
 the modules directory for your site and enable it (and its requirement,
 context) on the admin/build/modules page.
 
-You will probably want to install context_ui_contrib as well, which
-adds context_ui integration for several contrib modules including
-Views.
+You will probably want to install context_contrib and context_ui as well.
+context_contrib provides basic context integration for several contrib
+modules including Views and context_ui provides a way for you to edit
+contexts through the Drupal admin interface.
 
 Basic usage
 -----------
-context_ui allows you to manage contexts for different portions of your
-site. You can think of each context as represeting a "section" of your
-site. For each context, you can choose the conditions that trigger this
-context to be active and choose different aspects of Drupal that should
-respond to this active context.
+Context allows you to manage contextual conditions and reactions for
+different portions of your site. You can think of each context as
+represemting a "section" of your site. For each context, you can choose
+the conditions that trigger this context to be active and choose different
+aspects of Drupal that should respond to this active context.
+
+Think of conditions as a set of rules that are checked during page load
+to see what context is active. Any reactions that are associated with
+active contexts are then fired.
 
 Example
 -------
@@ -40,32 +45,33 @@ pressroom section.
 
 Hooks
 -----
-hook_context_ui_setters()
+hook_context_conditions()
   Provides an array of FormAPI definitions. Allows you to provide
-  additional conditions as context setters in the context UI form.
-  See context_ui_context_ui_setters() as an example.
+  additional conditions for setting a context.
 
-hook_context_ui_getters()
+  Example: context_context_conditions()
+
+hook_context_reactions()
   Provides an array of FormAPI definitions. Allows you to provide
-  additional context getters that respond to a set context in the
-  context UI form. See context_ui_context_ui_getters() as an
-  example.
+  additional reactions that respond to a set context.
+
+  Example: context_context_reactions()
 
 hook_context_default_contexts()
   Provides an array of exported context definitions. Allows you
   to provide default contexts in your modules.
 
-hook_context_ui_default_contexts_alter()
+hook_context_default_contexts_alter()
   A drupal_alter() that acts on the collected array of default
   contexts before they are cached.
 
-hook_context_ui_active_contexts_alter()
+hook_context_active_contexts_alter()
   A drupal_alter() that acts on the collected array of active
   contexts on a given page load.
 
-hook_context_ui_node_links_alter()
-  A drupal_alter() that acts on the a links array of node
-  creation and other contextual links for a given page load.
+hook_context_links_alter()
+  A drupal_alter() that acts on the contextual links provided
+  to page.tpl.php.
 
 Maintainers
 -----------
