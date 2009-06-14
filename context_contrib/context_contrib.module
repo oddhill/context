@@ -133,11 +133,12 @@ function _context_contrib_get_css_injector() {
 }
 
 /**
- * Getter response function for css injector
+ * Implementation hook_context_page_reaction() on behalf of css injector.
  */
-function _context_contrib_css_injector_response($context) {
-  if (is_array($context->css_injector)) {
-    foreach ($context->css_injector as $crid) {
+function css_injector_context_page_reaction($context) {
+  $css_rules= context_active_values('css_injector');
+  if (!empty($css_rules)) {
+    foreach ($css_rules as $crid) {
       if ($css_rule = _css_injector_load_rule($crid)) {
         drupal_add_css(file_create_path($css_rule['file_path']), 'module', $css_rule['media'], $css_rule['preprocess']);
       }
