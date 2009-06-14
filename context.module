@@ -229,13 +229,13 @@ function context_save_context($context) {
       return false;
     }
     else {
-      $context = context_pack_context($context);
-      drupal_write_record('context', $context);
+      $packed = context_pack_context($context);
+      drupal_write_record('context', $packed);
     }
   }
   else {
-    $context = context_pack_context($context);
-    drupal_write_record('context', $context, 'cid'); 
+    $packed = context_pack_context($context);
+    drupal_write_record('context', $packed, 'cid');
   }
 
   // Invalidate context cache
@@ -270,24 +270,19 @@ function context_delete_context($context) {
  */
 function context_pack_context($context) {
   $packed = new StdClass();
-
   $packed->cid = $context->cid;
   $packed->namespace = $context->namespace;
   $packed->attribute = $context->attribute;
   $packed->value = $context->value;
 
-  unset($context->cid);
-  unset($context->namespace);
-  unset($context->attribute);
-  unset($context->value);
+  $serialized = drupal_clone($context);
 
-  // Clear out storage and status information
-  unset($context->type);
-  unset($context->status);
+  // Clear out non-condition/reaction attributes
+  unset($serialized->cid, $serialized->namespace, $serialized->attribute, $serialized->value, $serialized->type, $serialized->status);
 
   // Serialize associations as data array
-  $context = (array) $context;
-  $packed->data = serialize($context);
+  $serialized = (array) $serialized;
+  $packed->data = serialize($serialized);
 
   return $packed;
 }
