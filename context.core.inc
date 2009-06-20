@@ -424,6 +424,8 @@ function context_block_list($region) {
         $block->status = 1;
         $block->enabled = TRUE;
         $block->page_match = TRUE;
+        $block->throttle = FALSE;
+        $block->title = '';
         $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
       }
     }
