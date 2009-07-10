@@ -83,7 +83,7 @@ Drupal.behaviors.context_ui = function(context) {
   $('table#context-ui-blocks td.display a:not(.contextui-processed)').each(function() {
     $(this).click(function() {
       var hash = Drupal.context_ui.getHash($(this).attr('href'));
-      var region = hash.replace('_', '-');
+      var region = hash.replace(/_/g, '-');
 
       var selected = $("div.context-ui-block-selector input:checked");
       if (selected.size() > 0) {
