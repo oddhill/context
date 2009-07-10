@@ -438,7 +438,7 @@ function context_block_list($region) {
   }
 
   // Kill blocks in disabled regions
-  foreach (array_keys($disabled_regions) as $r) {
+  foreach ($disabled_regions as $r) {
     unset($blocks[$r]);
   }
 

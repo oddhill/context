@@ -846,31 +846,24 @@ function context_ui_form_validate($form, &$form_state) {
  */
 function context_ui_form_process($form) {
   $context = new stdClass();
-  
+
   // Context ns/attr/value definition
   foreach (array('cid', 'system', 'namespace', 'attribute', 'value', 'description') as $item) {
     $context->$item = isset($form[$item]) ? $form[$item] : NULL;
   }
   $context->status = 1; // all user defined contexts have status 1
 
-  // Retrieve values for conditions
-  foreach (array_keys(context_conditions()) as $id) {
+  // Retrieve values for conditions and reactions
+  foreach (array_keys(context_conditions() + context_reactions()) as $id) {
     if (is_array($form['items'][$id])) {
-      foreach ($form['items'][$id] as $option => $value) {
-        if (!empty($value)) {
-          $context->{$id}[] = $option;
-        }
-      }
+      $items = array_keys(array_filter($form['items'][$id]));
     }
-    else if (isset($form['items'][$id]) && !empty($form['items'][$id])) {
-      $context->{$id}[] = $form['items'][$id];
+    else {
+      $items = isset($form['items'][$id]) ? $form['items'][$id] : '';
     }
-  }
 
-  // Retrieve values for reactions -- preserve key => val associations
-  foreach (array_keys(context_reactions()) as $id) {
-    if (isset($form['items'][$id]) && !context_empty($form['items'][$id])) {
-      $context->{$id} = $form['items'][$id];
+    if (!empty($items)) {
+      $context->{$id} = $items;
     }
   }
 
