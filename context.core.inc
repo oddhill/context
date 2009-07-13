@@ -165,7 +165,7 @@ function context_condition_text_validate($element, &$form_state) {
       foreach ($items as $k => $v) {
         $v = trim($v);
         if (!empty($v)) {
-          $values[$v] = TRUE;
+          $values[$v] = $v;
         }
       }
       $id = end($element['#parents']);
