@@ -31,7 +31,7 @@ function context_theme_registry_alter(&$theme_registry) {
   // has not overridden it. It is the responsibility of any themes
   // implementing theme_blocks() to take advantage of context block
   // visibility on their own.
-  if (!isset($theme_registry['blocks']['type']) || !in_array($theme_registry['blocks']['type'], array('base_theme_engine', 'theme_engine'))) {
+  if (!isset($theme_registry['blocks']['type']) || !in_array($theme_registry['blocks']['type'], array('base_theme_engine', 'theme_engine')) && !isset($theme_registry['blocks']['file'])) {
     unset($theme_registry['blocks']['preprocess functions']);
     $theme_registry['blocks']['function'] = 'context_blocks';
   }
