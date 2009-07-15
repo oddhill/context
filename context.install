@@ -52,8 +52,6 @@ function context_schema() {
         'description' => t('Serialized storage of all associated context items.'),
         'type' => 'text',
         'size' => 'big',
-        'not null' => TRUE,
-        'default' => '',
       ),
     ),
     'unique keys' => array(
