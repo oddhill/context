@@ -413,8 +413,17 @@ function context_ui_confirm(&$form_state, $op = 'delete', $context) {
   $form['action'] = array('#type' => 'value', '#value' => $op);
   switch ($op) {
     case 'delete':
-      $action = t('delete');
-      $message = t('This action will remove this context permanently from your site.');
+      $contexts = context_contexts();
+      switch ($contexts["{$context->namespace}-{$context->attribute}-{$context->value}"]->type) {
+        case CONTEXT_STORAGE_OVERRIDDEN:
+          $action = t('revert');
+          $message = t('This action will permanently remove any customizations made to this context.');
+          break;
+        default:
+          $action = t('delete');
+          $message = t('This action will remove this context permanently from your site.');
+          break;
+      }
       break;
     case 'disable':
       $action = t('disable');
