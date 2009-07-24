@@ -135,8 +135,8 @@ function _context_contrib_get_css_injector() {
 /**
  * Implementation hook_context_page_reaction() on behalf of css injector.
  */
-function css_injector_context_page_reaction($context) {
-  $css_rules= context_active_values('css_injector');
+function css_injector_context_page_reaction() {
+  $css_rules = context_active_values('css_injector');
   if (!empty($css_rules)) {
     foreach ($css_rules as $crid) {
       if ($css_rule = _css_injector_load_rule($crid)) {
