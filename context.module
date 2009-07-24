@@ -145,7 +145,11 @@ function context_init() {
     // context integration against paths
     if (!empty($context->path) && is_array($context->path)) {
       $paths = implode("\n", $context->path);
-      if (drupal_match_path($current_path, $paths)) {
+      $path_match = drupal_match_path($current_path, $paths);
+      if ($current_path != $_GET['q']) {
+        $path_match = $path_match || drupal_match_path($_GET['q'], $paths);
+      }
+      if ($path_match) {
         context_set($context->namespace, $context->attribute, $context->value);
       }
     }
