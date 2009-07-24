@@ -242,7 +242,7 @@ function context_context_reactions() {
     ),
     'class' => array(
       '#title' => t('Section class'),
-      '#description' => t('Provides this text as an additional body class (in <strong>$body_classes</strong> in page.tpl.php) when this section is active. Note that there may only be <strong>one</strong> active section class at once.'),
+      '#description' => t('Provides this text as an additional body class (in <strong>$body_classes</strong> in page.tpl.php) when this section is active.'),
       '#type' => 'textfield',
       '#maxlength' => 64,
     ),
@@ -584,7 +584,15 @@ function context_preprocess_page(&$vars) {
   $info = context_active_values('theme_section');
   $vars['section_title'] = !empty($info['title']) ? $info['title'] : '';
   $vars['section_subtitle'] = !empty($info['subtitle']) ? $info['subtitle'] : '';
-  $vars['body_classes'] .= !empty($info['class']) ? ' '. $info['class'] : '';
+
+  // Merge body classes from *any* active contexts.
+  $classes = array();
+  foreach (context_active_contexts() as $context) {
+    if (!empty($context->theme_section['class'])) {
+      $classes[$context->theme_section['class']] = $context->theme_section['class'];
+    }
+  }
+  $vars['body_classes'] .= !empty($classes) ? ' '. implode(' ', $classes) : '';
 
   // If primary + secondary links are pointed at the same menu, provide
   // contextual trailing by default.
