@@ -281,7 +281,7 @@ function context_nodeapi(&$node, $op, $teaser, $page) {
  * Implementation of hook_form_alter().
  */
 function context_form_alter(&$form, $form_state, $form_id) {
-  if (isset($form['#node']) && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
+  if ($form['#id'] === 'node-form' && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
     context_set_by_condition('node', $form['#node']->type);
   }
   if ($form_id == 'system_modules') {
