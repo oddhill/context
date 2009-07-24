@@ -19,7 +19,7 @@ class ContextUiTestCase extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('context', 'context_ui');
-    
+
     // Create and login user
     $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer blocks', 'access content', 'create page content'));
     $this->drupalLogin($admin_user);
@@ -38,8 +38,8 @@ class ContextUiTestCase extends DrupalWebTestCase {
     $this->context = $context;
 
     $edit = array(
-      'namespace' => $context->namespace, 
-      'attribute' => $context->attribute, 
+      'namespace' => $context->namespace,
+      'attribute' => $context->attribute,
       'value' => $context->value,
       'items[node][page]' => 'page',
       'items[menu]' => 'node/add/page',

@@ -1,4 +1,5 @@
 <?php
+// $Id$
 
 /**
  * Implementation of hook_theme().
@@ -80,7 +81,7 @@ function context_context_conditions() {
   // Book
   if (module_exists('book')) {
     $options = array();
-    foreach(book_get_books() as $book) {
+    foreach (book_get_books() as $book) {
       $options[$book['menu_name']] = $book['title'];
     }
     $items['book'] = array(
@@ -225,7 +226,7 @@ function context_context_reactions() {
 
   // Implements context-based theme improvements
   $items['theme_section'] = array(
-    '#tree' => true,
+    '#tree' => TRUE,
     '#title' => t('Theme variables'),
     'title' => array(
       '#title' => t('Section title'),
@@ -530,7 +531,7 @@ function theme_context_links($links) {
  * Generates an array of links (suitable for use with theme_links)
  * to the node forms of types associated with current active contexts.
  */
-function context_links($reset = false) {
+function context_links($reset = FALSE) {
   static $links;
   if (!$links || $reset) {
     $links = array();

@@ -32,7 +32,7 @@ define('CONTEXT_STATUS_ENABLED', 1);
  * @return
  *   Either the requested value, or false if the operation fails.
  */
-function context_context($op = CONTEXT_GET, $namespace = null, $attribute = null, $value = null) {
+function context_context($op = CONTEXT_GET, $namespace = NULL, $attribute = NULL, $value = NULL) {
   static $context;
   $context = !$context ? array() : $context;
   switch ($op) {
@@ -47,7 +47,7 @@ function context_context($op = CONTEXT_GET, $namespace = null, $attribute = null
         if (is_array($context[(string) $namespace]) && isset($context[(string) $namespace][(string) $attribute])) {
           return $context[(string) $namespace][(string) $attribute];
         }
-        elseif (!$attribute){
+        elseif (!$attribute) {
           return $context[(string) $namespace];
         }
       }
@@ -58,29 +58,29 @@ function context_context($op = CONTEXT_GET, $namespace = null, $attribute = null
         // initialize namespace if no key is specified
         if (!$attribute) {
           $context[(string) $namespace] = array();
-          return true;
+          return TRUE;
         }
         // set to true if key is a usable identifier. otherwise, allow a key or object to be inserted
         if (!$value) {
           if (is_string($attribute) || is_int($attribute)) {
-            $context[(string) $namespace][(string) $attribute] = true;
-            return true;
+            $context[(string) $namespace][(string) $attribute] = TRUE;
+            return TRUE;
           }
           elseif (is_array($attribute) || is_object($attribute)) {
             $context[(string) $namespace] = $attribute;
-            return true;
+            return TRUE;
           }
         }
         // set value if key is valid
         if ((is_string($attribute) || is_int($attribute)) && $value) {
           $context[$namespace][$attribute] = $value;
-          return true;
+          return TRUE;
         }
       }
       break;
     case CONTEXT_ISSET:
       // return entire context
-      if (!$namespace) return false;
+      if (!$namespace) return FALSE;
       if (!$attribute) {
         // return entire space if set
         return isset($context[$namespace]);
@@ -89,38 +89,38 @@ function context_context($op = CONTEXT_GET, $namespace = null, $attribute = null
       return isset($context[$namespace][$attribute]);
     case CONTEXT_CLEAR:
       $context = array();
-      return true;
+      return TRUE;
   }
-  return false;
+  return FALSE;
 }
 
 /**
  * Sets a context by namespace + attribute.
  */
-function context_set($namespace, $attribute = null, $value = null) {
+function context_set($namespace, $attribute = NULL, $value = NULL) {
   return context_context(CONTEXT_SET, $namespace, $attribute, $value);
 }
 
 /**
  * Retrieves a context by namespace + (optional) attribute.
  */
-function context_get($namespace = null, $attribute = null) {
-  return context_context(CONTEXT_GET, $namespace, $attribute, null);
+function context_get($namespace = NULL, $attribute = NULL) {
+  return context_context(CONTEXT_GET, $namespace, $attribute, NULL);
 }
 
 /**
  * Returns a boolean for whether a context namespace + attribute have been set.
  */
-function context_isset($namespace = null, $attribute = null) {
-  return context_context(CONTEXT_ISSET, $namespace, $attribute, null);
+function context_isset($namespace = NULL, $attribute = NULL) {
+  return context_context(CONTEXT_ISSET, $namespace, $attribute, NULL);
 }
 
 /**
  * Deprecated context_exists() function. Retained for backwards
  * compatibility -- please use context_isset() instead.
  */
-function context_exists($namespace = null, $attribute = null) {
-  return context_context(CONTEXT_ISSET, $namespace, $attribute, null);
+function context_exists($namespace = NULL, $attribute = NULL) {
+  return context_context(CONTEXT_ISSET, $namespace, $attribute, NULL);
 }
 
 /**
@@ -207,7 +207,7 @@ function context_load_context($context, $reset = FALSE) {
     return $context;
   }
 
-  return false;
+  return FALSE;
 }
 
 /**
@@ -226,7 +226,7 @@ function context_save_context($context) {
   if (!isset($context->cid)) {
     $existing = context_load_context($context, TRUE);
     if ($existing && $existing->cid) {
-      return false;
+      return FALSE;
     }
     else {
       $packed = context_pack_context($context);
@@ -260,16 +260,16 @@ function context_delete_context($context) {
     // Invalidate context cache
     cache_clear_all('context', 'cache');
 
-    return true;
+    return TRUE;
   }
-  return false;
+  return FALSE;
 }
 
 /**
  * Helper function to pack a context object to be stored in the database.
  */
 function context_pack_context($context) {
-  $packed = new StdClass();
+  $packed = new stdClass();
   $packed->cid = $context->cid;
   $packed->namespace = $context->namespace;
   $packed->attribute = $context->attribute;

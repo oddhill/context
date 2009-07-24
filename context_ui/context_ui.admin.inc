@@ -31,13 +31,13 @@ function context_ui_admin() {
 /**
  * Recursive function that intelligently populates default values in a
  * form from a provided array of data.
- * 
+ *
  * @param $form
  *   A form API element to populate with default values.
  * @param $data
  *   A keyed array of data that matches the tree structure of the
  *   form API branch it should populate.
- * 
+ *
  * @return
  *   A form API element populated with default values.
  */
@@ -56,7 +56,7 @@ function context_ui_default_values($form, $data) {
         $form['#default_value'][$value] = $value;
       }
     }
-    else if (is_array($data) && $form['#type'] == 'select' && $form['#multiple'] == true) {
+    else if (is_array($data) && $form['#type'] == 'select' && $form['#multiple'] == TRUE) {
       $form['#default_value'] = array();
       foreach ($data as $value) {
         $form['#default_value'][] = $value;
@@ -103,13 +103,13 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     case 'clone':
       drupal_set_title(t('Clone context: %title', array('%title' => $context->value)));
       $context->system = 0;
-      $context->cid = null;
-      $cid = null;
+      $context->cid = NULL;
+      $cid = NULL;
       break;
   }
 
   // Initialize context object if it doesn't already exist
-  $context = !$context ? new StdClass() : $context;
+  $context = !$context ? new stdClass() : $context;
 
   // Core context definition
   $form = array(
@@ -130,17 +130,17 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   foreach (array('value', 'attribute', 'namespace', 'description') as $field) {
     $form[$field] = array(
       '#type' => 'textfield',
-      '#required' => true,
+      '#required' => TRUE,
       '#maxlength' => 64,
       '#size' => 20,
-      '#disabled' => !empty($context->system) ? true : false,
+      '#disabled' => !empty($context->system) ? TRUE : FALSE,
       '#default_value' => isset($context->{$field}) ? $context->{$field} : '',
       '#title' => t(ucfirst($field)),
     );
   }
 
   $form['value']['#description'] = t('A system name for this context. May only contain lowercase letters, underscores, and numbers. Example: <strong>science_blog</strong>');
-  
+
   $form['attribute']['#default_value'] = empty($form['attribute']['#default_value']) ? 'section' : $form['attribute']['#default_value'];
   $form['attribute']['#description'] = t('The type of context information provided in this namespace. Example: <strong>section</strong>');
 
@@ -152,7 +152,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $form['description']['#maxlength'] = 255;
   $form['description']['#description'] = t('The description of this context definition.');
 
-  $form['items'] = array('#tree' => true);
+  $form['items'] = array('#tree' => TRUE);
 
   // We need to initialize theme in order to deal with blocks
   // and also let themes integrate against context_ui
@@ -165,7 +165,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
     // Disable element
     if (isset($context->system) && $context->system) {
-      $form['items'][$id]['#disabled'] = true;
+      $form['items'][$id]['#disabled'] = TRUE;
     }
 
     // Default values
@@ -193,7 +193,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   ksort($block_options);
 
   $form['block'] = array(
-    '#tree' => true,
+    '#tree' => TRUE,
   );
 
   $form['block']['help'] = array(
@@ -203,7 +203,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
   $form['block']['selector'] = array(
     '#type' => 'item',
-    '#tree' => true,
+    '#tree' => TRUE,
     '#prefix' => '<div class="context-ui-block-selector">',
     '#suffix' => '</div>',
   );
@@ -213,18 +213,18 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
         '#type' => 'checkboxes',
         '#title' => $modules[$module],
         '#options' => $module_blocks,
-        '#disabled' => isset($context->system) && $context->system ? true : false,
+        '#disabled' => isset($context->system) && $context->system ? TRUE : FALSE,
       );
     }
   }
 
   $form['block']['blocks'] = array(
-    '#tree' => true,
+    '#tree' => TRUE,
     '#theme' => 'context_ui_block_ui',
   );
   foreach ($regions as $region => $label) {
     $defaults = array();
-    $midpoint = false;
+    $midpoint = FALSE;
     $form['block']['blocks'][$region] = array(
       '#type' => 'item',
       '#title' => $label,
@@ -240,7 +240,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
       $system_blocks = "<span class='system-blocks'>". implode(", ", $system_blocks) ."</span";
       $form['block']['blocks'][$region]['system'] = array(
         '#type' => 'markup',
-        '#tree' => true,
+        '#tree' => TRUE,
         '#value' => $system_blocks,
         '#weight' => 0,
         'weight' => array(
@@ -256,7 +256,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
       if ($block->type == 'context_ui') {
         $form['block']['blocks'][$region][$block->bid] = array(
           '#type' => 'markup',
-          '#tree' => true,
+          '#tree' => TRUE,
           '#value' => $block->label,
           '#weight' => $block->weight,
           'weight' => array(
@@ -335,7 +335,7 @@ function context_ui_item_display($type, $element) {
     $items[] = !empty($element['#default_value']) ? $element['#default_value'] : array('data' => '', 'class' => 'empty');
   }
   foreach ($items as $k => $v) {
-    $items[$k] = is_string($v) ? check_plain($v) : $v; 
+    $items[$k] = is_string($v) ? check_plain($v) : $v;
   }
   $output = '';
   $output .= theme('item_list', $items, $title, 'ul', array('id' => 'display-'. $type));
@@ -483,7 +483,7 @@ function context_ui_import() {
     '#title' => t('Context Object'),
     '#type' => 'textarea',
     '#rows' => 10,
-    '#required' => true,
+    '#required' => TRUE,
   );
   $form['submit'] = array(
     '#type' => 'submit',
@@ -625,7 +625,7 @@ function context_ui_bulk_export(&$form_state) {
     );
 
     $form['submit'] = array(
-      '#type' => 'submit', 
+      '#type' => 'submit',
       '#value' => t('Export'),
     );
 
@@ -771,7 +771,7 @@ function theme_context_ui_admin($contexts) {
       'class' => 'context-table-row ' . $class,
     );
   }
-  return theme('table', array(t('Context'), t('Operations')), $rows, array('class' => 'context-ui-overview')); 
+  return theme('table', array(t('Context'), t('Operations')), $rows, array('class' => 'context-ui-overview'));
 }
 
 /**
@@ -824,7 +824,7 @@ function context_ui_form_validate($form, &$form_state) {
     }
     if (!isset($form_state['values']['cid'])) {
       // Check that no other user-defined context definition has taken this identifier already
-      $context = new StdClass();
+      $context = new stdClass();
       $context->namespace = $form_state['values']['namespace'];
       $context->attribute = $form_state['values']['attribute'];
       $context->value = $form_state['values']['value'];
@@ -939,7 +939,7 @@ function context_ui_form_submit($form, &$form_state) {
  * @return
  *   A keyed (by "module_delta" convention) array of blocks.
  */
-function _context_ui_get_blocks($region = null, $context = null) {
+function _context_ui_get_blocks($region = NULL, $context = NULL) {
   static $block_info, $valid, $system_blocks;
 
   // we don't static cache context blocks
@@ -970,7 +970,7 @@ function _context_ui_get_blocks($region = null, $context = null) {
           $system_blocks[0][$block->bid] = $block;
         }
         // mark block as available in DB
-        $valid[$block->module ."_". $block->delta] = true;
+        $valid[$block->module ."_". $block->delta] = TRUE;
       }
     }
   }
