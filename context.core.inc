@@ -320,15 +320,19 @@ function context_user($op, &$edit, &$account, $category = NULL) {
  * theme registry. See context_theme_registry_alter().
  */
 function context_blocks($region) {
+  // Bail if this region is disabled.
+  $disabled_regions = context_active_values('theme_regiontoggle');
+  if (!empty($disabled_regions) && in_array($region, $disabled_regions)) {
+    return '';
+  }
+
   $output = "";
   if ($list = context_block_list($region)) {
     foreach ($list as $key => $block) {
       $output .= theme("block", $block);
     }
   }
-  // Add any content assigned to this region through drupal_set_content() calls.
-  $output .= drupal_get_content($region);
-  return $output;
+  return $output . drupal_get_content($region);
 }
 
 /**
@@ -337,12 +341,10 @@ function context_blocks($region) {
 function context_block_list($region) {
   static $blocks;
   static $context_blocks;
-  static $disabled_regions;
 
   if (!isset($context_blocks)) {
     $blocks = array();
     $context_blocks = array();
-    $disabled_regions = array();
 
     // Store all active context blocks when first called
     $context_blocks = array();
@@ -350,7 +352,6 @@ function context_block_list($region) {
       $block = (object) $block;
       $context_blocks["{$block->module}-{$block->delta}"] = $block;
     }
-    $disabled_regions = context_active_values('theme_regiontoggle');
 
     global $user, $theme_key;
     $rids = array_keys($user->roles);
@@ -436,11 +437,6 @@ function context_block_list($region) {
     foreach ($blocks as $r => $dummy) {
       uasort($blocks[$r], '_context_block_sort');
     }
-  }
-
-  // Kill blocks in disabled regions
-  foreach ($disabled_regions as $r) {
-    unset($blocks[$r]);
   }
 
   // ==================================================================
