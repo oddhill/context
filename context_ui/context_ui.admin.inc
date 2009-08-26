@@ -979,7 +979,7 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
     _block_rehash();
 
     // Load blocks from database
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} GROUP BY module, delta ORDER BY module, delta, weight, region, status");
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} ORDER BY module, delta, weight, region, status");
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = isset($block_info[$block->module]) ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
