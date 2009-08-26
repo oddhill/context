@@ -187,6 +187,17 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $blocks = _context_ui_get_blocks();
   $regions = system_region_list($theme_key);
   // $blocks in [0] have not been assigned a region
+
+  // Weights range from -delta to +delta, so delta should be at least half
+  // of the amount of blocks present. This makes sure all blocks in the same
+  // region get an unique weight.
+  $block_count = 0;
+  foreach ($blocks as $region => $block_list) {
+    $block_count += count($block_list);
+  }
+  // Add 2 to make sure there's space at either end of the block list
+  $weight_delta = round(($block_count + 2) / 2);
+
   foreach ($blocks[0] as $block) {
     $block_options[$block->module][$block->bid] = $block->label;
   }
@@ -194,6 +205,12 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
 
   $form['block'] = array(
     '#tree' => TRUE,
+  );
+
+  //Save the value to use in the process function
+  $form['block']['max_block_weight'] = array(
+    '#value' => $weight_delta,
+    '#type' => 'value',
   );
 
   $form['block']['help'] = array(
@@ -245,7 +262,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
         '#weight' => 0,
         'weight' => array(
           '#type' => 'weight',
-          '#delta' => 20,
+          '#delta' => $weight_delta,
           '#default_value' => 0,
         ),
       );
@@ -261,7 +278,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
           '#weight' => $block->weight,
           'weight' => array(
             '#type' => 'weight',
-            '#delta' => 20,
+            '#delta' => $weight_delta,
             '#default_value' => $block->weight,
           ),
         );
@@ -898,7 +915,8 @@ function context_ui_form_process($form) {
         }
         if ($bid != 'system') {
           $block = $valid[$bid];
-          $modifier = $position < $midpoint ? -20 : 20;
+          //use the max block weight to calculate modifier
+          $modifier = $position < $midpoint ? $form['block']['max_block_weight'] * -1 : $form['block']['max_block_weight'];
           $block->weight = $position - $midpoint + $modifier;
           $block->region = $region;
           $block->type = 'context_ui';
