@@ -136,3 +136,17 @@ function context_update_6002() {
   }
   return array();
 }
+
+/**
+ * Remove deprecated tables from context_ui.
+ */
+function context_update_6003() {
+  $ret = array();
+  $tables = array('context_ui', 'context_ui_setter', 'context_ui_getter', 'context_ui_block');
+  foreach ($tables as $table) {
+    if (db_table_exists($table)) {
+      db_drop_table($ret, $table);
+    }
+  }
+  return $ret;
+}
