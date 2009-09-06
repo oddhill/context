@@ -137,6 +137,9 @@ function context_context_conditions() {
       '#multiple' => TRUE,
     );
   }
+  else {
+    $items['menu_trail'] = array('#type' => 'value');
+  }
 
   return $items;
 }
@@ -222,6 +225,9 @@ function context_context_reactions() {
       '#options' => $menus,
       '#type' => 'select',
     );
+  }
+  else {
+    $items['menu'] = array('#type' => 'value');
   }
 
   // Implements context-based theme improvements
