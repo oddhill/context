@@ -2,12 +2,129 @@
 // $Id$
 
 /**
+ * Implementation of hook_context_registry().
+ */
+function context_context_registry() {
+  $registry = array();
+  $registry['conditions'] = array(
+    'node' => array(
+      'title' => t('Node'),
+      'description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
+      'plugin' => 'context_condition_node',
+    ),
+    'sitewide' => array(
+      'title' => t('Sitewide context'),
+      'description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
+      'plugin' => 'context_condition_sitewide',
+    ),
+    'path' => array(
+      'title' => t('Path'),
+      'description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the "*" character as a wildcard and &lt;front&gt; for the front page.'),
+      'plugin' => 'context_condition_path',
+    ),
+    'user' => array(
+      'title' => t('User'),
+      'description' => t('Set this context when a user with selected role(s) is viewed.'),
+      'plugin' => 'context_condition_user',
+    ),
+    'menu' => array(
+      'title' => t('Menu'),
+      'description' => t('Set this context when any of the selected menu items belong to the current active menu trail.'),
+      'plugin' => 'context_condition_menu',
+    ),
+  );
+  if (module_exists('views')) {
+    $registry['conditions']['views'] = array(
+      'title' => t('Views'),
+      'description' => t('Set this context when displaying the page of one of these views.'),
+      'plugin' => 'context_condition_views',
+    );
+  }
+  if (module_exists('book')) {
+    $registry['conditions']['book'] = array(
+      'title' => t('Book'),
+      'description' => t('Set this context when a node in the selected book is viewed.'),
+      'plugin' => 'context_condition_book',
+    );
+  }
+  $registry['reactions'] = array(
+    'block' => array(
+      'title' => t('Blocks'),
+      'description' => t('Control block visibility using context.'),
+      'plugin' => 'context_reaction_block',
+    ),
+    'menu' => array(
+      'title' => t('Menu'),
+      'description' => t('Control menu active class using context.'),
+      'plugin' => 'context_reaction_menu',
+    ),
+    'theme' => array(
+      'title' => t('Theme'),
+      'description' => t('Control theme variables using context.'),
+      'plugin' => 'context_reaction_theme',
+    ),
+    'debug' => array(
+      'title' => t('Debug'),
+      'description' => t('Debug output reaction for SimpleTest.'),
+      'plugin' => 'context_reaction_debug',
+    ),
+  );
+  if (module_exists('css_injector')) {
+    $registry['reactions']['css_injector'] = array(
+      'title' => t('CSS Injector'),
+      'description' => t('Inject the selected css when this context is set.'),
+      'plugin' => 'context_reaction_css_injector',
+    );
+  }
+  return $registry;
+}
+
+/**
  * Implementation of hook_theme().
  */
 function context_theme() {
   $items = array();
   $items['context_links'] = array(
     'arguments' => array(),
+  );
+  $items['context_block_form'] = array(
+    'arguments' => array('form' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'file' => 'context_reaction_block.theme.inc',
+  );
+  $items['context_block_regions_form'] = array(
+    'arguments' => array('form' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'file' => 'context_reaction_block.theme.inc',
+  );
+  $items['context_block_editor'] = array(
+    'arguments' => array('form' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'file' => 'context_reaction_block.theme.inc',
+  );
+  $items['context_block_browser'] = array(
+    'arguments' => array('blocks' => array(), 'context' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'template' => 'context-block-browser',
+    'file' => 'context_reaction_block.theme.inc',
+  );
+  $items['context_block_browser_item'] = array(
+    'arguments' => array('block' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'template' => 'context-block-browser-item',
+    'file' => 'context_reaction_block.theme.inc',
+  );
+  $items['context_block_editable_block'] = array(
+    'arguments' => array('block' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'template' => 'context-block-editable-block',
+    'file' => 'context_reaction_block.theme.inc',
+  );
+  $items['context_block_editable_region'] = array(
+    'arguments' => array('region' => '', 'blocks' => array()),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'template' => 'context-block-editable-region',
+    'file' => 'context_reaction_block.theme.inc',
   );
   return $items;
 }
@@ -39,247 +156,15 @@ function context_theme_registry_alter(&$theme_registry) {
 }
 
 /**
- * Implementation of hook_context_conditions().
- *
- * Allows modules to integrate with context and provide their native
- * objects as options for setting a context definition. The
- * hook should return an array of items keyed on the object "type"
- * (e.g. "node", "user", etc.) with key-value pairs corresponding to
- * a FormAPI element array with some restrictions and additional info.
- *
- * '#title': Required. The title of the object / form option.
- * '#type': Required. The FormAPI element type to use. Currently only
- *   'select', 'checkboxes', 'radio', and 'textfield' are allowed.
- * '#description': Optional. Help text to be displayed on the form.
- * '#options': Required. A key-value array of options. They key will be
- *   stored and passed to context_set_by_condition(), so the integrating module
- *   should use a unique (within its namespace) / usable identifier.
- */
-function context_context_conditions() {
-  $items = array();
-
-  // Content Types
-  $nodetypes = array();
-  foreach (node_get_types() as $type) {
-    $nodetypes[$type->type] = t(drupal_ucfirst($type->name));
-  }
-  $items['node'] = array(
-    '#title' => t('Node pages'),
-    '#description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
-    '#options' => $nodetypes,
-    '#type' => 'checkboxes',
-  );
-
-  // User
-  $items['user'] = array(
-    '#title' => t('User pages'),
-    '#description' => t('Set this context when a user with selected role(s) is viewed'),
-    '#options' => user_roles(true),
-    '#type' => 'checkboxes',
-  );
-
-  // Book
-  if (module_exists('book')) {
-    $options = array();
-    foreach (book_get_books() as $book) {
-      $options[$book['menu_name']] = $book['title'];
-    }
-    $items['book'] = array(
-      '#title' => t('Book'),
-      '#description' => t('Set this context when a node in the selected book is viewed.'),
-      '#options' => $options,
-      '#type' => 'checkboxes',
-    );
-  }
-
-  // Sitewide context
-  $items['sitewide'] = array(
-    '#title' => t('Sitewide context'),
-    '#type' => 'radios',
-    '#options' => array(0 => t('False'), 1 => t('True')),
-    '#description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
-  );
-
-  // Path
-  $items['path'] = array(
-    '#title' => t('Path'),
-    '#description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the "*" character as a wildcard and &lt;front&gt; for the front page.'),
-    '#type' => 'textarea',
-    '#element_validate' => array('context_condition_text_validate'),
-  );
-
-  // Menu trail
-  // @TODO: Implement a real handler system : (
-  // This condition most clearly shows the architecture problem of
-  // storing both conditions and reactions as first-level children
-  // on the context object.
-  if (module_exists('menu')) {
-    $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
-    $root_menus = array();
-    foreach ($menus as $key => $name) {
-      $id = explode(':', $key);
-      if ($id[1] == '0') {
-        $root_menus[$id[0]] = check_plain($name);
-      }
-      else {
-        $link = menu_link_load($id[1]);
-        $root_menu = $root_menus[$id[0]];
-        $menus[$root_menu][$link['link_path']] = $name;
-      }
-      unset($menus[$key]);
-    }
-    array_unshift($menus, "-- ". t('None') ." --");
-    $items['menu_trail'] = array(
-      '#title' => t('Menu trail'),
-      '#description' => t('Set this context when any of the selected menu items belong to the current active menu trail.'),
-      '#options' => $menus,
-      '#type' => 'select',
-      '#multiple' => TRUE,
-    );
-  }
-  else {
-    $items['menu_trail'] = array('#type' => 'value');
-  }
-
-  return $items;
-}
-
-/**
- * Element validate handler for setter textareas and texfields.
- * Will process and convert a string to an array of matchable
- * elements by splitting on an appropriate delimiter ("\n" for
- * textareas and "," for textfields).
- */
-function context_condition_text_validate($element, &$form_state) {
-  if (!empty($element['#value']) && in_array($element['#type'], array('textfield', 'textarea'))) {
-    switch ($element['#type']) {
-      case 'textfield':
-        $delimiter = ',';
-        break;
-      case 'textarea':
-        $delimiter = "\n";
-        break;
-    }
-
-    $items = $element['#value'];
-    $items = explode($delimiter, $items);
-
-    if (!empty($items)) {
-      $values = array();
-      foreach ($items as $k => $v) {
-        $v = trim($v);
-        if (!empty($v)) {
-          $values[$v] = $v;
-        }
-      }
-      $id = end($element['#parents']);
-      $form_state['values']['items'][$id] = $values;
-    }
-  }
-}
-
-/**
- * Implementation of hook_context_reactions().
- *
- * Allows modules to integrate with context and provide options for
- * responding when a context has been set. The hook should return an
- * array of items keyed on the "type" of getter (e.g. "menu", "theme",
- * etc.) with key-value pairs corresponding to a FormAPI element array
- * with some restrictions and additional info.
- *
- * The getter element array provided differs from the setter array in
- * that it may store a tree of values (i.e. where #tree => true). The
- * values will be stored in a serialized array in the database.
- *
- * '#title': Required. The title of the object / form option.
- * '#type': Required. The FormAPI element type to use. Currently only
- *   'select', 'checkboxes', 'radio', and 'textfield' are allowed.
- * '#description': Optional. Help text to be displayed on the form.
- * '#options': Required. A key-value array of options. They key will be
- *   stored and passed to context_set_by_condition(), so the integrating module
- *   should use a unique (within its namespace) / usable identifier.
- */
-function context_context_reactions() {
-  $items = array();
-
-  // Menu
-  if (module_exists('menu')) {
-    $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
-    $root_menus = array();
-    foreach ($menus as $key => $name) {
-      $id = explode(':', $key);
-      if ($id[1] == '0') {
-        $root_menus[$id[0]] = check_plain($name);
-      }
-      else {
-        $link = menu_link_load($id[1]);
-        $root_menu = $root_menus[$id[0]];
-        $menus[$root_menu][$link['link_path']] = $name;
-      }
-      unset($menus[$key]);
-    }
-    array_unshift($menus, "-- ". t('None') ." --");
-    $items['menu'] = array(
-      '#title' => t('Active menu'),
-      '#description' => t('Display the selected menu item as active in the <strong>$primary_links</strong> or <strong>$secondary_links</strong> of page.tpl.php when this context is set.'),
-      '#options' => $menus,
-      '#type' => 'select',
-    );
-  }
-  else {
-    $items['menu'] = array('#type' => 'value');
-  }
-
-  // Implements context-based theme improvements
-  $items['theme_section'] = array(
-    '#tree' => TRUE,
-    '#title' => t('Theme variables'),
-    'title' => array(
-      '#title' => t('Section title'),
-      '#description' => t('Provides this text as a <strong>$section_title</strong> variable for display in page.tpl.php when this context is active.'),
-      '#type' => 'textfield',
-      '#maxlength' => 255,
-    ),
-    'subtitle' => array(
-      '#title' => t('Section subtitle'),
-      '#description' => t('Provides this text as a <strong>$section_subtitle</strong> variable for display in page.tpl.php when this context is active.'),
-      '#type' => 'textfield',
-      '#maxlength' => 255,
-    ),
-    'class' => array(
-      '#title' => t('Section class'),
-      '#description' => t('Provides this text as an additional body class (in <strong>$body_classes</strong> in page.tpl.php) when this section is active.'),
-      '#type' => 'textfield',
-      '#maxlength' => 64,
-    ),
-  );
-
-  // Implements context-based region disabling
-  $theme_key = variable_get('theme_default', 'garland');
-  $regions = system_region_list($theme_key);
-  $items['theme_regiontoggle'] = array(
-    '#title' => t('Disabled regions'),
-    '#type' => 'checkboxes',
-    '#options' => $regions,
-  );
-
-  return $items;
-}
-
-
-/**
  * Implementation of hook_nodeapi().
  */
 function context_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page && menu_get_object() === $node) {
-    // Implementation of context_set_by_condition for node.
-    context_set_by_condition('node', $node->type);
+    $plugin = context_get_plugin('condition', 'node');
+    $plugin->execute($node, $op);
 
-    // Implementation of context_set_by_condition for book.
-    if (module_exists('book') && isset($node->book)) {
-      if ($node->book['menu_name']) {
-        context_set_by_condition('book', $node->book['menu_name']);
-      }
+    if ($plugin = context_get_plugin('condition', 'book')) {
+      $plugin->execute($node, $op);
     }
   }
 }
@@ -288,8 +173,10 @@ function context_nodeapi(&$node, $op, $teaser, $page) {
  * Implementation of hook_form_alter().
  */
 function context_form_alter(&$form, $form_state, $form_id) {
-  if ($form['#id'] === 'node-form' && arg(0) != 'admin') { // Prevent this from firing on admin pages... damn form driven apis...
-    context_set_by_condition('node', $form['#node']->type);
+  // Prevent this from firing on admin pages... damn form driven apis...
+  if ($form['#id'] === 'node-form' && arg(0) != 'admin') {
+    $plugin = context_get_plugin('condition', 'node');
+    $plugin->execute($form['#node'], 'form');
   }
   if ($form_id == 'system_modules') {
     context_invalidate_cache();
@@ -301,8 +188,8 @@ function context_form_alter(&$form, $form_state, $form_id) {
  */
 function context_form_comment_form_alter(&$form, $form_state) {
   if ($nid = $form['nid']['#value']) {
-    $node = node_load($nid);
-    context_set_by_condition('node', $node->type);
+    $plugin = context_get_plugin('condition', 'node');
+    $plugin->execute($node = node_load($nid), 'comment');
   }
 }
 
@@ -310,10 +197,19 @@ function context_form_comment_form_alter(&$form, $form_state) {
  * Implementation of hook_user().
  */
 function context_user($op, &$edit, &$account, $category = NULL) {
-  if ($op == 'view' && !empty($account->roles)) {
-    foreach (array_keys($account->roles) as $rid) {
-      context_set_by_condition('user', $rid);
+  if ($op == 'view') {
+    if ($plugin = context_get_plugin('condition', 'user')) {
+      $plugin->execute($account, $op);
     }
+  }
+}
+
+/**
+ * Implementation of hook_views_pre_view().
+ */
+function context_views_pre_view($view, $args) {
+  if ($plugin = context_get_plugin('condition', 'views')) {
+    $plugin->execute($view);
   }
 }
 
@@ -326,185 +222,9 @@ function context_user($op, &$edit, &$account, $category = NULL) {
  * theme registry. See context_theme_registry_alter().
  */
 function context_blocks($region) {
-  // Bail if this region is disabled.
-  $disabled_regions = context_active_values('theme_regiontoggle');
-  if (!empty($disabled_regions) && in_array($region, $disabled_regions)) {
-    return '';
+  if ($plugin = context_get_plugin('reaction', 'block')) {
+    return $plugin->execute($region);
   }
-
-  $output = "";
-  if ($list = context_block_list($region)) {
-    foreach ($list as $key => $block) {
-      $output .= theme("block", $block);
-    }
-  }
-  return $output . drupal_get_content($region);
-}
-
-/**
- * An alternative version of block_list() that provides any context enabled blocks.
- */
-function context_block_list($region) {
-  static $blocks;
-  static $context_blocks;
-
-  if (!isset($context_blocks)) {
-    $blocks = array();
-    $context_blocks = array();
-
-    // Store all active context blocks when first called
-    $context_blocks = array();
-    foreach (context_active_values('block') as $block) {
-      $block = (object) $block;
-      $context_blocks["{$block->module}-{$block->delta}"] = $block;
-    }
-
-    global $user, $theme_key;
-    $rids = array_keys($user->roles);
-
-    // This query is identical to the one in block_list(), but status = 1 is excluded to
-    // retain blocks that may be enabled via context.
-    $result = db_query(db_rewrite_sql("SELECT DISTINCT b.* FROM {blocks} b LEFT JOIN {blocks_roles} r ON b.module = r.module AND b.delta = r.delta WHERE b.theme = '%s' AND (r.rid IN (". db_placeholders($rids) .") OR r.rid IS NULL) ORDER BY b.region, b.weight, b.module", 'b', 'bid'), array_merge(array($theme_key), $rids));
-
-    while ($block = db_fetch_object($result)) {
-      $bid = "{$block->module}-{$block->delta}";
-
-      // If block is not enabled & not enabled via context, skip it
-      if (!empty($context_blocks[$bid])) {
-        $block->region = $context_blocks[$bid]->region;
-        $block->weight = $context_blocks[$bid]->weight;
-        unset($context_blocks[$bid]);
-        $enabled = TRUE;
-      }
-      else if (!$block->status) {
-        continue;
-      }
-
-      // Initialize region key
-      if (!isset($blocks[$block->region])) {
-        $blocks[$block->region] = array();
-      }
-
-      // Use the user's block visibility setting, if necessary
-      if ($block->custom != 0) {
-        if ($user->uid && isset($user->block[$block->module][$block->delta])) {
-          $enabled = $user->block[$block->module][$block->delta];
-        }
-        else {
-          $enabled = ($block->custom == 1);
-        }
-      }
-      else {
-        $enabled = TRUE;
-      }
-
-      // Match path if necessary
-      if ($block->pages) {
-        if ($block->visibility < 2) {
-          $path = drupal_get_path_alias($_GET['q']);
-          // Compare with the internal and path alias (if any).
-          $page_match = drupal_match_path($path, $block->pages);
-          if ($path != $_GET['q']) {
-            $page_match = $page_match || drupal_match_path($_GET['q'], $block->pages);
-          }
-          // When $block->visibility has a value of 0, the block is displayed on
-          // all pages except those listed in $block->pages. When set to 1, it
-          // is displayed only on those pages listed in $block->pages.
-          $page_match = !($block->visibility xor $page_match);
-        }
-        else {
-          $page_match = drupal_eval($block->pages);
-        }
-      }
-      else {
-        $page_match = TRUE;
-      }
-
-      $block->enabled = $enabled;
-      $block->page_match = $page_match;
-      $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
-    }
-    // It's possible that there are still some leftover blocks in the enabled contexts.
-    // Add these in as well.
-    if (!empty($context_blocks)) {
-      foreach ($context_blocks as $block) {
-        $block = (object) $block;
-        $block->status = 1;
-        $block->enabled = TRUE;
-        $block->page_match = TRUE;
-        $block->throttle = FALSE;
-        $block->title = '';
-        $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
-      }
-    }
-
-    // Sort blocks -- we must do this here since blocks provided via
-    // context may have overridden or altered weights.
-    foreach ($blocks as $r => $dummy) {
-      uasort($blocks[$r], '_context_block_sort');
-    }
-  }
-
-  // ==================================================================
-  // The block rendering code below is identical to block_list().
-  // ==================================================================
-
-  // Create an empty array if there were no entries
-  if (!isset($blocks[$region])) {
-    $blocks[$region] = array();
-  }
-
-  foreach ($blocks[$region] as $key => $block) {
-    // Render the block content if it has not been created already.
-    if (!isset($block->content)) {
-      // Erase the block from the static array - we'll put it back if it has content.
-      unset($blocks[$region][$key]);
-      if ($block->enabled && $block->page_match) {
-        // Check the current throttle status and see if block should be displayed
-        // based on server load.
-        if (!($block->throttle && (module_invoke('throttle', 'status') > 0))) {
-          // Try fetching the block from cache. Block caching is not compatible with
-          // node_access modules. We also preserve the submission of forms in blocks,
-          // by fetching from cache only if the request method is 'GET'.
-          if (!count(module_implements('node_grants')) && $_SERVER['REQUEST_METHOD'] == 'GET' && ($cid = _block_get_cache_id($block)) && ($cache = cache_get($cid, 'cache_block'))) {
-            $array = $cache->data;
-          }
-          else {
-            $array = module_invoke($block->module, 'block', 'view', $block->delta);
-            if (isset($cid)) {
-              cache_set($cid, $array, 'cache_block', CACHE_TEMPORARY);
-            }
-          }
-
-          if (isset($array) && is_array($array)) {
-            foreach ($array as $k => $v) {
-              $block->$k = $v;
-            }
-          }
-        }
-        if (isset($block->content) && $block->content) {
-          // Override default block title if a custom display title is present.
-          if ($block->title) {
-            // Check plain here to allow module generated titles to keep any markup.
-            $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
-          }
-          if (!isset($block->subject)) {
-            $block->subject = '';
-          }
-          $blocks[$block->region]["{$block->module}_{$block->delta}"] = $block;
-        }
-      }
-    }
-  }
-
-  return $blocks[$region];
-}
-
-/**
- * Helper function to sort blocks.
- */
-function _context_block_sort($a, $b) {
-  return ($a->weight - $b->weight);
 }
 
 /**
@@ -537,8 +257,15 @@ function theme_context_links($links) {
 function context_links($reset = FALSE) {
   static $links;
   if (!$links || $reset) {
+    $contexts = context_active_contexts();
+    $active_types = array();
+    foreach ($contexts as $k => $v) {
+      if (!empty($v->conditions['node']['values'])) {
+        $active_types = array_merge($active_types, array_filter($v->conditions['node']['values']));
+      }
+    }
+
     $links = array();
-    $active_types = context_active_values('node');
     if (!empty($active_types)) {
       // Collect types
       $types = node_get_types();
@@ -571,12 +298,20 @@ function context_page_alter(&$vars) {
  * Implementation of hook_context_page_condition().
  */
 function context_context_page_condition() {
-  // Menu trail condition integration
-  $trail = menu_get_active_trail();
-  foreach ($trail as $item) {
-    if (!empty($item['href'])) {
-      context_set_by_condition('menu_trail', $item['href']);
-    }
+  if ($plugin = context_get_plugin('condition', 'menu')) {
+    $plugin->execute();
+  }
+}
+
+/**
+ * Implementation of hook_context_page_reaction().
+ */
+function context_context_page_reaction() {
+  if ($plugin = context_get_plugin('reaction', 'css_injector')) {
+    $plugin->execute();
+  }
+  if ($plugin = context_get_plugin('reaction', 'debug')) {
+    $plugin->execute();
   }
 }
 
@@ -584,96 +319,12 @@ function context_context_page_condition() {
  * Implementation of preprocess_page().
  */
 function context_preprocess_page(&$vars) {
-  $info = context_active_values('theme_section');
-  $vars['section_title'] = !empty($info['title']) ? $info['title'] : '';
-  $vars['section_subtitle'] = !empty($info['subtitle']) ? $info['subtitle'] : '';
-
-  // Merge body classes from *any* active contexts.
-  $classes = array();
-  foreach (context_active_contexts() as $context) {
-    if (!empty($context->theme_section['class'])) {
-      $classes[$context->theme_section['class']] = $context->theme_section['class'];
-    }
-  }
-  $vars['body_classes'] .= !empty($classes) ? ' '. implode(' ', $classes) : '';
-
-  // If primary + secondary links are pointed at the same menu, provide
-  // contextual trailing by default.
-  if (variable_get('menu_primary_links_source', 'primary-links') == variable_get('menu_secondary_links_source', 'secondary-links')) {
-    $vars['primary_links'] = context_menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links'));
-    $vars['secondary_links'] = context_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1);
-  }
-
-  $vars['primary_links'] = context_menu_set_active($vars['primary_links']);
-  $vars['secondary_links'] = context_menu_set_active($vars['secondary_links']);
+  $plugin = context_get_plugin('reaction', 'menu');
+  $plugin->execute($vars);
+  $plugin = context_get_plugin('reaction', 'theme');
+  $plugin->execute($vars);
 
   if ($context_links = context_links()) {
     $vars['context_links'] = theme('context_links', $context_links);
   }
-}
-
-/**
- * Iterates through a provided links array for use with theme_links()
- * (e.g. from menu_primary_links()) and provides an active class for
- * any items that have a path that matches an active context.
- *
- * @param $links
- *   An array of links.
- * @param $reset
- *   A boolean flag for resetting the static cache.
- *
- * @return
- *   A modified links array.
- */
-function context_menu_set_active($links = array(), $reset = FALSE) {
-  $active_paths = context_active_values('menu');
-
-  // Iterate through the provided links and build a new set of links
-  // that includes active classes
-  $new_links = array();
-  if (!empty($links)) {
-    foreach ($links as $key => $link) {
-      if (!empty($link['href']) && in_array($link['href'], $active_paths)) {
-        if (isset($links['attributes']['class'])) {
-          $link['attributes']['class'] .= ' active';
-        }
-        else {
-          $link['attributes']['class'] = 'active';
-        }
-        if (strpos(' active', $key) === FALSE) {
-          $new_links[$key .' active'] = $link;
-        }
-      }
-      else {
-        $new_links[$key] = $link;
-      }
-    }
-  }
-
-  return $new_links;
-}
-
-/**
- * Wrapper around menu_navigation_links() that gives themers the option of
- * building navigation links based on an active context trail.
- */
-function context_menu_navigation_links($menu_name, $level = 0) {
-  // Retrieve original path so we can repair it after our hack.
-  $original_path = $_GET['q'];
-
-  // Retrieve the first active menu path found.
-  $active_paths = context_active_values('menu');
-  if (!empty($active_paths)) {
-    $path = current($active_paths);
-    if (menu_get_item($path)) {
-      menu_set_active_item($path);
-    }
-  }
-
-  // Build the links requested
-  $links = menu_navigation_links($menu_name, $level);
-
-  // Repair and get out
-  menu_set_active_item($original_path);
-  return $links;
 }

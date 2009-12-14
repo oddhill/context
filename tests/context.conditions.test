@@ -1,0 +1,209 @@
+<?php
+// $Id$
+
+class ContextConditionSitewideTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: sitewide'),
+      'description' => t('Test sitewide condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration'));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('sitewide' => array('values' => array(1)));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet('node');
+    $this->assertText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+  }
+}
+
+class ContextConditionPathTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: path'),
+      'description' => t('Test path condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools', 'path');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('path' => array('values' => array('admin', 'node/*')));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet('admin');
+    $this->assertText('Active context: testcontext');
+
+    $node = $this->drupalCreateNode();
+    $this->drupalGet("node/{$node->nid}");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet('node');
+    $this->assertNoText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+
+    // @TODO: Test with path alias
+    // @TODO: Test with language prefixes
+  }
+}
+
+class ContextConditionNodeTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: node'),
+      'description' => t('Test node condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools', 'blog');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('node' => array('values' => array('blog')));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet("node/add/blog");
+    $this->assertNoText('Active context: testcontext');
+
+    $this->drupalGet("node/add/page");
+    $this->assertNoText('Active context: testcontext');
+
+    $node = $this->drupalCreateNode(array('type' => 'blog'));
+    $this->drupalGet("node/{$node->nid}");
+    $this->assertText('Active context: testcontext');
+
+    $node = $this->drupalCreateNode(array('type' => 'page'));
+    $this->drupalGet("node/{$node->nid}");
+    $this->assertNoText('Active context: testcontext');
+
+    $context->conditions['node']['options']['node_form'] = 1;
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet("node/add/blog");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node/add/page");
+    $this->assertNoText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+  }
+}
+
+class ContextConditionMenuTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: menu'),
+      'description' => t('Test menu condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('menu' => array('values' => array('node/add')));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet("node/add/blog");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node/add");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node");
+    $this->assertNoText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+  }
+}
+
+class ContextConditionBookTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: book'),
+      'description' => t('Test book condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools', 'book', 'menu');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    $book = $this->drupalCreateNode(array('type' => 'book', 'book' => array('bid' => 'new')));
+    $child = $this->drupalCreateNode(array('type' => 'book', 'book' => array('bid' => $book->nid)));
+    $dummy = $this->drupalCreateNode(array('type' => 'book'));
+
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('book' => array('values' => array(book_menu_name($book->book['bid']))));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet("node/{$book->nid}");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node/{$child->nid}");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node/{$dummy->nid}");
+    $this->assertNoText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+  }
+}

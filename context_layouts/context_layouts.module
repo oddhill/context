@@ -1,0 +1,79 @@
+<?php
+
+/**
+ * Implementation of hook_ctools_plugin_api().
+ */
+function context_layouts_ctools_plugin_api($module, $api) {
+  if ($module == 'context' && $api == 'plugins') {
+    return array('version' => 3);
+  }
+}
+
+/**
+ * Implementation of hook_context_plugins().
+ * This is a ctools plugins hook.
+ */
+function context_layouts_context_plugins() {
+  return array(
+    'context_layouts_reaction_block' => array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'context_layouts') .'/plugins',
+        'file' => 'context_layouts_reaction_block.inc',
+        'class' => 'context_layouts_reaction_block',
+        'parent' => 'context_reaction_block',
+      ),
+    ),
+  );
+}
+
+/**
+ * Implementation of hook_context_registry_alter().
+ */
+function context_layouts_context_registry_alter(&$registry) {
+  if (isset($registry['reactions']['block'])) {
+    $registry['reactions']['block']['plugin'] = 'context_layouts_reaction_block';
+  }
+}
+
+/**
+ * Implementation of hook_context_page_reaction().
+ */
+function context_layouts_context_page_reaction() {
+  $plugin = context_get_plugin('reaction', 'block');
+  if ($plugin && method_exists($plugin, 'add_layout_stylesheet')) {
+    $plugin->add_layout_stylesheet();
+  }
+}
+
+/**
+ * Preprocessor for theme('page').
+ */
+function context_layouts_preprocess_page(&$vars) {
+  $plugin = context_get_plugin('reaction', 'block');
+  if ($plugin && method_exists($plugin, 'add_layout_stylesheet')) {
+    $plugin->add_layout_template($vars);
+  }
+}
+
+/**
+ * Retrieve layouts for the specified theme.
+ */
+function context_layouts_get_layouts($theme = NULL) {
+  global $theme_key;
+  $theme = isset($theme) ? $theme : $theme_key;
+  $info = context_get_info('theme', $theme);
+  if (isset($info['layouts'])) {
+    return $info['layouts'];
+  }
+  return FALSE;
+}
+
+/**
+ * Get the active layout for the current page.
+ */
+function context_layouts_get_active_layout($info = TRUE) {
+  $plugin = context_get_plugin('reaction', 'block');
+  if ($plugin && method_exists($plugin, 'add_layout_stylesheet')) {
+    return $plugin->get_active_layout($info);
+  }
+}
