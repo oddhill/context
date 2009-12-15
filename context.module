@@ -251,8 +251,8 @@ function context_context_list() {
 /**
  * CTools export function.
  */
-function context_export_context($context) {
-  return ctools_export_object('context', $context);
+function context_export_context($context, $indent = '') {
+  return ctools_export_object('context', $context, $indent);
 }
 
 /**
@@ -435,4 +435,19 @@ function _context_registry($key = NULL, $reset = FALSE) {
     return isset($registry[$key]) ? $registry[$key] : array();
   }
   return $registry;
+}
+
+/**
+ * Implementation of hook_features_api().
+ */
+function context_features_api() {
+  return array(
+    'context' => array(
+      'api' => 'context',
+      'default_hook' => 'context_default_contexts',
+      'current_version' => 3,
+      'module' => 'context',
+      'feature_source' => TRUE,
+    ),
+  );
 }
