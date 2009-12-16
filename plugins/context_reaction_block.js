@@ -180,7 +180,7 @@ function DrupalContextBlockEditor(editor) {
         'bid': bid,
         'context': context
       };
-      $.getJSON(Drupal.settings.basePath+'/admin/build/context/ajax-block-view', params, function(data) {
+      $.getJSON(Drupal.settings.contextBlockEditor.ajax, params, function(data) {
         if (data.status) {
           var newBlock = $(data.block);
           newBlock.addClass('draggable');

@@ -119,7 +119,11 @@ class context_reaction_block extends context_reaction {
       // We might be called multiple times so use a static to ensure this is set just once.
       static $once;
       if (!isset($once)) {
-        drupal_add_js(array('contextBlockEditor' => array('path' => $_GET['q'])), 'setting');
+        $settings = array(
+          'path' => $_GET['q'],
+          'ajax' => url('context/ajax-block-view'),
+        );
+        drupal_add_js(array('contextBlockEditor' => $settings), 'setting');
         $once = TRUE;
       }
 

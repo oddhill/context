@@ -160,7 +160,7 @@ function context_ui_menu() {
   );
 
   // AHAH callback for block plugin.
-  $items['admin/build/context/ajax-block-view'] = array(
+  $items['context/ajax-block-view'] = array(
     'title' => 'Block view',
     'description' => 'AJAX callback for rendering a block.',
     'page callback' => 'context_ui_menu_plugin',
