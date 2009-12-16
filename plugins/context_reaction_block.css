@@ -87,6 +87,7 @@ body.context-editing div.context-block-region div.draggable:hover div.handle {
   right:0px;
   top:0px;
   bottom:0px;
+  z-index:5;
   cursor:move;
   }
 
