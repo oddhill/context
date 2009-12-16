@@ -165,6 +165,8 @@ function context_ui_menu() {
     'description' => 'AJAX callback for rendering a block.',
     'page callback' => 'context_ui_menu_plugin',
     'page arguments' => array('reaction', 'block', 'ajax'),
+    'access callback' => 'user_access',
+    'access arguments' => array('access content'),
     'type' => MENU_CALLBACK,
   );
 

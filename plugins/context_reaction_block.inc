@@ -176,12 +176,7 @@ class context_reaction_block extends context_reaction {
     // if (!empty($disabled_regions) && in_array($region, $disabled_regions)) {
     //   return '';
     // }
-    if (user_access('administer site configuration')) {
-      return $this->render_editable($region);
-    }
-    else {
-      return $this->render_region($region);
-    }
+    return $this->render_editable($region);
   }
 
   /**
