@@ -235,7 +235,7 @@ function context_ui_form_admin_settings_form_alter(&$form, $form_state) {
   $form['context_ui_show_empty_regions'] = array(
     '#type' => 'checkbox',
     '#title' => t('Always show empty theme regions.'),
-    '#description' => t('When checked empty regions will always be displayed making it possible to drag blocks into those regions'),
+    '#description' => t('When checked empty regions will always be displayed, making it possible to drag blocks into those regions.'),
     '#default_value' => variable_get('context_ui_show_empty_regions', false),
     '#weight' => -1,
   );
