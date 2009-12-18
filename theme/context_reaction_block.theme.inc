@@ -89,7 +89,7 @@ function template_preprocess_context_block_editable_region(&$vars) {
   // Killswitch flag allowing other preprocessors to abort editable regions entirely.
   $vars['editable'] = isset($vars['editable']) ? $vars['editable'] : TRUE;
 
-  $vars['show_always'] = variable_get('context_show_empty_regions', false);
+  $vars['show_always'] = variable_get('context_ui_show_empty_regions', false);
 }
 
 /**
