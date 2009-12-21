@@ -473,7 +473,29 @@ class context_reaction_block extends context_reaction {
           $block->content = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
         }
         $block = $this->build_block($block);
-        drupal_json(array('status' => 1, 'block' => theme('context_block_editable_block', $block)));
+
+        $css = array();
+
+        // On behalf of panels we try to load some css, but we don't support
+        // panels inside panels currently.
+        if ($block->module == 'panels_mini') {
+          $panel = panels_mini_load($block->delta);
+          $layout = panels_get_layout($panel->display->layout);
+          if (!empty($layout['css'])) {
+            if (file_exists(path_to_theme() . '/' . $layout['css'])) {
+              $css[] = path_to_theme() . '/' . $layout['css'];
+            }
+            else {
+              $css[] = $layout['path'] . '/' . $layout['css'];
+            }
+          }
+        }
+
+        drupal_json(array(
+          'status' => 1,
+          'block' => theme('context_block_editable_block', $block),
+          'css' => $css,
+        ));
         exit;
       }
     }

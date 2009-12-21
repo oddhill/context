@@ -186,6 +186,13 @@ function DrupalContextBlockEditor(editor) {
           newBlock.addClass('draggable');
           var newBlock = ui.item.replaceWith(newBlock);
 
+          $.each(data.css, function(k, v){
+            var cssfile = Drupal.settings.basePath + v;
+            if ($('head link[href $='+cssfile+']').length == 0 ) {
+              $('head').append('<link type="text/css" rel="stylesheet" media="all" href="' + cssfile + " />'");
+            }
+          });
+
           Drupal.contextBlockEditor.updateBlocks();
           Drupal.attachBehaviors();
         }
