@@ -273,7 +273,7 @@ function DrupalContextBlockEditor(editor) {
     zIndex: '2700',
     connectToSortable: ['div.context-block-region'],
     start: function(event, ui) { $(document.body).addClass('context-block-adding'); },
-    stop: function(event, ui) { $(document.body).removeClass('context-block-adding'); },
+    stop: function(event, ui) { $(document.body).removeClass('context-block-adding'); }
   };
   $('div.context-block-addable', editor).draggable(options);
 
