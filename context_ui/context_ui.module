@@ -278,7 +278,7 @@ function context_ui_editor($form_state, $contexts) {
     }
     if (count(element_children($form_context['condition']))) {
       $form_context['condition']['#title'] = t('Conditions');
-      $form_context['condition']['#type'] = 'checkboxes';
+      $form_context['condition']['#type'] = 'item';
       $form_context['condition']['#description'] = t('This context is active when any of the selected conditions are true.');
     }
 
