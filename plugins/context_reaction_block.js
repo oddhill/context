@@ -246,6 +246,15 @@ function DrupalContextBlockEditor(editor) {
     $('div.context-block-region').each(function() {
       $(this).sortable('option', 'connectWith', ['div.context-block-region']);
     });
+
+    // Terrible, terrible workaround for parentoffset issue in Safari.
+    // The proper fix for this issue has been committed to jQuery UI, but was
+    // not included in the 1.6 release. Therefore, we do a browser agent hack
+    // to ensure that Safari users are covered by the offset fix found here:
+    // http://dev.jqueryui.com/changeset/2073.
+    if ($.ui.version === '1.6' && $.browser.safari) {
+      $.browser.mozilla = true;
+    }
   };
 
   /**
@@ -255,6 +264,11 @@ function DrupalContextBlockEditor(editor) {
     $('div.context-block-region > div.draggable').removeClass('draggable');
     $('div.context-block-region').sortable('destroy');
     this.setState();
+
+    // Unhack the user agent.
+    if ($.ui.version === '1.6' && $.browser.safari) {
+      $.browser.mozilla = false;
+    }
   };
 
   // Category selector handler.
@@ -271,7 +285,7 @@ function DrupalContextBlockEditor(editor) {
     appendTo: 'body',
     helper: 'clone',
     zIndex: '2700',
-    connectToSortable: ['div.context-block-region'],
+    connectToSortable: ($.ui.version === '1.6') ? ['div.context-block-region'] : 'div.context-block-region',
     start: function(event, ui) { $(document.body).addClass('context-block-adding'); },
     stop: function(event, ui) { $(document.body).removeClass('context-block-adding'); }
   };
