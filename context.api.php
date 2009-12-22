@@ -32,36 +32,6 @@ function hook_context_plugins() {
 }
 
 /**
- * Registry hook for conditions.
- *
- * Each entry associates a condition type with the CTools plugin to be used as
- * its condition class.
- */
-function hook_context_conditions() {
-  return array(
-    'bar' => array(
-      'title' => t('Name of condition "bar"'),
-      'plugin' => 'foo_context_condition_bar',
-    ),
-  );
-}
-
-/**
- * Alter the condition registry.
- *
- * Allows modules to alter the condition registry. Default condition plugins
- * can be replaced by custom ones declared in hook_context_plugins().
- *
- * @param $registry
- *   The condition registry, passed by reference.
- */
-function hook_context_conditions_alter(&$registry) {
-  if (isset($registry['bar'])) {
-    $registry['bar']['plugin'] = 'custom_context_condition_bar';
-  }
-}
-
-/**
  * Registry hook for conditions & reactions.
  *
  * Each entry associates a condition or reaction with the CTools plugin to be
@@ -91,9 +61,9 @@ function hook_context_registry() {
  * custom ones declared in hook_context_plugins().
  *
  * @param $registry
- *   The reaction registry, passed by reference.
+ *   The registry, passed by reference.
  */
-function hook_context_reactions_alter(&$registry) {
+function hook_context_registry_alter(&$registry) {
   if (isset($registry['reactions']['baz'])) {
     $registry['reactions']['baz']['plugin'] = 'custom_context_reaction_baz';
   }
