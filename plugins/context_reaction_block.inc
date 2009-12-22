@@ -243,6 +243,7 @@ class context_reaction_block extends context_reaction {
    */
   protected function build_block($block) {
     if (!isset($block->content)) {
+      $block->content = '';
       // Try fetching the block from cache. Block caching is not compatible with
       // node_access modules. We also preserve the submission of forms in blocks,
       // by fetching from cache only if the request method is 'GET'.
@@ -261,7 +262,7 @@ class context_reaction_block extends context_reaction {
         }
       }
     }
-    if (isset($block->content) && $block->content) {
+    if (!empty($block->content)) {
       global $user, $theme_key;
       $block->title = db_result(db_query("SELECT title FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block->module, $block->delta, $theme_key));
       // Override default block title if a custom display title is present.
@@ -463,6 +464,7 @@ class context_reaction_block extends context_reaction {
         $block->delta = $delta;
         $block->info = isset($info[$bid]->info) ? $info[$bid]->info : '';
         $block->bid = $bid;
+        $block->region = '';
 
         $block_view = module_invoke($module, 'block', 'view', $delta);
         if (!empty($block_view) && !empty($block_view['content'])) {
