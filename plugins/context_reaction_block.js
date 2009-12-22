@@ -238,7 +238,8 @@ function DrupalContextBlockEditor(editor) {
       dropOnEmpty: true,
       placeholder: 'draggable-placeholder',
       forcePlaceholderSize: true,
-      stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); }
+      stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); },
+      items: '> div.editable'
     };
     $('div.context-block-region').sortable(params);
 
