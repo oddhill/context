@@ -31,7 +31,7 @@ Drupal.behaviors.contextReactionBlock = function(context) {
     });
   });
 
-  // 
+  //
   // Admin Form =======================================================
   //
   // ContextBlockForm: Init.
@@ -184,11 +184,11 @@ function DrupalContextBlockEditor(editor) {
         if (data.status) {
           var newBlock = $(data.block);
           newBlock.addClass('draggable');
-          var newBlock = ui.item.replaceWith(newBlock);
+          newBlock = ui.item.replaceWith(newBlock);
 
           $.each(data.css, function(k, v){
             var cssfile = Drupal.settings.basePath + v;
-            if ($('head link[href $='+cssfile+']').length == 0 ) {
+            if ($('head link[href $='+cssfile+']').length === 0 ) {
               $('head').append('<link type="text/css" rel="stylesheet" media="all" href="' + cssfile + " />'");
             }
           });
@@ -216,7 +216,7 @@ function DrupalContextBlockEditor(editor) {
       $('div.context-block', $(this)).each(function() {
         var bid = $(this).attr('id').split('context-block-')[1];
         var context = $(this).attr('class').split('edit-')[1];
-        var context = context ? context : 0;
+        context = context ? context : 0;
         var block = {'bid': bid, 'context': context};
         blocks.push(block);
       });
@@ -239,7 +239,7 @@ function DrupalContextBlockEditor(editor) {
       placeholder: 'draggable-placeholder',
       forcePlaceholderSize: true,
       stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); }
-    }
+    };
     $('div.context-block-region').sortable(params);
 
     // Second pass, hook up all regions via connectWith to each other.
@@ -293,4 +293,4 @@ function DrupalContextBlockEditor(editor) {
 
   // Set the block states.
   this.updateBlocks();
-};
+}
