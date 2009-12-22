@@ -59,7 +59,13 @@ function template_preprocess_context_block_browser(&$vars) {
     '#type' => 'select',
     '#options' => array(0 => '<'. t('Choose a category') .'>'),
     '#attributes' => array('class' => 'context-block-browser-categories'),
-    '#parents' => array(),
+    '#value' => 0,
+    '#size' => 1,
+    '#id' => '',
+    '#name' => '',
+    '#parents' => array(''),
+    '#multiple' => FALSE,
+    '#required' => FALSE,
   );
   $blocks = array();
   // Group blocks by module.
