@@ -108,7 +108,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     '#required' => TRUE,
     '#maxlength' => 255,
     '#default_value' => isset($context->name) ? $context->name : '',
-    '#description' => t('Example: <code>blog_section</code>') .'<br/>'. t('A system name for this context. May only contain lowercase letters, underscores, and numbers.'),
+    '#description' => t('Example: <code>blog_section</code>') .'<br/>'. t('A system name for this context. May only contain lowercase letters, dashes, underscores, and numbers.'),
     '#element_validate' => ($op === 'edit') ? array() : array('context_ui_form_name_validate'),
   );
   if ($op === 'edit') {
@@ -344,8 +344,8 @@ function context_ui_export(&$form_state, $context) {
  */
 function context_ui_form_name_validate($element, &$form_state) {
   // Check for string identifier sanity
-  if (!preg_match('!^[a-z0-9_]+$!', $element['#value'])) {
-    form_set_error('name', t('The context name can only consist of lowercase letters, underscores, and numbers.'));
+  if (!preg_match('!^[a-z0-9_-]+$!', $element['#value'])) {
+    form_set_error('name', t('The context name can only consist of lowercase letters, dashes, underscores, and numbers.'));
   }
   // Check for name collision
   else if ($exists = context_load($element['#value'])) {
@@ -410,7 +410,7 @@ function context_ui_form_submit($form, &$form_state) {
     // Send user to delete confirmation page
     case 'edit-delete':
       if (isset($form_state['values']['context']->name)) {
-        $form_state['redirect'] = "admin/build/context/{$form_state['values']['context']->name}/delete";
+        $form_state['redirect'] = "admin/build/context/list/{$form_state['values']['context']->name}/delete";
       }
       return;
     // Process form values and save and/or update the context in the db

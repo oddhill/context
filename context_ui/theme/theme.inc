@@ -89,13 +89,13 @@ function theme_context_ui_admin($form) {
 
       // Context actions
       $links = array(
-        'edit'    => l(t('Edit'), "admin/build/context/{$context->name}"),
-        'delete'  => l(t('Delete'), "admin/build/context/{$context->name}/delete"),
-        'revert'  => l(t('Revert'), "admin/build/context/{$context->name}/revert"),
-        'export'  => l(t('Export'), "admin/build/context/{$context->name}/export"),
-        'clone'   => l(t('Clone'), "admin/build/context/{$context->name}/clone"),
-        'disable' => l(t('Disable'), "admin/build/context/{$context->name}/disable"),
-        'enable'  => l(t('Enable'), "admin/build/context/{$context->name}/enable"),
+        'edit'    => l(t('Edit'), "admin/build/context/list/{$context->name}"),
+        'delete'  => l(t('Delete'), "admin/build/context/list/{$context->name}/delete"),
+        'revert'  => l(t('Revert'), "admin/build/context/list/{$context->name}/revert"),
+        'export'  => l(t('Export'), "admin/build/context/list/{$context->name}/export"),
+        'clone'   => l(t('Clone'), "admin/build/context/list/{$context->name}/clone"),
+        'disable' => l(t('Disable'), "admin/build/context/list/{$context->name}/disable"),
+        'enable'  => l(t('Enable'), "admin/build/context/list/{$context->name}/enable"),
       );
       foreach (array_keys($links) as $key) {
         if (!context_ui_task_access($context, $key)) {

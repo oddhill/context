@@ -102,60 +102,60 @@ function context_ui_menu() {
     'type' => MENU_LOCAL_TASK,
     'weight' => 2,
   );
-  $items['admin/build/context/%context'] = array(
+  $items['admin/build/context/list/%context'] = array(
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_form', 'edit', 3),
+    'page arguments' => array('context_ui_form', 'edit', 4),
     'type' => MENU_CALLBACK,
   );
-  $items['admin/build/context/%context/edit'] = array(
+  $items['admin/build/context/list/%context/edit'] = array(
     'title' => 'Edit',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_form', 'edit', 3),
+    'page arguments' => array('context_ui_form', 'edit', 4),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -1,
   );
-  $items['admin/build/context/%context/clone'] = array(
+  $items['admin/build/context/list/%context/clone'] = array(
     'title' => 'Clone',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_form', 'clone', 3),
+    'page arguments' => array('context_ui_form', 'clone', 4),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context/export'] = array(
+  $items['admin/build/context/list/%context/export'] = array(
     'title' => 'Export',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_export', 3),
+    'page arguments' => array('context_ui_export', 4),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context/revert'] = array(
+  $items['admin/build/context/list/%context/revert'] = array(
     'title' => 'Revert',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_confirm', 'revert', 3),
+    'page arguments' => array('context_ui_confirm', 'revert', 4),
     'access callback' => 'context_ui_task_access',
-    'access arguments' => array(3, 'revert'),
+    'access arguments' => array(4, 'revert'),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context/delete'] = array(
+  $items['admin/build/context/list/%context/delete'] = array(
     'title' => 'Delete',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_confirm', 'delete', 3),
+    'page arguments' => array('context_ui_confirm', 'delete', 4),
     'access callback' => 'context_ui_task_access',
-    'access arguments' => array(3, 'delete'),
+    'access arguments' => array(4, 'delete'),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context/disable'] = array(
+  $items['admin/build/context/list/%context/disable'] = array(
     'title' => 'Disable',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_confirm', 'disable', 3),
+    'page arguments' => array('context_ui_confirm', 'disable', 4),
     'access callback' => 'context_ui_task_access',
-    'access arguments' => array(3, 'disable'),
+    'access arguments' => array(4, 'disable'),
     'type' => MENU_LOCAL_TASK,
   );
-  $items['admin/build/context/%context/enable'] = array(
+  $items['admin/build/context/list/%context/enable'] = array(
     'title' => 'Enable',
     'page callback' => 'drupal_get_form',
-    'page arguments' => array('context_ui_confirm', 'enable', 3),
+    'page arguments' => array('context_ui_confirm', 'enable', 4),
     'access callback' => 'context_ui_task_access',
-    'access arguments' => array(3, 'enable'),
+    'access arguments' => array(4, 'enable'),
     'type' => MENU_LOCAL_TASK,
   );
 
