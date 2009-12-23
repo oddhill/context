@@ -167,6 +167,8 @@ function context_update_6003() {
  * Update 6301: Update schema.
  */
 function context_update_6301() {
+  // Install CTools.
+  drupal_install_modules(array('ctools'));
 
   $schema = array(
     'fields' => array(
@@ -204,58 +206,79 @@ function context_update_6301() {
     ),
     'primary key' => array('name'),
   );
-
-  // Install CTools.
-  drupal_install_modules(array('ctools'));
-
-  // Invoke context 2.0 default hooks, write to DB.
-  foreach (module_invoke_all('context_default_contexts') as $context) {
-    if (is_array($context) && !isset($context['api_version'])) {
-      $serialized = $context;
-      // Clear out non-condition/reaction attributes
-      unset($serialized['namespace'], $serialized['attribute'], $serialized['value'], $serialized['type'], $serialized['status']);
-      if (0 == db_result(db_query("SELECT count(*) FROM {context} WHERE namespace = '%s' AND attribute = '%s' AND value = '%s'", $context['namespace'], $context['attribute'], $context['value']))) {
-        db_query("INSERT INTO {context}(namespace, attribute, value, data) VALUES('%s', '%s', '%s', '%s')", $context['namespace'], $context['attribute'], $context['value'], serialize($serialized));
-      }
-    }
-  }
-
   $ret = array();
   if (db_table_exists('context')) {
     $result = db_query("SELECT * FROM {context}");
+
+    // Migrate old contexts into new table.
+    $contexts = array();
+    while ($context = db_fetch_object($result)) {
+      $data = unserialize($context->data);
+      unset($context->data);
+      foreach ($data as $k => $v) {
+        $context->{$k} = $v;
+      }
+      $contexts["{$context->namespace}-{$context->attribute}-{$context->value}"] = $context;
+    }
 
     // Drop the existing context table and create one using the new schema.
     db_drop_table($ret, 'context');
     db_create_table($ret, 'context', $schema);
 
-    // Migrate old contexts into new table.
-    while ($row = db_fetch_object($result)) {
-      $data = unserialize($row->data);
+    // Migrate objects.
+    context_migrate_api_3($contexts);
+  }
+  return $ret;
+}
 
+/**
+ * Update 6302: Update old context exportables. This update script may be
+ * re-run at any time to update context 2 objects that have been exported.
+ */
+function context_update_6302() {
+  $contexts = array();
+  // Invoke context 2 default hooks so that the contexts can be migrated.
+  foreach (module_invoke_all('context_default_contexts') as $context) {
+    $context = (object) $context;
+    if (!isset($context->api_version)) {
+      $contexts["{$context->namespace}-{$context->attribute}-{$context->value}"] = $context;
+      drupal_set_message("{$context->namespace}-{$context->attribute}-{$context->value}");
+    }
+  }
+  // Migrate objects.
+  context_migrate_api_3($contexts);
+  return array();
+}
+
+/**
+ * Helper function to update context 2 objects to context 3.
+ */
+function context_migrate_api_3($contexts) {
+  foreach ($contexts as $context) {
+    if (!db_result(db_query("SELECT name FROM {context} WHERE name = '%s'", "{$context->namespace}-{$context->attribute}-{$context->value}"))) {
       $new = array(
-        'name' => "{$row->namespace}_{$row->attribute}_{$row->value}",
-        'description' => isset($data['description']) ? $data['description'] : '',
+        'name' => "{$context->namespace}-{$context->attribute}-{$context->value}",
+        'description' => isset($context->description) ? $context->description : '',
         'tag' => '',
         'conditions' => array(),
         'reactions' => array(),
       );
-
       // Migration condition/reaction settings.
       $conditions = array('node', 'user', 'book', 'sitewide', 'path', 'menu_trail', 'views', 'nodequeue');
       foreach ($conditions as $key) {
-        if (isset($data[$key])) {
-          $new['conditions'][$key] = array('values' => $data[$key], 'options' => array());
+        if (isset($context->{$key})) {
+          $new['conditions'][$key] = array('values' => $context->{$key}, 'options' => array());
         }
       }
       $reactions = array('menu', 'theme_section', 'theme_regiontoggle', 'css_injector');
       foreach ($reactions as $key) {
-        if (isset($data[$key])) {
-          $new['reactions'][$key] = $data[$key];
+        if (isset($context->{$key})) {
+          $new['reactions'][$key] = $context->{$key};
         }
       }
       // Special treatment for blocks.
-      if (isset($data['block'])) {
-        foreach ($data['block'] as $block) {
+      if (isset($context->block)) {
+        foreach ($context->block as $block) {
           $block = (array)$block;
           $new['reactions']['block']['blocks'][$block['module'] .'-'. $block['delta']] = $block;
         }
@@ -267,5 +290,4 @@ function context_update_6301() {
       db_query("INSERT INTO {context} (name,description,tag,conditions,reactions) VALUES ('%s', '%s', '%s', '%s', '%s')", $new['name'], $new['description'], $new['tag'], $new['conditions'], $new['reactions']);
     }
   }
-  return $ret;
 }
