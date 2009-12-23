@@ -242,7 +242,6 @@ function context_update_6302() {
     $context = (object) $context;
     if (!isset($context->api_version)) {
       $contexts["{$context->namespace}-{$context->attribute}-{$context->value}"] = $context;
-      drupal_set_message("{$context->namespace}-{$context->attribute}-{$context->value}");
     }
   }
   // Migrate objects.
@@ -267,7 +266,7 @@ function context_migrate_api_3($contexts) {
       $conditions = array('node', 'user', 'book', 'sitewide', 'path', 'menu_trail', 'views', 'nodequeue');
       foreach ($conditions as $key) {
         if (isset($context->{$key})) {
-          $new['conditions'][$key] = array('values' => $context->{$key}, 'options' => array());
+          $new['conditions'][$key] = array('values' => is_array($context->{$key}) ? $context->{$key} : array($context->{$key}), 'options' => array());
         }
       }
       $reactions = array('menu', 'theme_section', 'theme_regiontoggle', 'css_injector');
@@ -288,6 +287,8 @@ function context_migrate_api_3($contexts) {
 
       // update_sql does not escape strings properly.
       db_query("INSERT INTO {context} (name,description,tag,conditions,reactions) VALUES ('%s', '%s', '%s', '%s', '%s')", $new['name'], $new['description'], $new['tag'], $new['conditions'], $new['reactions']);
+
+      drupal_set_message('Updated context: '. $new['name']);
     }
   }
 }
