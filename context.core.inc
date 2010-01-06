@@ -84,9 +84,6 @@ function context_context_registry() {
  */
 function context_theme() {
   $items = array();
-  $items['context_links'] = array(
-    'arguments' => array(),
-  );
   $items['context_block_form'] = array(
     'arguments' => array('form' => array()),
     'path' => drupal_get_path('module', 'context') . '/theme',
@@ -232,25 +229,6 @@ function context_blocks($region) {
  */
 
 /**
- * Generates a themed set of links for node types associated with
- * the current active contexts.
- */
-function theme_context_links($links) {
-  $output = '';
-  foreach ($links as $link) {
-    $options = $link;
-    $options['attributes']['class'] = isset($link['attributes']['class']) ? $link['attributes']['class'] : 'button';
-    if (!empty($link['custom'])) {
-      $output .= l($link['title'], $link['href'], $options);
-    }
-    else {
-      $output .= l('+ '. t('Add !type', array('!type' => $link['title'])), $link['href'], $options);
-    }
-  }
-  return $output;
-}
-
-/**
  * Generates an array of links (suitable for use with theme_links)
  * to the node forms of types associated with current active contexts.
  */
@@ -267,14 +245,12 @@ function context_links($reset = FALSE) {
 
     $links = array();
     if (!empty($active_types)) {
-      // Collect types
-      $types = node_get_types();
       // Iterate over active contexts
       foreach ($active_types as $type) {
         $add_url = 'node/add/'. str_replace('_', '-', $type);
         $item = menu_get_item($add_url);
         if ($item && $item['access'] && strpos($_GET['q'], $add_url) !== 0) {
-          $links[$type] = array('title' => $types[$type]->name, 'href' => $add_url);
+          $links[$type] = array('title' => t('Add @type', array('@type' => node_get_types('name', $type))), 'href' => $add_url);
         }
       }
     }
@@ -325,6 +301,6 @@ function context_preprocess_page(&$vars) {
   $plugin->execute($vars);
 
   if ($context_links = context_links()) {
-    $vars['context_links'] = theme('context_links', $context_links);
+    $vars['context_links'] = theme('links', $context_links);
   }
 }
