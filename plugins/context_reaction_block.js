@@ -152,11 +152,12 @@ function DrupalContextBlockEditor(editor) {
         $(this).show();
       }
     });
+
+    // Clean up after jQuery UI. Sometimes addables get left -- not good.
+    $('.context-block-addable.ui-sortable-helper').remove();
+
     // Mark empty regions.
     $('.context-block-region').each(function() {
-      // Clean up after jQuery UI. Sometimes addables get left in the regions -- not good.
-      $('.context-block-addable', this).remove();
-
       if ($('div.context-block', this).size() > 0) {
         $(this).removeClass('context-block-region-empty');
       }
