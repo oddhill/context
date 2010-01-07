@@ -12,6 +12,8 @@ div.context-editor li.context-editing a.done { display:block; }
 /* Don't display form submission buttons initially or when editing */
 body.context-editing div.context-editor div.links { display:none; }
 body.context-editing div.context-editor li.context-editing div.links { display:block; }
+
+div.context-editor div.buttons { display:none; }
 form.edited div.context-editor div.buttons { display:block; }
 body.context-editing form.edited div.context-editor div.buttons { display:none; }
 
