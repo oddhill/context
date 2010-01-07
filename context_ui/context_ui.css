@@ -1,16 +1,29 @@
 /**
  * Editor =============================================================
  */
-#admin-toolbar div.context-editor div.label { float:left; }
-#admin-toolbar div.context-editor div.links { float:right; }
+div.context-editor div.label { float:left; }
+div.context-editor div.links { float:right; }
 
+div.context-editor div.context-editable { display:none; }
+div.context-editor div.links a.done { display:none; }
+div.context-editor li.context-editing a.edit { display:none; }
+div.context-editor li.context-editing a.done { display:block; }
+
+/* Don't display form submission buttons initially or when editing */
+body.context-editing div.context-editor div.links { display:none; }
+body.context-editing div.context-editor li.context-editing div.links { display:block; }
+form.edited div.context-editor div.buttons { display:block; }
+body.context-editing form.edited div.context-editor div.buttons { display:none; }
+
+/**
+ * Styles for visual integration with admin.
+ */
 #admin-toolbar div.context-editor div.links a:hover {
   background:#eee;
   color:#000;
   }
 
 #admin-toolbar div.context-editor div.links a {
-  display:block;
   float:left;
 
   padding:0px 10px;
@@ -22,18 +35,7 @@
   -webkit-border-radius:10px;
   }
 
-#admin-toolbar div.context-editor div.context-editable {
-  padding:5px 0px;
-  display:none;
-  }
-
-#admin-toolbar div.context-editor div.links a.done { display:none; }
-#admin-toolbar div.context-editor li.context-editing a.edit { display:none; }
-#admin-toolbar div.context-editor li.context-editing a.done { display:block; }
-
-/* Don't display form submission buttons initially or when editing */
-body.context-editing #admin-toolbar div.context-editor div.links { display:none; }
-body.context-editing #admin-toolbar div.context-editor li.context-editing div.links { display:block; }
+div.context-editor div.context-editable { padding:5px 0px; }
 
 #admin-toolbar div.context-editor div.buttons {
   padding:10px 0px;
@@ -41,9 +43,6 @@ body.context-editing #admin-toolbar div.context-editor li.context-editing div.li
   background:#111;
   display:none;
   }
-
-  #admin-toolbar form.edited div.context-editor div.buttons { display:block; }
-  body.context-editing #admin-toolbar form.edited div.context-editor div.buttons { display:none; }
 
 /**
  * Horizontal

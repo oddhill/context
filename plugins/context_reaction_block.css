@@ -1,7 +1,7 @@
 /**
  * Browser
  */
-#admin-toolbar div.context-editor  div.context-block-browser div.category { display:none; }
+div.context-editor div.context-block-browser div.category { display:none; }
 
 div.context-block-addable,
 #admin-toolbar div.context-editor div.context-block-browser div.context-block-addable {
