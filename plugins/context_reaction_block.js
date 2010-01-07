@@ -235,6 +235,7 @@ function DrupalContextBlockEditor(editor) {
 
     // First pass, enable sortables on all regions.
     var params = {
+      revert: true,
       dropOnEmpty: true,
       placeholder: 'draggable-placeholder',
       forcePlaceholderSize: true,
