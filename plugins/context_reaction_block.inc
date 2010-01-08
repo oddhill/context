@@ -145,13 +145,25 @@ class context_reaction_block extends context_reaction {
   function editor_form_submit(&$context, $values) {
     $edited = !empty($values['state']) ? (array) $this->json_decode($values['state']) : array();
 
-    // First pass, group blocks into values we'd like to store in each context object.
-    $context_blocks = array();
+    $options = array();
+
+    // Take the existing context values and remove blocks that belong affected regions.
+    $affected_regions = array_keys($edited);
+    if (!empty($context->reactions['block']['blocks'])) {
+      $options = $context->reactions['block'];
+      foreach ($options['blocks'] as $key => $block) {
+        if (in_array($block['region'], $affected_regions)) {
+          unset($options['blocks'][$key]);
+        }
+      }
+    }
+
+    // Iterate through blocks and add in the ones that belong to the context.
     foreach ($edited as $region => $blocks) {
       foreach ($blocks as $weight => $block) {
-        if ($block->context) {
+        if ($block->context === $context->name) {
           $split = explode('-', $block->bid);
-          $context_blocks[$block->context][$block->bid] = array(
+          $options['blocks'][$block->bid] = array(
             'module' => array_shift($split),
             'delta' => implode('-', $split),
             'region' => $region,
@@ -160,11 +172,8 @@ class context_reaction_block extends context_reaction {
         }
       }
     }
-    // Second pass, actually return the values for the specified context.
-    if (isset($context_blocks[$context->name])) {
-      return array('blocks' => $context_blocks[$context->name]);
-    }
-    return array();
+
+    return $options;
   }
 
   /**
