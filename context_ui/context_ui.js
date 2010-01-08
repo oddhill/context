@@ -90,62 +90,6 @@ function DrupalContextPlugins(form) {
   this.setState();
 }
 
-/**
- * Context editor. AHAH editor for live context editing.
- */
-function DrupalContextEditor(editor) {
-  this.context = '';
-  this.editing = false;
-  this.state = {};
-
-  this.invoke = function(type) {
-    var event = {
-      'caller': 'contextEditor',
-      'event': type,
-      'editor': editor,
-      'context': this.context
-    };
-    Drupal.attachBehaviors(event);
-  };
-
-  this.editStart = function(context) {
-    if (!this.editing) {
-      this.editing = true;
-      this.context = context;
-      $('#context-editable-'+context, editor).show();
-      $(document.body).addClass('context-editing');
-      this.invoke('editStart');
-    }
-  };
-
-  this.editFinish = function() {
-    if (this.editing) {
-      this.editing = false;
-      this.context = '';
-      $(document.body).removeClass('context-editing');
-      $('div.contexts div.context-editable', editor).hide();
-      $('li.context-editable').removeClass('context-editing');
-
-      // Indicate that edits have been made.
-      $('form.context-editor').addClass('edited');
-      this.invoke('editFinish');
-    }
-  };
-
-  // Attach handlers to editable contexts.
-  $('li.context-editable a.edit', editor).click(function() {
-    var trigger = $(this).parents('li.context-editable').addClass('context-editing');
-    var context = trigger.attr('id').split('context-editable-trigger-')[1];
-    Drupal.contextEditor.editStart(context);
-    return false;
-  });
-  $('li.context-editable a.done', editor).click(function() {
-    Drupal.contextEditor.editFinish();
-    return false;
-  });
-  this.invoke('init');
-}
-
 Drupal.behaviors.context_ui = function(context) {
   // Initialize context plugin form.
   $('form div.context-plugins:not(.context-ui-processed)').each(function() {
@@ -154,8 +98,45 @@ Drupal.behaviors.context_ui = function(context) {
   });
 
   // Initialize context editor.
-  $('form div.context-editor:not(.context-ui-processed)').each(function() {
-    $(this).addClass('context-ui-processed');
-    Drupal.contextEditor = new DrupalContextEditor($(this));
-  });
+  if (jQuery().pageEditor) {
+    $('form.context-editor:not(.context-ui-processed)')
+      .addClass('context-ui-processed')
+      .pageEditor()
+      .each(function() {
+        var editor = $(this);
+        var defaultContext = $('li.context-editable', this).attr('id').split('context-editable-trigger-')[1];
+        $(this).data('defaultContext', defaultContext);
+
+        // Attach start/end handlers to editable contexts.
+        $('li.context-editable a.edit', editor).click(function() {
+          var trigger = $(this).parents('li.context-editable').addClass('context-editing');
+          var context = trigger.attr('id').split('context-editable-trigger-')[1];
+          editor.pageEditor('start', context);
+          return false;
+        });
+        $('li.context-editable a.done', editor).click(function() {
+          editor.pageEditor('end');
+          return false;
+        });
+
+        // Handler for start event.
+        editor.bind('start.pageEditor', function(event, context) {
+          // Fallback to first context if param is empty.
+          if (!context) {
+            context = $(this).data('defaultContext');
+            $('li#context-editable-trigger-'+context, this).addClass('context-editing');
+          }
+          $(document.body).addClass('context-editing');
+          $('#context-editable-'+context, this).show();
+        });
+
+        // Handler for end event.
+        editor.bind('end.pageEditor', function(event, context) {
+          $(document.body).removeClass('context-editing');
+          $('div.contexts div.context-editable', this).hide();
+          $('li.context-editable').removeClass('context-editing');
+          $('form.context-editor').addClass('edited');
+        });
+      });
+  }
 };

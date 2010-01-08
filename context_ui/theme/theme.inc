@@ -6,6 +6,7 @@
 function template_preprocess_context_ui_editor(&$vars) {
   drupal_add_css(drupal_get_path('module', 'context_ui') . '/context_ui.css');
   drupal_add_js(drupal_get_path('module', 'context_ui') . '/context_ui.js');
+  drupal_add_js(drupal_get_path('module', 'context_ui') . '/jquery.pageEditor.js');
 
   $vars['contexts'] = $vars['form']['contexts'];
   unset($vars['form']['contexts']);
@@ -20,6 +21,7 @@ function template_preprocess_context_ui_editor(&$vars) {
 function template_preprocess_context_ui_plugins(&$vars) {
   drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
   drupal_add_js(drupal_get_path("module", "context_ui") ."/context_ui.js");
+  drupal_add_js(drupal_get_path('module', 'context_ui') . '/jquery.pageEditor.js');
 
   // Provide title & desc.
   $vars['title'] = check_plain($vars['form']['#title']);
@@ -46,6 +48,7 @@ function template_preprocess_context_ui_plugins(&$vars) {
 function template_preprocess_context_ui_form(&$vars) {
   drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
   drupal_add_js(drupal_get_path("module", "context_ui") ."/context_ui.js");
+  drupal_add_js(drupal_get_path('module', 'context_ui') . '/jquery.pageEditor.js');
   $vars['buttons'] = $vars['form']['buttons'];
   unset($vars['form']['buttons']);
 }

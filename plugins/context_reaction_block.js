@@ -1,21 +1,23 @@
 // $Id$
 
 Drupal.behaviors.contextReactionBlock = function(context) {
-  // Context uses Drupal behaviors as an informal hook/events system.
-  if (context.caller == 'contextEditor' && context.editor && context.event) {
-    switch (context.event) {
-      case 'init':
-        Drupal.contextBlockEditor = new DrupalContextBlockEditor(context.editor);
-        break;
-      case 'editStart':
-        Drupal.contextBlockEditor.editStart(context.editor, context.context);
-        break;
-      case 'editFinish':
+  $('form.context-editor:not(.context-block-processed)')
+    .addClass('context-block-processed')
+    .each(function() {
+      $(this).bind('init.pageEditor', function(event) {
+        Drupal.contextBlockEditor = new DrupalContextBlockEditor($(this));
+      });
+      $(this).bind('start.pageEditor', function(event, context) {
+        // Fallback to first context if param is empty.
+        if (!context) {
+          context = $(this).data('defaultContext');
+        }
+        Drupal.contextBlockEditor.editStart($(this), context);
+      });
+      $(this).bind('end.pageEditor', function(event) {
         Drupal.contextBlockEditor.editFinish();
-        break;
-    }
-    return;
-  }
+      });
+    });
 
   //
   // Editor ===========================================================
@@ -232,6 +234,11 @@ function DrupalContextBlockEditor(editor) {
    * Start editing. Attach handlers, begin draggable/sortables.
    */
   this.editStart = function(editor, context) {
+    // This is redundant to the start handler found in context_ui.js.
+    // However it's necessary that we trigger this class addition before
+    // we call .sortable() as the empty regions need to be visible.
+    $(document.body).addClass('context-editing');
+
     $('div.context-block-region > div.edit-'+context).addClass('draggable');
 
     // First pass, enable sortables on all regions.
