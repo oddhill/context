@@ -118,6 +118,11 @@ Drupal.behaviors.context_ui = function(context) {
           editor.pageEditor('end');
           return false;
         });
+        $(editor).submit(function() {
+          if (editor.pageEditor('isEditing')) {
+            editor.pageEditor('end');
+          }
+        });
 
         // Handler for start event.
         editor.bind('start.pageEditor', function(event, context) {
