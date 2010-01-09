@@ -180,10 +180,19 @@ function context_flush_caches() {
  */
 function context_load($name = NULL, $reset = FALSE) {
   ctools_include('export');
-  if ($reset) {
-    ctools_export_load_object_reset('context');
+  static $contexts;
+  if (!isset($contexts) || $reset) {
+    if (!$reset && $contexts = context_cache_get('context')) {
+      // Nothing here.
+    }
+    else {
+      if ($reset) {
+        ctools_export_load_object_reset('context');
+      }
+      $contexts = ctools_export_load_object('context', 'all');
+      context_cache_set('context', $contexts);
+    }
   }
-  $contexts = ctools_export_load_object('context', 'all');
   if (isset($name)) {
     return isset($contexts[$name]) ? $contexts[$name] : FALSE;
   }
