@@ -230,7 +230,10 @@ class context_reaction_block extends context_reaction {
             $block = (object) $block;
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
-            $context_blocks[$block->region][] = $this->build_block($block);
+            $block = $this->build_block($block);
+            if (!empty($block->content)) {
+              $context_blocks[$block->region][] = $block;
+            }
           }
         }
       }
