@@ -66,6 +66,14 @@ function _context_context_plugins() {
         'parent' => 'context_condition',
       ),
     );
+    $plugins['context_condition_bookroot'] = array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'context') .'/plugins',
+        'file' => 'context_condition_bookroot.inc',
+        'class' => 'context_condition_bookroot',
+        'parent' => 'context_condition_node',
+      ),
+    );
   }
   if (module_exists('views')) {
     $plugins['context_condition_views'] = array(

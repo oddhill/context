@@ -46,6 +46,11 @@ function context_context_registry() {
       'description' => t('Set this context when a node in the selected book is viewed.'),
       'plugin' => 'context_condition_book',
     );
+    $registry['conditions']['bookroot'] = array(
+      'title' => t('Book root'),
+      'description' => t('Set this context when viewing a node whose root book is of the selected type.'),
+      'plugin' => 'context_condition_bookroot',
+    );
   }
   $registry['reactions'] = array(
     'block' => array(
@@ -157,11 +162,16 @@ function context_theme_registry_alter(&$theme_registry) {
  */
 function context_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page && menu_get_object() === $node) {
-    $plugin = context_get_plugin('condition', 'node');
-    $plugin->execute($node, $op);
-
-    if ($plugin = context_get_plugin('condition', 'book')) {
+    if ($plugin = context_get_plugin('condition', 'node')) {
       $plugin->execute($node, $op);
+    }
+    if (module_exists('book')) {
+      if ($plugin = context_get_plugin('condition', 'book')) {
+        $plugin->execute($node, $op);
+      }
+      if ($plugin = context_get_plugin('condition', 'bookroot')) {
+        $plugin->execute($node, $op);
+      }
     }
   }
 }
@@ -172,8 +182,14 @@ function context_nodeapi(&$node, $op, $teaser, $page) {
 function context_form_alter(&$form, $form_state, $form_id) {
   // Prevent this from firing on admin pages... damn form driven apis...
   if ($form['#id'] === 'node-form' && arg(0) != 'admin') {
-    $plugin = context_get_plugin('condition', 'node');
-    $plugin->execute($form['#node'], 'form');
+    if ($plugin = context_get_plugin('condition', 'node')) {
+      $plugin->execute($form['#node'], 'form');
+    }
+    if (module_exists('book')) {
+      if ($plugin = context_get_plugin('condition', 'bookroot')) {
+        $plugin->execute($node, $op);
+      }
+    }
   }
   if ($form_id == 'system_modules') {
     context_invalidate_cache();
