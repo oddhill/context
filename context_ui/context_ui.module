@@ -351,7 +351,9 @@ function context_ui_editor_submit(&$form, &$form_state) {
     $context = context_ui_editor_process($values);
     if (($original->conditions !== $context->conditions) || ($original->reactions !== $context->reactions)) {
       if (context_save($context)) {
-        drupal_set_message(t('Saved context %title.', array('%title' =>  $context->name)));
+        drupal_set_message(t('Saved %title.', array(
+          '%title' => (!empty($context->description) ? $context->description : $context->name)
+        )));
       }
       else {
         drupal_set_message(t('Could not save context %title.', array('%title' =>  $context->name)), 'error');
