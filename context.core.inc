@@ -253,9 +253,12 @@ function context_links($reset = FALSE) {
   if (!$links || $reset) {
     $contexts = context_active_contexts();
     $active_types = array();
-    foreach ($contexts as $k => $v) {
-      if (!empty($v->conditions['node']['values'])) {
-        $active_types = array_merge($active_types, array_filter($v->conditions['node']['values']));
+    $conditions = array('node', 'bookroot');
+    foreach ($conditions as $condition) {
+      foreach ($contexts as $k => $v) {
+        if (!empty($v->conditions[$condition]['values'])) {
+          $active_types = array_merge($active_types, array_filter($v->conditions[$condition]['values']));
+        }
       }
     }
 
