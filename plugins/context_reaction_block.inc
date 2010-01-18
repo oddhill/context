@@ -316,32 +316,40 @@ class context_reaction_block extends context_reaction {
    * @return
    *   A keyed (by "module_delta" convention) array of blocks.
    */
-  function get_blocks($region = NULL, $context = NULL) {
+  function get_blocks($region = NULL, $context = NULL, $reset = FALSE) {
     static $block_info;
 
-    if (!isset($block_info)) {
+    if (!isset($block_info) || $reset) {
       $block_info = array();
+      // Retrieve blocks from cache.
+      if (!$reset && $cache = cache_get('context_block_info', 'cache')) {
+        $block_info = $cache->data;
+      }
       // Gather blocks from code.
-      foreach (module_implements('block') as $module) {
-        $module_blocks = module_invoke($module, 'block', 'list');
-        if (!empty($module_blocks)) {
-          foreach ($module_blocks as $delta => $block) {
-            $block = (object) $block;
-            $block->module = $module;
-            $block->delta = $delta;
-            $block->bid = "{$block->module}-{$block->delta}";
-            $block_info[$block->bid] = $block;
+      else {
+        foreach (module_implements('block') as $module) {
+          $module_blocks = module_invoke($module, 'block', 'list');
+          if (!empty($module_blocks)) {
+            foreach ($module_blocks as $delta => $block) {
+              $block = (object) $block;
+              $block->module = $module;
+              $block->delta = $delta;
+              $block->bid = "{$block->module}-{$block->delta}";
+              $block_info[$block->bid] = $block;
+            }
           }
         }
-      }
-      // Gather only region info from the database.
-      $theme_key = variable_get('theme_default', 'garland');
-      $result = db_query("SELECT module,weight,delta,region,status FROM {blocks} WHERE theme = '%s' ORDER BY weight ASC", $theme_key);
-      while ($row = db_fetch_object($result)) {
-        if ($row->status && isset($block_info["{$row->module}-{$row->delta}"])) {
-          $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
-          $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
+        // Gather only region info from the database.
+        $theme_key = variable_get('theme_default', 'garland');
+        $result = db_query("SELECT module,weight,delta,region,status FROM {blocks} WHERE theme = '%s' ORDER BY weight ASC", $theme_key);
+        while ($row = db_fetch_object($result)) {
+          if ($row->status && isset($block_info["{$row->module}-{$row->delta}"])) {
+            $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
+            $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
+          }
         }
+        // Set the cache.
+        cache_set('context_block_info', $block_info, 'cache');
       }
     }
 
