@@ -469,11 +469,12 @@ class context_reaction_block extends context_reaction {
         $block->region = '';
 
         $block_view = module_invoke($module, 'block', 'view', $delta);
-        if (!empty($block_view) && !empty($block_view['content'])) {
-          $block->content = $block_view['content'];
-          $block->subject = $block_view['subject'];
+        if (!empty($block_view)) {
+          foreach ($block_view as $k => $v) {
+            $block->{$k} = $v;
+          }
         }
-        else {
+        if (empty($block->content)) {
           $block->content = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
         }
         $block = $this->build_block($block);
