@@ -81,6 +81,7 @@ body.context-editing div.context-block-region div.draggable-placeholder {
   }
 
 body.context-editing div.context-block-region div.draggable:hover div.handle {
+  cursor:move;
   display:block;
   position:absolute;
   left:0px;
@@ -88,42 +89,46 @@ body.context-editing div.context-block-region div.draggable:hover div.handle {
   top:0px;
   bottom:0px;
   z-index:5;
-  cursor:move;
   }
+
+  body.context-editing div.context-block-region div.context-block-handleonly:hover div.handle { bottom:auto; }
 
 body.context-editing div.context-block-region div.draggable div.handle label,
 body.context-editing div.context-block-region div.draggable div.handle a.remove {
-  -moz-border-radius:15px;
-  -webkit-border-radius:15px;
-
   background:#000;
   color:#fff;
   font-size:11px;
   font-weight:bold;
 
+  margin-top:-30px;
   height:30px;
   line-height:30px;
-  margin-top:-15px;
   text-align:center;
+  display:block;
 
   position:absolute;
-  top:50%;
+  top:0%;
   }
 
 body.context-editing div.context-block-region div.draggable div.handle label {
-  opacity:.6;
-  left:15%;
-  width:70%;
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  cursor:move;
+  opacity:.75;
+  left:0px;
+  right:0px;
   }
 
 body.context-editing div.context-block-region div.draggable div.handle a.remove {
+  -moz-border-radius:0px 5px 5px 0px;
+  -webkit-border-radius:0px 5px 5px 0px;
   opacity:.8;
   width:30px;
-  right:15%;
+  right:0%;
   z-index:5;
   }
 
-body.context-editing div.context-block-region div.draggable div.handle:hover a.remove { display:block; }
+body.context-editing div.context-block-region div.draggable:hover div.handle { display:block; }
 
 div.block div.context-block-empty {
   padding:10px;

@@ -167,6 +167,9 @@ function DrupalContextBlockEditor(editor) {
         $(this).addClass('context-block-region-empty');
       }
     });
+
+    // Mark any blocks that have forms as draggable by handle only.
+    $('.context-block-region > div.context-block:has(form)').addClass('context-block-handleonly');
   };
 
   /**
@@ -218,7 +221,7 @@ function DrupalContextBlockEditor(editor) {
       var blocks = [];
       $('div.context-block', $(this)).each(function() {
         var bid = $(this).attr('id').split('context-block-')[1];
-        var context = $(this).attr('class').split('edit-')[1];
+        var context = $(this).attr('class').split('edit-')[1].split(' ')[0];
         context = context ? context : 0;
         var block = {'bid': bid, 'context': context};
         blocks.push(block);
@@ -248,7 +251,8 @@ function DrupalContextBlockEditor(editor) {
       placeholder: 'draggable-placeholder',
       forcePlaceholderSize: true,
       stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); },
-      items: '> div.editable'
+      items: '> div.editable',
+      handle: 'div.handle'
     };
     $('div.context-block-region').sortable(params);
 
