@@ -173,6 +173,18 @@ function DrupalContextBlockEditor(editor) {
   };
 
   /**
+   * Remove script elements while dragging & dropping.
+   */
+  this.scriptFix = function(event, ui, editor, context) {
+    if ($('script', ui.item)) {
+      var placeholder = $(Drupal.settings.contextBlockEditor.scriptPlaceholder);
+      var label = $('div.handle label', ui.item).text();
+      placeholder.children('strong').html(label);
+      $('script', ui.item).parent().empty().append(placeholder);
+    }
+  };
+
+  /**
    * Add a block to a region through an AHAH load of the block contents.
    */
   this.addBlock = function(event, ui, editor, context) {
@@ -190,6 +202,10 @@ function DrupalContextBlockEditor(editor) {
         if (data.status) {
           var newBlock = $(data.block);
           newBlock.addClass('draggable');
+          if ($('script', newBlock)) {
+            $('script', newBlock).remove();
+          }
+          
           newBlock = ui.item.replaceWith(newBlock);
 
           $.each(data.css, function(k, v){
@@ -250,6 +266,7 @@ function DrupalContextBlockEditor(editor) {
       dropOnEmpty: true,
       placeholder: 'draggable-placeholder',
       forcePlaceholderSize: true,
+      start: function(event, ui) { Drupal.contextBlockEditor.scriptFix(event, ui, editor, context); },
       stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); },
       items: '> div.editable',
       handle: 'div.handle'

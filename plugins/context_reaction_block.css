@@ -1,4 +1,12 @@
 /**
+ * Script placeholder markup.
+ */
+.script-placeholder {
+  padding:100px 0px;
+  text-align:center;
+  }
+
+/**
  * Browser
  */
 div.context-editor div.context-block-browser div.category { display:none; }

@@ -128,6 +128,11 @@ function context_theme() {
     'template' => 'context-block-editable-region',
     'file' => 'context_reaction_block.theme.inc',
   );
+  $items['context_block_script_placeholder'] = array(
+    'arguments' => array('text' => NULL),
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'file' => 'context_reaction_block.theme.inc',
+  );
   return $items;
 }
 

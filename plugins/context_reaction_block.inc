@@ -122,6 +122,7 @@ class context_reaction_block extends context_reaction {
         $settings = array(
           'path' => $_GET['q'],
           'ajax' => url('context/ajax-block-view'),
+          'scriptPlaceholder' => theme('context_block_script_placeholder', ''),
         );
         drupal_add_js(array('contextBlockEditor' => $settings), 'setting');
         $once = TRUE;
@@ -446,6 +447,10 @@ class context_reaction_block extends context_reaction {
    */
   function ajax($args) {
     if (isset($_GET['bid'], $_GET['context'])) {
+      // Set the header right away. This will inform any players in the stack
+      // that we are in the middle of responding to an AJAX request.
+      drupal_set_header('Content-Type: text/javascript; charset=utf-8');
+
       $bid = $_GET['bid'];
       $context = $_GET['context'];
       list($module, $delta) = explode('-', $bid, 2);
@@ -496,7 +501,7 @@ class context_reaction_block extends context_reaction {
           }
         }
 
-        drupal_json(array(
+        echo drupal_to_js(array(
           'status' => 1,
           'block' => theme('context_block_editable_block', $block),
           'css' => $css,
@@ -504,7 +509,7 @@ class context_reaction_block extends context_reaction {
         exit;
       }
     }
-    drupal_json(array('status' => 0));
+    echo drupal_to_js(array('status' => 0));
     exit;
   }
 }
