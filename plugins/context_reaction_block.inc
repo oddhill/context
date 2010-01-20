@@ -113,6 +113,7 @@ class context_reaction_block extends context_reaction {
     $form = array();
     if (module_exists('jquery_ui')) {
       jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
+      drupal_add_js(drupal_get_path('module', 'context_ui') .'/json2.js');
       drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
       drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
 
