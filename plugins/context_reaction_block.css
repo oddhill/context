@@ -19,13 +19,16 @@ div.context-block-addable,
 
   color:#fff;
   background:#333;
-  -moz-border-radius:5px;
-  -webkit-border-radius:5px;
   padding:10px 10px 9px;
   margin:0px 0px 1px;
   overflow:hidden;
   max-width:300px;
   cursor:move;
+
+  -moz-border-radius:5px;
+  -webkit-border-radius:5px;
+  -moz-user-select:none;
+  -webkit-user-select:none;
   }
 
   #admin-toolbar.horizontal div.context-editor div.context-block-browser div.context-block-addable {

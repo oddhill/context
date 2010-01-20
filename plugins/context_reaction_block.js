@@ -250,6 +250,42 @@ function DrupalContextBlockEditor(editor) {
   };
 
   /**
+   * Disable text selection.
+   */
+  this.disableTextSelect = function() {
+    if ($.browser.safari) {
+      $('*').css('WebkitUserSelect','none');
+    }
+    else if ($.browser.mozilla) {
+      $('*').css('MozUserSelect','none');
+    }
+    else if ($.browser.msie) {
+      $('*').bind('selectstart.contextBlockEditor', function() { return false; });
+    }
+    else {
+      $(this).bind('mousedown.contextBlockEditor', function() { return false; });
+    }
+  };
+
+  /**
+   * Enable text selection.
+   */
+  this.enableTextSelect = function() {
+    if ($.browser.safari) {
+      $('*').css('WebkitUserSelect','');
+    }
+    else if ($.browser.mozilla) {
+      $('*').css('MozUserSelect','');
+    }
+    else if ($.browser.msie) {
+      $('*').unbind('selectstart.contextBlockEditor');
+    }
+    else {
+      $(this).unbind('mousedown.contextBlockEditor');
+    }
+  };
+
+  /**
    * Start editing. Attach handlers, begin draggable/sortables.
    */
   this.editStart = function(editor, context) {
@@ -257,6 +293,8 @@ function DrupalContextBlockEditor(editor) {
     // However it's necessary that we trigger this class addition before
     // we call .sortable() as the empty regions need to be visible.
     $(document.body).addClass('context-editing');
+
+    this.disableTextSelect();
 
     $('div.context-block-region > div.edit-'+context).addClass('draggable');
 
@@ -292,6 +330,8 @@ function DrupalContextBlockEditor(editor) {
    * Finish editing. Remove handlers.
    */
   this.editFinish = function() {
+    this.enableTextSelect();
+
     $('div.context-block-region > div.draggable').removeClass('draggable');
     $('div.context-block-region').sortable('destroy');
     this.setState();
