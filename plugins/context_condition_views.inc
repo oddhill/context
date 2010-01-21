@@ -32,11 +32,11 @@ class context_condition_views extends context_condition {
   }
 
   function execute($view) {
-    $this->values[$view->name] = array();
-    $this->values["{$view->name}:{$view->current_display}"] = array();
     switch ($view->display_handler->display->display_plugin) {
       case 'page':
       case 'calendar':
+        $this->values[$view->name] = array();
+        $this->values["{$view->name}:{$view->current_display}"] = array();
         // Set contexts for this view.
         $contexts = $this->get_contexts($view->name);
         foreach ($contexts as $context) {
