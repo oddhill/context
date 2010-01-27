@@ -192,7 +192,7 @@ function context_form_alter(&$form, $form_state, $form_id) {
     }
     if (module_exists('book')) {
       if ($plugin = context_get_plugin('condition', 'bookroot')) {
-        $plugin->execute($form['#node'], $op);
+        $plugin->execute($form['#node'], 'form');
       }
     }
   }
