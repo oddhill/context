@@ -251,6 +251,16 @@ class ContextConditionBookroot extends DrupalWebTestCase {
     $this->drupalGet("node/{$dummy_child->nid}");
     $this->assertNoText('Active context: testcontext');
 
+    $this->drupalGet("node/{$book->nid}/edit");
+    $this->assertNoText('Active context: testcontext');
+
+    $context->conditions['bookroot']['options']['node_form'] = 1;
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet("node/{$book->nid}/edit");
+    $this->assertText('Active context: testcontext');
+
     // Cleanup
     context_delete($context);
   }
