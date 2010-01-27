@@ -207,3 +207,51 @@ class ContextConditionBookTest extends DrupalWebTestCase {
     context_delete($context);
   }
 }
+
+class ContextConditionBookroot extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: bookroot'),
+      'description' => t('Test bookroot condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools', 'book', 'menu');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    $this->drupalLogin($admin_user);
+    variable_set('book_allowed_types', array('book', 'page'));
+  }
+
+  function test() {
+    $book = $this->drupalCreateNode(array('type' => 'book', 'book' => array('bid' => 'new')));
+    $child = $this->drupalCreateNode(array('type' => 'book', 'book' => array('bid' => $book->nid)));
+
+    $dummy = $this->drupalCreateNode(array('type' => 'page', 'book' => array('bid' => 'new')));
+    $dummy_child = $this->drupalCreateNode(array('type' => 'page', 'book' => array('bid' => $dummy->nid)));
+
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('bookroot' => array('values' => array('book')));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet("node/{$book->nid}");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node/{$child->nid}");
+    $this->assertText('Active context: testcontext');
+
+    $this->drupalGet("node/{$dummy->nid}");
+    $this->assertNoText('Active context: testcontext');
+
+    $this->drupalGet("node/{$dummy_child->nid}");
+    $this->assertNoText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+  }
+}
