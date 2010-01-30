@@ -141,10 +141,16 @@ function context_theme() {
  */
 function context_theme_registry_alter(&$theme_registry) {
   // Push theme_page() through a context_preprocess to provide
-  // context-sensitive menus and variables.
-  if (!in_array('context_preprocess_page', $theme_registry['page']['preprocess functions'])) {
-    $theme_registry['page']['preprocess functions'][] = 'context_preprocess_page';
+  // context-sensitive menus and variables. Ensure that
+  // context_preprocess_page() comes immediately after
+  // template_preprocess_page().
+  if ($position = array_search('context_preprocess_page', $theme_registry['page']['preprocess functions'])) {
+    unset($theme_registry['page']['preprocess functions'][$position]);
   }
+  $position = array_search('template_preprocess_page', $theme_registry['page']['preprocess functions']);
+  $position = $position ? $position + 1 : 2;
+  array_splice($theme_registry['page']['preprocess functions'], $position, 0, 'context_preprocess_page');
+
   // Add a page preprocess function to the very top of the theme_page()
   // stack so that we can actually set contexts *before* the page theming
   // is executed.
