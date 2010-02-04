@@ -114,7 +114,6 @@ class context_reaction_menu extends context_reaction {
       $path = current($active_paths);
       if (menu_get_item($path)) {
         menu_set_active_item($path);
-        break;
       }
     }
 
