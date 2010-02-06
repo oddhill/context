@@ -452,6 +452,7 @@ function _context_registry($key = NULL, $reset = FALSE) {
 function context_features_api() {
   return array(
     'context' => array(
+      'name' => 'Contexts',
       'api' => 'context',
       'default_hook' => 'context_default_contexts',
       'current_version' => 3,
