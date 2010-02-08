@@ -26,7 +26,7 @@ class context_layouts_reaction_block extends context_reaction_block {
     if (!empty($contexts) && !empty($layouts)) {
       foreach ($contexts as $context) {
         $values = $this->fetch_from_context($context);
-        if (isset($values['layout']) && $layouts[$values['layout']]) {
+        if (isset($values['layout']) && isset($layouts[$values['layout']])) {
           return $info ? $layouts[$values['layout']] : $values['layout'];
         }
       }
