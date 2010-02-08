@@ -182,11 +182,6 @@ class context_reaction_block extends context_reaction {
    * Execute.
    */
   function execute($region) {
-    // Bail if this region is disabled.
-    // $disabled_regions = context_active_values('theme_regiontoggle');
-    // if (!empty($disabled_regions) && in_array($region, $disabled_regions)) {
-    //   return '';
-    // }
     return $this->render_editable($region);
   }
 
@@ -194,7 +189,12 @@ class context_reaction_block extends context_reaction {
    * Render a region with editable markup.
    */
   protected function render_editable($region) {
-    if (module_exists('jquery_ui')) {
+    // Generally speaking, it does not make sense to allow anonymous users to
+    // edit a context inline. Though it may be possible to save (and restore)
+    // an edited context to an anonymous user's cookie or session, it's an
+    // edge case and probably not something we want to encourage anyway.
+    global $user;
+    if (module_exists('jquery_ui') && $user->uid) {
       jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
       drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
       drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
