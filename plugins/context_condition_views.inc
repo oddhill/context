@@ -21,10 +21,8 @@ class context_condition_views extends context_condition {
           if ($display->display_plugin == 'page') {
             $displays[$view->name .":". $id] = "-- {$display->display_title}";
           }
-        }      
-        if (count($displays)) {
-          $enabled_views += $displays;
         }
+        $enabled_views += $displays;
       }
     }
     ksort($enabled_views);
