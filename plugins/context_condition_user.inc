@@ -13,12 +13,8 @@ class context_condition_user extends context_condition {
     if ($op == 'view') {
       $roles = $account->roles;
       foreach ($roles as $role) {
-        $this->values[$role] = array();
-        if ($contexts = $this->get_contexts($role)) {
-          foreach ($contexts as $context) {
-            $this->values[$role][] = $context->name;
-            context_set('context', $context->name, $context);
-          }
+        foreach ($this->get_contexts($role) as $context) {
+          $this->condition_met($context, $role);
         }
       }
     }

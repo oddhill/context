@@ -94,12 +94,20 @@ class context_condition {
    * points with Drupal.
    */
   function execute($value) {
-    $contexts = $this->get_contexts($value);
-    $this->values[$value] = array();
-    foreach ($contexts as $context) {
-      $this->values[$value][] = $context->name;
-      context_set('context', $context->name, $context);
+    foreach ($this->get_contexts($value) as $context) {
+      $this->condition_met($context, $value);
     }
+  }
+
+  /**
+   * Marks a context as having met this particular condition.
+   */
+  function condition_met($context, $value = NULL) {
+    if (isset($value)) {
+      $this->values[$value] = isset($this->values[$value]) ? $this->values[$value] : array();
+      $this->values[$value][] = $context->name;
+    }
+    context_condition_met($context, $this->plugin);
   }
 
   /**

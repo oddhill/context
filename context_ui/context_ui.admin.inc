@@ -132,6 +132,14 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     '#description' => t('The description of this context definition.'),
   );
 
+  // Condition mode
+  $form['condition_mode'] = array(
+    '#type' => 'checkbox',
+    '#default_value' => isset($context->condition_mode) ? $context->condition_mode : FALSE,
+    '#title' => t('Require all conditions'),
+    '#description' => t('If checked, all conditions must be met for this context to be active. Otherwise, the first condition that is met will activate this context.')
+  );
+
   // Condition plugin forms
   $form['conditions'] = array(
     '#theme' => 'context_ui_plugins',
@@ -368,6 +376,7 @@ function context_ui_form_process($form) {
   $context->name = isset($form['name']) ? $form['name'] : NULL;
   $context->description = isset($form['description']) ? $form['description'] : NULL;
   $context->tag = isset($form['tag']) ? $form['tag'] : NULL;
+  $context->condition_mode = isset($form['condition_mode']) ? $form['condition_mode'] : NULL;
   $context->conditions = array();
   $context->reactions = array();
   if (!empty($form['conditions'])) {

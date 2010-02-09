@@ -66,6 +66,11 @@ function context_schema() {
         'type' => 'text',
         'serialize' => TRUE,
       ),
+      'condition_mode' => array(
+        'description' => 'Condition mode for this context.',
+        'type' => 'int',
+        'default' => 0,
+      ),
     ),
     'primary key' => array('name'),
   );
@@ -247,6 +252,20 @@ function context_update_6302() {
   // Migrate objects.
   context_migrate_api_3($contexts);
   return array();
+}
+
+/**
+ * Update 6303: Add field for context condition mode.
+ */
+function context_update_6303() {
+  $ret = array();
+  $spec = array(
+    'description' => 'Condition mode for this context.',
+    'type' => 'int',
+    'default' => 0,
+  );
+  db_add_field(&$ret, 'context', 'condition_mode', $spec);
+  return $ret;
 }
 
 /**

@@ -8,6 +8,9 @@ define('CONTEXT_SET', 1);
 define('CONTEXT_ISSET', 2);
 define('CONTEXT_CLEAR', 3);
 
+define('CONTEXT_CONDITION_MODE_OR', 0);
+define('CONTEXT_CONDITION_MODE_AND', 1);
+
 /**
  * Master context function. Avoid calling this directly -- use one of the helper functions below.
  *
@@ -302,10 +305,42 @@ function context_enabled_contexts($reset = FALSE) {
 }
 
 /**
+ * Queue or activate contexts that have met the specified condition.
+ *
+ * @param $context
+ *   The context object to queue or activate.
+ * @param $condition
+ *   String. Name for the condition that has been met.
+ * @param $reset
+ *   Reset flag for the queue static cache.
+ */
+function context_condition_met($context, $condition, $reset = FALSE) {
+  static $queue;
+  if (!isset($queue) || $reset) {
+    $queue = array();
+  }
+  if (!context_isset('context', $context->name)) {
+    // Context is using AND mode. Queue it.
+    if (isset($context->condition_mode) && $context->condition_mode == CONTEXT_CONDITION_MODE_AND) {
+      $queue[$context->name][$condition] = $condition;
+
+      // If all conditions have been met. set the context.
+      if (!array_diff(array_keys($context->conditions), $queue[$context->name])) {
+        context_set('context', $context->name, $context);
+      }
+    }
+    // Context is using OR mode. Set it.
+    else {
+      context_set('context', $context->name, $context);
+    }
+  }
+}
+
+/**
  * Loads any active contexts with associated reactions. This should be run
  * at a late stage of the page load to ensure that relevant contexts have been set.
  */
-function context_active_contexts($reset = FALSE) {
+function context_active_contexts() {
   $contexts = context_get('context');
   return !empty($contexts) && is_array($contexts) ? $contexts : array();
 }

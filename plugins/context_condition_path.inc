@@ -46,7 +46,6 @@ class context_condition_path extends context_condition {
    */
   function execute() {
     $current_path = drupal_get_path_alias($_GET['q']);
-    $this->values[$current_path] = array();
     foreach (context_enabled_contexts() as $context) {
       if ($paths = $this->fetch_from_context($context, 'values')) {
         $paths = implode("\n", $paths);
@@ -55,8 +54,7 @@ class context_condition_path extends context_condition {
           $path_match = $path_match || drupal_match_path($_GET['q'], $paths);
         }
         if ($path_match) {
-          $this->values[$current_path][] = $context->name;
-          context_set('context', $context->name, $context);
+          $this->condition_met($context, $current_path);
         }
       }
     }

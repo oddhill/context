@@ -26,20 +26,16 @@ class context_condition_node extends context_condition {
   }
 
   function execute($node, $op) {
-    $contexts = $this->get_contexts($node->type);
-    $this->values[$node->type] = array();
-    foreach ($contexts as $context) {
+    foreach ($this->get_contexts($node->type) as $context) {
       // Check the node form option.
       if ($op === 'form') {
         $options = $this->fetch_from_context($context, 'options');
         if (!empty($options['node_form'])) {
-          $this->values[$node->type][] = $context->name;
-          context_set('context', $context->name, $context);
+          $this->condition_met($context, $node->type);
         }
       }
       else {
-        $this->values[$node->type][] = $context->name;
-        context_set('context', $context->name, $context);
+        $this->condition_met($context, $node->type);
       }
     }
   }
