@@ -1,6 +1,60 @@
 <?php
 // $Id$
 
+class ContextConditionUserTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: user'),
+      'description' => t('Test user condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools');
+    $this->user1 = $this->drupalCreateUser(array('access content', 'administer site configuration'));
+    $this->user2 = $this->drupalCreateUser(array('access content'));
+
+    // Grab role from user1.
+    $role = '';
+    foreach ($this->user1->roles as $r) {
+      if ($r !== 'authenticated user') {
+        $role = $r;
+        break;
+      }
+    }
+
+    // Create test context.
+    ctools_include('export');
+    $this->context = ctools_export_new_object('context');
+    $this->context->name = 'testcontext';
+    $this->context->conditions = array('user' => array('values' => array($role)));
+    $this->context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($this->context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+  }
+
+  function tearDown() {
+    parent::tearDown();
+    context_delete($this->context);
+    $edit = array();
+    user_delete($edit, $this->user1->uid);
+    user_delete($edit, $this->user2->uid);
+  }
+
+  function test() {
+    // User 1 triggers the context.
+    $this->drupalLogin($this->user1);
+    $this->drupalGet('node');
+    $this->assertText('Active context: testcontext');
+
+    // User 2 does not.
+    $this->drupalLogin($this->user2);
+    $this->drupalGet('node');
+    $this->assertNoText('Active context: testcontext');
+  }
+}
+
 class ContextConditionNodeTaxonomyTest extends DrupalWebTestCase {
   function getInfo() {
     return array(

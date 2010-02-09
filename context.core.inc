@@ -24,7 +24,7 @@ function context_context_registry() {
     ),
     'user' => array(
       'title' => t('User'),
-      'description' => t('Set this context when a user with selected role(s) is viewed.'),
+      'description' => t('Set this context when the current user has one of the selected role(s).'),
       'plugin' => 'context_condition_user',
     ),
     'menu' => array(
@@ -249,17 +249,6 @@ function context_form_comment_form_alter(&$form, $form_state) {
   if ($nid = $form['nid']['#value']) {
     $plugin = context_get_plugin('condition', 'node');
     $plugin->execute($node = node_load($nid), 'comment');
-  }
-}
-
-/**
- * Implementation of hook_user().
- */
-function context_user($op, &$edit, &$account, $category = NULL) {
-  if ($op == 'view') {
-    if ($plugin = context_get_plugin('condition', 'user')) {
-      $plugin->execute($account, $op);
-    }
   }
 }
 
