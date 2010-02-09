@@ -1,26 +1,16 @@
 $Id$
 
-Context 3.0 for Drupal 6.x
+Context 3.x for Drupal 6.x
 
 
 Installation
 ------------
 Context can be installed like any other Drupal module -- place it in
 the modules directory for your site and enable it (and its requirement,
-context) on the admin/build/modules page.
+context) on the `admin/build/modules` page.
 
 You will probably also want to install Context UI which provides a way for
 you to edit contexts through the Drupal admin interface.
-
-
-Upgrade from Context 2.0 for Drupal 6.x
----------------------------------------
-
-- Download latest Context 3.0 and latest CTools release and place in modules
-  directory.
-- Run update.php.
-- If your site contains contexts defined in code they will be overridden.
-  Re-export them to code again.
 
 
 Basic usage
@@ -29,7 +19,7 @@ Context allows you to manage contextual conditions and reactions for
 different portions of your site. You can think of each context as
 representing a "section" of your site. For each context, you can choose
 the conditions that trigger this context to be active and choose different
-aspects of Drupal that should respond to this active context.
+aspects of Drupal that should react to this active context.
 
 Think of conditions as a set of rules that are checked during page load
 to see what context is active. Any reactions that are associated with
@@ -51,11 +41,25 @@ pressroom section.
 4. Under "Reactions > Blocks", add the contact block to a region.
 5. Save the context.
 
+For a more in-depth overview of the UI components, see the Context UI
+`README.txt`.
+
+
+Upgrading from Context 2.x for Drupal 6.x
+-----------------------------------------
+- Download latest Context 3.x and latest CTools release and place in modules
+  directory.
+- Run `update.php` or `drush updatedb`.
+- If your site contains contexts defined in code they will be overridden.
+  Re-export them to code again. If you are using any custom conditions or
+  reactions, you may need to upgrade or reconfigure them by hand. See `API.txt`
+  for instructions on adding and extending plugins in Context.
+
 
 Hooks
 -----
-
-See context.api.php for the hooks made available by context.
+See `context.api.php` for the hooks made available by context and `API.txt` for
+usage examples.
 
 
 Maintainers
