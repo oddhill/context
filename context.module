@@ -155,9 +155,6 @@ function context_context_plugins() {
 function context_init() {
   $plugin = context_get_plugin('condition', 'path');
   $plugin->execute();
-
-  $plugin = context_get_plugin('condition', 'sitewide');
-  $plugin->execute(1);
 }
 
 /**
