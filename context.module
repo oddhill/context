@@ -271,7 +271,13 @@ function context_context_list() {
  * CTools export function.
  */
 function context_export_context($context, $indent = '') {
-  return ctools_export_object('context', $context, $indent);
+  foreach (array('description', 'tag') as $id) {
+    if (!empty($context->$id)) {
+      $o .= $indent . "  t('" . str_replace("'", "\'", $context->$id) . "'),\n";
+    }
+  }
+  $o = "\n\$translatables['" . $context->name . "'] = array(\n". $o .");\n";
+  return ctools_export_object('context', $context, $indent) . $o;
 }
 
 /**
