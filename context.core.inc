@@ -176,21 +176,26 @@ function context_theme_registry_alter(&$theme_registry) {
 }
 
 /**
+ * Implementation of hook_ctools_render_alter().
+ * Used to detect the presence of a page manager node view or node form.
+ */
+function context_ctools_render_alter($info, $page, $args, $contexts, $task, $subtask) {
+  if ($page && in_array($task['name'], array('node_view', 'node_edit'), TRUE)) {
+    foreach ($contexts as $ctools_context) {
+      if ($ctools_context->type === 'node' && !empty($ctools_context->data)) {
+        context_node_condition($ctools_context->data, $task['name'] === 'node_view' ? 'view' : 'form');
+        break;
+      }
+    }
+  }
+}
+
+/**
  * Implementation of hook_nodeapi().
  */
 function context_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page && menu_get_object() === $node) {
-    if ($plugin = context_get_plugin('condition', 'node')) {
-      $plugin->execute($node, $op);
-    }
-    if (module_exists('book')) {
-      if ($plugin = context_get_plugin('condition', 'book')) {
-        $plugin->execute($node, $op);
-      }
-      if ($plugin = context_get_plugin('condition', 'bookroot')) {
-        $plugin->execute($node, $op);
-      }
-    }
+    context_node_condition($node, 'view');
   }
 }
 
@@ -200,17 +205,28 @@ function context_nodeapi(&$node, $op, $teaser, $page) {
 function context_form_alter(&$form, $form_state, $form_id) {
   // Prevent this from firing on admin pages... damn form driven apis...
   if ($form['#id'] === 'node-form' && arg(0) != 'admin') {
-    if ($plugin = context_get_plugin('condition', 'node')) {
-      $plugin->execute($form['#node'], 'form');
-    }
-    if (module_exists('book')) {
-      if ($plugin = context_get_plugin('condition', 'bookroot')) {
-        $plugin->execute($form['#node'], 'form');
-      }
-    }
+    context_node_condition($form['#node'], 'form');
   }
-  if ($form_id == 'system_modules') {
+  else if ($form_id == 'system_modules') {
     context_invalidate_cache();
+  }
+}
+
+/**
+ * Centralized node condition call function for the ever increasing number of
+ * ways to get at a node view / node form.
+ */
+function context_node_condition(&$node, $op) {
+  if ($plugin = context_get_plugin('condition', 'node')) {
+    $plugin->execute($node, $op);
+  }
+  if (module_exists('book')) {
+    if ($plugin = context_get_plugin('condition', 'book')) {
+      $plugin->execute($node, $op);
+    }
+    if ($plugin = context_get_plugin('condition', 'bookroot')) {
+      $plugin->execute($node, $op);
+    }
   }
 }
 
