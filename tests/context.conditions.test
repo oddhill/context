@@ -1,6 +1,66 @@
 <?php
 // $Id$
 
+class ContextConditionNodeTaxonomyTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: taxonomy'),
+      'description' => t('Test taxonomy condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools', 'taxonomy');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'create page content'));
+    $this->drupalLogin($admin_user);
+
+    // Create test vocab.
+    $this->vocab = array(
+      'name' => 'Test',
+      'description' => 'Test vocab.',
+      'multiple' => 0,
+      'tags' => 0,
+      'nodes' => array('page' => TRUE),
+    );
+    taxonomy_save_vocabulary($this->vocab);
+
+    // Create test terms.
+    $this->terms = array();
+    $this->terms['apples'] = array('name' => 'apples', 'vid' => $this->vocab['vid']);
+    $this->terms['oranges'] = array('name' => 'oranges', 'vid' => $this->vocab['vid']);
+    taxonomy_save_term($this->terms['apples']);
+    taxonomy_save_term($this->terms['oranges']);
+
+    // Create test context.
+    ctools_include('export');
+    $this->context = ctools_export_new_object('context');
+    $this->context->name = 'testcontext';
+    $this->context->conditions = array('node_taxonomy' => array('values' => array($this->terms['apples']['tid'])));
+    $this->context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($this->context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+  }
+
+  function tearDown() {
+    parent::tearDown();
+    context_delete($this->context);
+    taxonomy_del_vocabulary($this->vocab['vid']);
+    taxonomy_del_term($this->terms['apples']['tid']);
+    taxonomy_del_term($this->terms['oranges']['tid']);
+  }
+
+  function test() {
+    // Apples does trigger the context.
+    $this->drupalPost('node/add/page', array('title' => 'Apples', "taxonomy[{$this->vocab['vid']}]" => $this->terms['apples']['tid']), 'Save');
+    $this->assertText('Active context: testcontext');
+
+    // Oranges does not trigger the context.
+    $this->drupalPost('node/add/page', array('title' => 'Oranges', "taxonomy[{$this->vocab['vid']}]" => $this->terms['oranges']['tid']), 'Save');
+    $this->assertNoText('Active context: testcontext');
+  }
+}
+
 class ContextConditionLanguageTest extends DrupalWebTestCase {
   function getInfo() {
     return array(

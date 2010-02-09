@@ -59,6 +59,13 @@ function context_context_registry() {
       'plugin' => 'context_condition_language',
     );
   }
+  if (module_exists('taxonomy')) {
+    $registry['conditions']['node_taxonomy'] = array(
+      'title' => t('Taxonomy'),
+      'description' => t('Set this context when viewing a node with the selected taxonomy terms.'),
+      'plugin' => 'context_condition_node_taxonomy',
+    );
+  }
   $registry['reactions'] = array(
     'block' => array(
       'title' => t('Blocks'),
@@ -219,6 +226,11 @@ function context_form_alter(&$form, $form_state, $form_id) {
 function context_node_condition(&$node, $op) {
   if ($plugin = context_get_plugin('condition', 'node')) {
     $plugin->execute($node, $op);
+  }
+  if (module_exists('taxonomy')) {
+    if ($plugin = context_get_plugin('condition', 'node_taxonomy')) {
+      $plugin->execute($node, $op);
+    }
   }
   if (module_exists('book')) {
     if ($plugin = context_get_plugin('condition', 'book')) {
