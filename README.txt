@@ -1,6 +1,16 @@
 $Id$
 
 Context 3.x for Drupal 6.x
+--------------------------
+Context allows you to manage contextual conditions and reactions for
+different portions of your site. You can think of each context as
+representing a "section" of your site. For each context, you can choose
+the conditions that trigger this context to be active and choose different
+aspects of Drupal that should react to this active context.
+
+Think of conditions as a set of rules that are checked during page load
+to see what context is active. Any reactions that are associated with
+active contexts are then fired.
 
 
 Installation
@@ -11,19 +21,6 @@ context) on the `admin/build/modules` page.
 
 You will probably also want to install Context UI which provides a way for
 you to edit contexts through the Drupal admin interface.
-
-
-Basic usage
------------
-Context allows you to manage contextual conditions and reactions for
-different portions of your site. You can think of each context as
-representing a "section" of your site. For each context, you can choose
-the conditions that trigger this context to be active and choose different
-aspects of Drupal that should react to this active context.
-
-Think of conditions as a set of rules that are checked during page load
-to see what context is active. Any reactions that are associated with
-active contexts are then fired.
 
 
 Example
