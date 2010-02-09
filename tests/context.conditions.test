@@ -1,6 +1,45 @@
 <?php
 // $Id$
 
+class ContextConditionLanguageTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Condition: language'),
+      'description' => t('Test language condition.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools', 'locale');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer languages'));
+    $this->drupalLogin($admin_user);
+
+    // Set up Spanish as second language.
+    $this->drupalPost('admin/settings/language/add', array('langcode' => 'es'), t('Add language'));
+    $this->drupalPost('admin/settings/language/configure', array('language_negotiation' => 1), t('Save settings'));
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('language' => array('values' => array('es')));
+    $context->reactions = array('debug' => array('debug' => TRUE));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet('node');
+    $this->assertNoText('Active context: testcontext');
+
+    $this->drupalGet('es/node');
+    $this->assertText('Active context: testcontext');
+
+    // Cleanup
+    context_delete($context);
+  }
+}
+
 class ContextConditionSitewideTest extends DrupalWebTestCase {
   function getInfo() {
     return array(

@@ -153,8 +153,13 @@ function context_context_plugins() {
  * Implementation of hook_init().
  */
 function context_init() {
-  $plugin = context_get_plugin('condition', 'path');
-  $plugin->execute();
+  if ($plugin = context_get_plugin('condition', 'path')) {
+    $plugin->execute();
+  }
+  if ($plugin = context_get_plugin('condition', 'language')) {
+    global $language;
+    $plugin->execute($language->language);
+  }
 }
 
 /**

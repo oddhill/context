@@ -52,6 +52,13 @@ function context_context_registry() {
       'plugin' => 'context_condition_bookroot',
     );
   }
+  if (module_exists('locale')) {
+    $registry['conditions']['language'] = array(
+      'title' => t('Language'),
+      'description' => t('Set this context when viewing the site in the selected language.'),
+      'plugin' => 'context_condition_language',
+    );
+  }
   $registry['reactions'] = array(
     'block' => array(
       'title' => t('Blocks'),

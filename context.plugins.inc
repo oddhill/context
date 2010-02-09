@@ -57,6 +57,16 @@ function _context_context_plugins() {
       'parent' => 'context_condition',
     ),
   );
+  if (module_exists('locale')) {
+    $plugins['context_condition_language'] = array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'context') .'/plugins',
+        'file' => 'context_condition_language.inc',
+        'class' => 'context_condition_language',
+        'parent' => 'context_condition',
+      ),
+    );
+  }
   if (module_exists('book')) {
     $plugins['context_condition_book'] = array(
       'handler' => array(
