@@ -322,19 +322,27 @@ class context_reaction_block extends context_reaction {
     static $block_info;
 
     if (!isset($block_info) || $reset) {
-      $block_info = array();
-      foreach (module_implements('block') as $module) {
-        $module_blocks = module_invoke($module, 'block', 'list');
-        if (!empty($module_blocks)) {
-          foreach ($module_blocks as $delta => $block) {
-            $block = (object) $block;
-            $block->module = $module;
-            $block->delta = $delta;
-            $block->bid = "{$block->module}-{$block->delta}";
-            $block_info[$block->bid] = $block;
+      $block_info = empty($reset) ? context_cache_get('block_info') : array();
+      if (empty($block_info)) {
+        $block_info = array();
+        foreach (module_implements('block') as $module) {
+          $module_blocks = module_invoke($module, 'block', 'list');
+          if (!empty($module_blocks)) {
+            foreach ($module_blocks as $delta => $block) {
+              $block = (object) $block;
+              $block->module = $module;
+              $block->delta = $delta;
+              $block->bid = "{$block->module}-{$block->delta}";
+              $block_info[$block->bid] = $block;
+            }
           }
         }
+        context_cache_set('block_info', $block_info);
       }
+      // Allow other modules that may declare blocks dynamically to alter
+      // this list.
+      drupal_alter('context_block_info', $block_info);
+
       // Gather only region info from the database.
       $theme_key = variable_get('theme_default', 'garland');
       $result = db_query("SELECT module,weight,delta,region,status FROM {blocks} WHERE theme = '%s' ORDER BY weight ASC", $theme_key);
