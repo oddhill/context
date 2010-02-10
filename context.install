@@ -264,7 +264,7 @@ function context_update_6303() {
     'type' => 'int',
     'default' => 0,
   );
-  db_add_field(&$ret, 'context', 'condition_mode', $spec);
+  db_add_field($ret, 'context', 'condition_mode', $spec);
   return $ret;
 }
 
