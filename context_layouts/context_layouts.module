@@ -59,14 +59,41 @@ function context_layouts_preprocess_page(&$vars) {
 /**
  * Retrieve layouts for the specified theme.
  */
-function context_layouts_get_layouts($theme = NULL) {
+function context_layouts_get_layouts($theme = NULL, $reset = FALSE) {
+  static $layouts = array();
+  $layouts = $reset ? array() : $layouts;
+
   global $theme_key;
   $theme = isset($theme) ? $theme : $theme_key;
-  $info = context_get_info('theme', $theme);
-  if (isset($info['layouts'])) {
-    return $info['layouts'];
+
+  if (!isset($layouts[$theme])) {
+    $info = context_get_info('theme', $theme);
+    $themes = array();
+
+    // Find all our ancestor themes that use layouts.
+    if (isset($info['base theme'])) {
+      while ($info['base theme']) {
+        $base_theme = $info['base theme'];
+        $info = context_get_info('theme', $base_theme);
+        $themes[$base_theme] = $info;
+      }
+    }
+
+    // Assemble in inheritance order and add the theme on.
+    $themes = array_reverse($themes);
+    $themes[$theme] = context_get_info('theme', $theme);
+
+    // Merge layout info into a single array.
+    foreach ($themes as $key => $info) {
+      if (!empty($info['layouts'])) {
+        foreach ($info['layouts'] as $layout => $layout_info) {
+          $layout_info['theme'] = $key;
+          $layouts[$theme][$layout] = $layout_info;
+        }
+      }
+    }
   }
-  return FALSE;
+  return isset($layouts[$theme]) ? $layouts[$theme] : FALSE;
 }
 
 /**
