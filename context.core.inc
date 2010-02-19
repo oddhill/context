@@ -158,7 +158,8 @@ function context_theme_registry_alter(&$theme_registry) {
   // context-sensitive menus and variables. Ensure that
   // context_preprocess_page() comes immediately after
   // template_preprocess_page().
-  if ($position = array_search('context_preprocess_page', $theme_registry['page']['preprocess functions'])) {
+  $position = array_search('context_preprocess_page', $theme_registry['page']['preprocess functions']);
+  if ($position !== FALSE) {
     unset($theme_registry['page']['preprocess functions'][$position]);
   }
   $position = array_search('template_preprocess_page', $theme_registry['page']['preprocess functions']);
