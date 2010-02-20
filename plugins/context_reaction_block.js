@@ -254,13 +254,13 @@ function DrupalContextBlockEditor(editor) {
    */
   this.disableTextSelect = function() {
     if ($.browser.safari) {
-      $('*').css('WebkitUserSelect','none');
+      $('div.context-block:not(:has(input,textarea))').css('WebkitUserSelect','none');
     }
     else if ($.browser.mozilla) {
-      $('*').css('MozUserSelect','none');
+      $('div.context-block:not(:has(input,textarea))').css('MozUserSelect','none');
     }
     else if ($.browser.msie) {
-      $('*').bind('selectstart.contextBlockEditor', function() { return false; });
+      $('div.context-block:not(:has(input,textarea))').bind('selectstart.contextBlockEditor', function() { return false; });
     }
     else {
       $(this).bind('mousedown.contextBlockEditor', function() { return false; });
