@@ -236,11 +236,13 @@ function DrupalContextBlockEditor(editor) {
       var region = $(this).attr('id').split('context-block-region-')[1];
       var blocks = [];
       $('div.context-block', $(this)).each(function() {
-        var bid = $(this).attr('id').split('context-block-')[1];
-        var context = $(this).attr('class').split('edit-')[1].split(' ')[0];
-        context = context ? context : 0;
-        var block = {'bid': bid, 'context': context};
-        blocks.push(block);
+        if ($(this).attr('class').indexOf('edit-') != -1) {
+          var bid = $(this).attr('id').split('context-block-')[1];
+          var context = $(this).attr('class').split('edit-')[1].split(' ')[0];
+          context = context ? context : 0;
+          var block = {'bid': bid, 'context': context};
+          blocks.push(block);
+        }
       });
       Drupal.contextBlockEditor.state[region] = blocks;
     });
