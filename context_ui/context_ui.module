@@ -201,6 +201,9 @@ function context_ui_menu_plugin() {
  * Menu access callback for various tasks.
  */
 function context_ui_task_access($context, $op) {
+  if (!user_access('administer site configuration')) {
+    return FALSE;
+  }
   switch ($op) {
     case 'revert':
       return ($context->export_type & EXPORT_IN_DATABASE) && ($context->export_type & EXPORT_IN_CODE);
