@@ -72,7 +72,7 @@ function context_layouts_get_layouts($theme = NULL, $reset = FALSE) {
 
     // Find all our ancestor themes that use layouts.
     if (isset($info['base theme'])) {
-      while ($info['base theme']) {
+      while (!empty($info['base theme'])) {
         $base_theme = $info['base theme'];
         $info = context_get_info('theme', $base_theme);
         $themes[$base_theme] = $info;
