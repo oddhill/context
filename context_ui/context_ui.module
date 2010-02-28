@@ -273,7 +273,7 @@ function context_ui_editor($form_state, $contexts) {
     );
 
     // Edit context conditions.
-    foreach (array_keys(context_conditions(TRUE)) as $condition) {
+    foreach (array_keys(context_conditions()) as $condition) {
       $plugin = context_get_plugin('condition', $condition);
       if (method_exists($plugin, 'editor_form') && ($plugin_form = $plugin->editor_form($context))) {
         $form_context['condition'][$condition] = $plugin_form;
@@ -286,7 +286,7 @@ function context_ui_editor($form_state, $contexts) {
     }
 
     // Edit context reactions.
-    foreach (array_keys(context_reactions(TRUE)) as $reaction) {
+    foreach (array_keys(context_reactions()) as $reaction) {
       $plugin = context_get_plugin('reaction', $reaction);
       if (method_exists($plugin, 'editor_form') && ($plugin_form = $plugin->editor_form($context))) {
         $form_context["reaction-{$reaction}"] = $plugin_form + array('#title' => $plugin->title);
