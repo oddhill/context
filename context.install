@@ -282,16 +282,34 @@ function context_migrate_api_3($contexts) {
         'reactions' => array(),
       );
       // Migration condition/reaction settings.
-      $conditions = array('node', 'user', 'book', 'sitewide', 'path', 'menu_trail', 'views', 'nodequeue');
-      foreach ($conditions as $key) {
-        if (isset($context->{$key})) {
-          $new['conditions'][$key] = array('values' => is_array($context->{$key}) ? $context->{$key} : array($context->{$key}), 'options' => array());
+      // Some have been renamed. Map them.
+      $conditions = array(
+        'node' => 'node',
+        'user' => 'user',
+        'book' => 'book',
+        'sitewide' => 'sitewide',
+        'path' => 'path',
+        'menu_trail' => 'menu',
+        'views' => 'views',
+        'nodequeue' => 'nodequeue'
+      );
+      foreach ($conditions as $old_key => $new_key) {
+        if (isset($context->{$old_key})) {
+          $values = $context->{$old_key};
+          $new['conditions'][$new_key] = array(
+            'values' => is_array($values) ? $values : array($values),
+            'options' => array()
+          );
         }
       }
-      $reactions = array('menu', 'theme_section', 'theme_regiontoggle', 'css_injector');
-      foreach ($reactions as $key) {
-        if (isset($context->{$key})) {
-          $new['reactions'][$key] = $context->{$key};
+      $reactions = array(
+        'menu' => 'menu',
+        'theme_section' => 'theme',
+        'css_injector' => 'css_injector'
+      );
+      foreach ($reactions as $old_key => $new_key) {
+        if (isset($context->{$old_key})) {
+          $new['reactions'][$new_key] = $context->{$old_key};
         }
       }
       // Special treatment for blocks.
