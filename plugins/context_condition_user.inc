@@ -6,7 +6,7 @@
  */
 class context_condition_user extends context_condition {
   function condition_values() {
-    return drupal_map_assoc(user_roles(TRUE));
+    return drupal_map_assoc(user_roles());
   }
 
   function execute($account) {
