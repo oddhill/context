@@ -8,7 +8,7 @@ function context_context_registry() {
   $registry = array();
   $registry['conditions'] = array(
     'node' => array(
-      'title' => t('Node'),
+      'title' => t('Node type'),
       'description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
       'plugin' => 'context_condition_node',
     ),
@@ -23,7 +23,7 @@ function context_context_registry() {
       'plugin' => 'context_condition_path',
     ),
     'user' => array(
-      'title' => t('User'),
+      'title' => t('User role'),
       'description' => t('Set this context when the current user has one of the selected role(s).'),
       'plugin' => 'context_condition_user',
     ),
