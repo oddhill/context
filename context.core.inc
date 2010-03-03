@@ -202,8 +202,11 @@ function context_ctools_render_alter($info, $page, $args, $contexts, $task, $sub
  * Implementation of hook_nodeapi().
  */
 function context_nodeapi(&$node, $op, $teaser, $page) {
-  if ($op == 'view' && $page && menu_get_object() === $node) {
-    context_node_condition($node, 'view');
+  if ($op == 'view' && $page) {
+    $object = menu_get_object();
+    if (isset($object->nid) && $object->nid === $node->nid) {
+      context_node_condition($node, 'view');
+    }
   }
 }
 
