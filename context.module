@@ -383,14 +383,15 @@ function context_condition_map($reset = FALSE) {
     }
     else {
       foreach (array_keys(context_conditions('condition')) as $condition) {
-        $plugin = context_get_plugin('condition', $condition);
-        foreach (context_enabled_contexts() as $context) {
-          $values = $plugin->fetch_from_context($context, 'values');
-          foreach ($values as $value) {
-            if (!isset($condition_map[$condition][$value])) {
-              $condition_map[$condition][$value] = array();
+        if ($plugin = context_get_plugin('condition', $condition)) {
+          foreach (context_enabled_contexts() as $context) {
+            $values = $plugin->fetch_from_context($context, 'values');
+            foreach ($values as $value) {
+              if (!isset($condition_map[$condition][$value])) {
+                $condition_map[$condition][$value] = array();
+              }
+              $condition_map[$condition][$value][] = $context->name;
             }
-            $condition_map[$condition][$value][] = $context->name;
           }
         }
       }
