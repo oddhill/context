@@ -405,7 +405,7 @@ class context_reaction_block extends context_reaction {
     if (function_exists('json_decode')) {
       return json_decode($json, $assoc);
     }
-    return $this->_json_decode($json);
+    return context_reaction_block::_json_decode($json);
   }
 
   /**
