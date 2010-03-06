@@ -322,7 +322,9 @@ class context_reaction_block extends context_reaction {
     static $block_info;
 
     if (!isset($block_info) || $reset) {
-      $block_info = empty($reset) ? context_cache_get('block_info') : array();
+      // We don't retrieve the block info cache when on admin pages as a
+      // variety of administrative UI tasks can create or alter block info.
+      $block_info = $reset || arg(0) === 'admin' ? array() : context_cache_get('block_info');
       if (empty($block_info)) {
         $block_info = array();
         foreach (module_implements('block') as $module) {
