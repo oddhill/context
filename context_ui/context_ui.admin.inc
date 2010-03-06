@@ -5,13 +5,11 @@
  * Context listing form. Allows for quick creation of new contexts.
  */
 function context_ui_admin() {
-  // rebuild & clear caches
-  _block_rehash();
   context_invalidate_cache();
 
   $form = array(
     '#theme' => 'context_ui_admin',
-    '#contexts' => context_load(),
+    '#contexts' => context_load(NULL, TRUE),
   );
   $form['name'] = array(
     '#title' => t('Name'),
