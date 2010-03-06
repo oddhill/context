@@ -158,15 +158,16 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $conditions = array_keys(context_conditions(TRUE));
   sort($conditions);
   foreach ($conditions as $condition) {
-    $plugin = context_get_plugin('condition', $condition);
-    $form['conditions']['plugins'][$condition] = array(
-      '#tree' => TRUE,
-      '#plugin' => $plugin,
-      '#context_enabled' => isset($context->conditions[$condition]), // This flag is used at the theme layer.
-      'values' => $plugin->condition_form($context),
-      'options' => $plugin->options_form($context),
-    );
-    $form['conditions']['selector']['#options'][$condition] = $plugin->title;
+    if ($plugin = context_get_plugin('condition', $condition)) {
+      $form['conditions']['plugins'][$condition] = array(
+        '#tree' => TRUE,
+        '#plugin' => $plugin,
+        '#context_enabled' => isset($context->conditions[$condition]), // This flag is used at the theme layer.
+        'values' => $plugin->condition_form($context),
+        'options' => $plugin->options_form($context),
+      );
+      $form['conditions']['selector']['#options'][$condition] = $plugin->title;
+    }
   }
 
   // Reaction plugin forms
@@ -189,12 +190,13 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $reactions = array_keys(context_reactions(TRUE));
   sort($reactions);
   foreach ($reactions as $reaction) {
-    $plugin = context_get_plugin('reaction', $reaction);
-    $form['reactions']['plugins'][$reaction] = $plugin->options_form($context) + array(
-      '#plugin' => $plugin,
-      '#context_enabled' => isset($context->reactions[$reaction]), // This flag is used at the theme layer.
-    );
-    $form['reactions']['selector']['#options'][$reaction] = $plugin->title;
+    if ($plugin = context_get_plugin('reaction', $reaction)) {
+      $form['reactions']['plugins'][$reaction] = $plugin->options_form($context) + array(
+        '#plugin' => $plugin,
+        '#context_enabled' => isset($context->reactions[$reaction]), // This flag is used at the theme layer.
+      );
+      $form['reactions']['selector']['#options'][$reaction] = $plugin->title;
+    }
   }
 
   // Buttons
