@@ -178,14 +178,6 @@ function context_init() {
 }
 
 /**
- * Implementation of hook_flush_caches().
- */
-function context_flush_caches() {
-  context_invalidate_cache();
-  return array();
-}
-
-/**
  * Load & crud functions ==============================================
  */
 
@@ -506,20 +498,4 @@ function _context_registry($key = NULL, $reset = FALSE) {
     return isset($registry[$key]) ? $registry[$key] : array();
   }
   return $registry;
-}
-
-/**
- * Implementation of hook_features_api().
- */
-function context_features_api() {
-  return array(
-    'context' => array(
-      'name' => 'Contexts',
-      'api' => 'context',
-      'default_hook' => 'context_default_contexts',
-      'current_version' => 3,
-      'module' => 'context',
-      'feature_source' => TRUE,
-    ),
-  );
 }
