@@ -615,10 +615,12 @@ function context_ui_bulk_export(&$form_state) {
   $contexts = context_contexts();
   if (isset($form_state['storage']['module_name'])) {
     $code = "function ". $form_state['storage']['module_name'] ."_context_default_contexts() {\n";
-    foreach ($form_state['storage']['contexts'] as $id) {
-      $context = (array) $contexts[$id];
-      unset($context['cid']);
-      $code .= '  $items[] = '. context_var_export($context, '  ') .";\n\n";
+    if (isset($form_state['storage']['contexts']) && is_array($form_state['storage']['contexts'])) {
+      foreach ($form_state['storage']['contexts'] as $id) {
+        $context = (array) $contexts[$id];
+        unset($context['cid']);
+        $code .= '  $items[] = '. context_var_export($context, '  ') .";\n\n";
+      }
     }
     $code .= "  return \$items;\n}";
     $form['code'] = array(
@@ -707,7 +709,7 @@ function theme_context_ui_bulk_export_table($form) {
           'class' => 'context-name',
         ),
       ),
-      'class' => 'context-table-row ' . $class,
+      'class' => 'context-table-row ',
     );
   }
   $output = theme('table', array(theme('table_select_header_cell'), t('Context')), $rows, array('class' => 'context-ui-bulk-export context-ui-overview'));
