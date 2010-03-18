@@ -49,7 +49,7 @@ function context_theme_registry_alter(&$theme_registry) {
  *
  * '#title': Required. The title of the object / form option.
  * '#type': Required. The FormAPI element type to use. Currently only
- *   'select', 'checkboxes', 'radio', and 'textfield' are allowed.
+ *   'select', 'checkboxes', 'radios', and 'textfield' are allowed.
  * '#description': Optional. Help text to be displayed on the form.
  * '#options': Required. A key-value array of options. They key will be
  *   stored and passed to context_set_by_condition(), so the integrating module
