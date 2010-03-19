@@ -600,12 +600,12 @@ function context_preprocess_page(&$vars) {
   // If primary + secondary links are pointed at the same menu, provide
   // contextual trailing by default.
   if (variable_get('menu_primary_links_source', 'primary-links') == variable_get('menu_secondary_links_source', 'secondary-links')) {
-    $vars['primary_links'] = context_menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links'));
-    $vars['secondary_links'] = context_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1);
+    $vars['primary_links'] = theme_get_setting('toggle_primary_links') ? context_menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links')) : $vars['primary_links'];
+    $vars['secondary_links'] = theme_get_setting('toggle_secondary_links') ? context_menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1) : $vars['secondary_links'];
   }
 
-  $vars['primary_links'] = context_menu_set_active($vars['primary_links']);
-  $vars['secondary_links'] = context_menu_set_active($vars['secondary_links']);
+  $vars['primary_links'] = theme_get_setting('toggle_primary_links') ? context_menu_set_active($vars['primary_links']) : $vars['primary_links'];
+  $vars['secondary_links'] = theme_get_setting('toggle_secondary_links') ? context_menu_set_active($vars['secondary_links']) : $vars['secondary_links'];
 
   if ($context_links = context_links()) {
     $vars['context_links'] = theme('context_links', $context_links);
