@@ -884,7 +884,7 @@ function context_ui_form_process($form) {
   // Retrieve values for conditions and reactions
   foreach (context_conditions() + context_reactions() as $id => $element) {
     if (is_array($form['items'][$id])) {
-      if ($element['#type'] == 'checkboxes') {
+      if (isset($element['#type']) && $element['#type'] == 'checkboxes') {
         $items = array_keys(array_filter($form['items'][$id]));
       }
       else {
