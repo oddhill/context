@@ -91,7 +91,13 @@ Drupal.behaviors.context_ui = function(context) {
           if (!$(this).attr('disabled')) {
             // create new block markup
             var block = document.createElement('tr');
-            var text = $(this).parents('div.form-item').eq(0).hide().children('label').text();
+
+            // get the label and remove the checkbox
+            var clonedlabel = $(this).parents('div.form-item').eq(0).hide().children('label').clone();
+            var checkboxitem = clonedlabel.find('input');
+            checkboxitem.replaceWith(' ');
+            var text = clonedlabel.html();
+
             $(block).attr('id', $(this).attr('value')).addClass('draggable');
             $(block).html("<td>"+ text + "<input class='block-weight' /></td><td><a href='' class='remove'>X</a></td>");
 
