@@ -53,15 +53,6 @@ function context_contrib_context_reactions() {
 }
 
 /**
- * Implementation of hook_context_reaction().
- */
-function context_contrib_context_reaction($context) {
-  if (module_exists('css_injector')) {
-    _context_contrib_css_injector_response($context);
-  }
-}
-
-/**
  * Implementation of hook_nodeapi().
  */
 function context_contrib_nodeapi(&$node, $op, $teaser, $page) {
