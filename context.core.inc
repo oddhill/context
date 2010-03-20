@@ -224,6 +224,7 @@ function context_context_reactions() {
       '#description' => t('Display the selected menu item as active in the <strong>$primary_links</strong> or <strong>$secondary_links</strong> of page.tpl.php when this context is set.'),
       '#options' => $menus,
       '#type' => 'select',
+      '#size' => 20,
     );
   }
   else {
