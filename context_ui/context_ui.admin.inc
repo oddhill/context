@@ -312,6 +312,9 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     $form['delete'] = array(
       '#type' => 'submit',
       '#value' => t('Delete'),
+      // Skip validation for this button, as we're just doing a redirect:
+      '#validate' => array(),
+      '#submit' => array('context_ui_form_delete_submit'),
     );
   }
 
@@ -843,22 +846,20 @@ function theme_context_ui_block_ui($form) {
  * hook_validate()
  */
 function context_ui_form_validate($form, &$form_state) {
-  if ($form_state['clicked_button']['#id'] == 'edit-submit' && $form_state['values']['value']) {
-    // Check for string identifier sanity
-    foreach (array('value', 'attribute', 'namespace') as $elem) {
-      if (!preg_match('!^[a-z0-9_]+$!', $form_state['values'][$elem])) {
-        form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
-      }
+  // Check for string identifier sanity
+  foreach (array('value', 'attribute', 'namespace') as $elem) {
+    if (!preg_match('!^[a-z0-9_]+$!', $form_state['values'][$elem])) {
+      form_set_error($elem, t('The context !elem can only consist of lowercase letters, underscores, and numbers.', array('!elem' => $elem)));
     }
-    if (!isset($form_state['values']['cid'])) {
-      // Check that no other user-defined context definition has taken this identifier already
-      $context = new stdClass();
-      $context->namespace = $form_state['values']['namespace'];
-      $context->attribute = $form_state['values']['attribute'];
-      $context->value = $form_state['values']['value'];
-      if ($exists = context_load_context($context)) {
-        form_set_error($form_state['values']['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
-      }
+  }
+  if (!isset($form_state['values']['cid'])) {
+    // Check that no other user-defined context definition has taken this identifier already
+    $context = new stdClass();
+    $context->namespace = $form_state['values']['namespace'];
+    $context->attribute = $form_state['values']['attribute'];
+    $context->value = $form_state['values']['value'];
+    if ($exists = context_load_context($context)) {
+      form_set_error($form_state['values']['value'], t('A user-defined context with this space/key/value identifier already exists. Please delete the existing definition before creating a new one.'));
     }
   }
 }
@@ -935,24 +936,22 @@ function context_ui_form_process($form) {
  * Submit handler for main context_ui form.
  */
 function context_ui_form_submit($form, &$form_state) {
-  switch ($form_state['clicked_button']['#id']) {
-    // Send user to delete confirmation page
-    case 'edit-delete':
-      $form_state['redirect'] = 'admin/build/context/'. $form_state['values']['cid'] .'/delete';
-      return;
-    // Process form values and save and/or update the context in the db
-    case 'edit-submit':
-      $context = context_ui_form_process($form_state['values']);
-      $result = context_save_context($context);
-      if ($result) {
-        drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
-      }
-      else {
-        drupal_set_message(t('An error occurred while attempting to save your context information.'), 'error');
-      }
-      break;
+  $context = context_ui_form_process($form_state['values']);
+  $result = context_save_context($context);
+  if ($result) {
+    drupal_set_message(t('The context %title was saved successfully.', array('%title' =>  $context->value)));
+  }
+  else {
+    drupal_set_message(t('An error occurred while attempting to save your context information.'), 'error');
   }
   $form_state['redirect'] = 'admin/build/context';
+}
+
+/**
+ * Submit handler for the delete button on the main context_ui form.
+ */
+function context_ui_form_delete_submit($form, &$form_state) {
+  $form_state['redirect'] = 'admin/build/context/'. $form_state['values']['cid'] .'/delete';
 }
 
 /**
