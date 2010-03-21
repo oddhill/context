@@ -979,8 +979,16 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
     // Rebuild block "cache"
     _block_rehash();
 
+    // Compute the active themes:
+    $active_themes = array();
+    foreach (list_themes() as $theme => $theme_ob) {
+      if ($theme_ob->status) {
+        $active_themes[] = $theme;
+      }
+    }
+
     // Load blocks from database
-    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} ORDER BY module, delta, weight, region, status");
+    $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme IN (" . db_placeholders($active_themes, 'varchar') . ") ORDER BY module, delta, weight, region, status", $active_themes);
     while ($block = db_fetch_object($result)) {
       // load block info
       $block_info[$block->module] = isset($block_info[$block->module]) ? $block_info[$block->module] : module_invoke($block->module, 'block', 'list');
