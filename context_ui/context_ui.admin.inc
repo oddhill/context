@@ -530,7 +530,7 @@ function context_ui_import_submit($form, &$form_state) {
   $items = array();
   if ($import = $form_state['values']['import']) {
     if (strpos($import, 'return') !== 0) {
-      $import = "return {$import}";
+      $import = "return {$import};";
     }
     ob_start();
     $context = eval($import);
@@ -606,7 +606,7 @@ function context_ui_export(&$form_state, $context) {
  * Themes a context value into an export friendly var_export().
  */
 function theme_context_ui_export_form($form) {
-  $form['#value'] = $form['#default_value'] = context_var_export($form['#value'], '', FALSE);
+  $form['#value'] = $form['#default_value'] = context_var_export($form['#value'], '', FALSE) . ';';
   return theme('textarea', $form);
 }
 
