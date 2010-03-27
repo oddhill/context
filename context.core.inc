@@ -272,7 +272,7 @@ function context_context_reactions() {
  * Implementation of hook_nodeapi().
  */
 function context_nodeapi(&$node, $op, $teaser, $page) {
-  if ($op == 'view' && $page && menu_get_object() === $node) {
+  if ($op == 'view' && $page && ($menu_ob = menu_get_object()) && $menu_ob->nid == $node->nid) {
     // Implementation of context_set_by_condition for node.
     context_set_by_condition('node', $node->type);
 
