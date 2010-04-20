@@ -655,6 +655,9 @@ function context_var_export($var, $prefix = '', $multiple = TRUE) {
   else if (is_bool($var)) {
     $output = $var ? 'TRUE' : 'FALSE';
   }
+  else if (is_object($var)) {
+    $output = '(object)' . context_var_export((array)$var, '  ', FALSE);
+  }
   else {
     $output = var_export($var, TRUE);
   }
