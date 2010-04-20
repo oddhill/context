@@ -32,6 +32,21 @@ function context_contrib_context_conditions() {
     );
   }
 
+
+  // CCK
+  if (module_exists('content')) {
+    foreach (content_fields() as $field) {
+      if ($options = content_allowed_values($field)) {
+        $items[$field['field_name']] = array(
+          '#title' => $field['widget']['label'],
+          '#type' => 'checkboxes',
+          '#options' => $options,
+          '#description' => filter_xss_admin($field['widget']['description']),
+        );
+      }
+    }
+  }
+
   return $items;
 }
 
@@ -62,6 +77,17 @@ function context_contrib_nodeapi(&$node, $op, $teaser, $page) {
       $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
       while($qid = db_fetch_object($result)) {
         context_set_by_condition('nodequeue', $qid->qid);
+      }
+    }
+
+    // Implementation of context for CCK.
+    if (module_exists('content')) {
+      foreach (content_fields() as $field) {
+        if (isset($node->$field['field_name']) && $options = content_allowed_values($field)) {
+          foreach ($node->$field['field_name'] as $item) {
+            context_set_by_condition($field['field_name'], $item['value']);
+          }
+        }
       }
     }
   }
