@@ -238,8 +238,19 @@ function context_save_context($context) {
     }
   }
   else {
-    $packed = context_pack_context($context);
-    drupal_write_record('context', $packed, 'cid');
+    // Ensure that when saving a context an existing one isn't overwritten:
+    $context_to_load = drupal_clone($context);
+    unset($context_to_load->cid);
+    $context_to_load = context_load_context($context_to_load, TRUE);
+    if ($context_to_load->cid && $context_to_load->cid != $context->cid) {
+      // We loaded a context, and it wasn't ours, abort!
+      return FALSE;
+    }
+    else {
+      $packed = context_pack_context($context);
+      drupal_write_record('context', $packed, 'cid');
+    }
+
   }
 
   // Invalidate context cache
