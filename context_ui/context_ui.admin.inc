@@ -4,28 +4,94 @@
 /**
  * Page callback for context_ui admin landing page.
  */
-function context_ui_admin() {
-  // Add css
-  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui.css");
-
+function context_ui_list_contexts() {
   // rebuild blocks
   _block_rehash();
 
   // rebuild context cache
   context_invalidate_cache();
-
-  // user defined contexts
-  $output = "<h3>". t('Context definitions') ."</h3>";
-  $normal = context_contexts();
-  if ($normal) {
-    ksort($normal);
-    $output .= theme('context_ui_admin', $normal);
-  }
-  else {
-    $output .= "<p>". t('Please !add_context to get started.', array('!add_context' => l(t('add a context'), 'admin/build/context/add'))) ."</p>";
-  }
-
+  $output = theme('context_ui_list_contexts');
   return $output;
+}
+
+/**
+ * Preprocess the contexts list theme
+ */
+function context_ui_preprocess_context_ui_list_contexts(&$vars) {
+  drupal_add_css(drupal_get_path("module", "context_ui") ."/context_ui-list.css");
+  $contexts = context_contexts();
+  $conditions = context_conditions();
+  $reactions = context_reactions();
+  ksort($contexts);
+  $vars['contexts_tree'] = array();
+
+  foreach ($contexts as $key => $context) {
+    $identifier = (isset($context->cid) && $context->cid) ? $context->cid : key;
+
+    $item = new stdClass();
+    $item->namespace = $context->namespace;
+    $item->attribute = $context->attribute;
+    $item->name = $context->value;
+    $item->ops = array();
+
+    switch ($context->type) {
+      case CONTEXT_STORAGE_DEFAULT:
+        $item->type = 'Default';
+        $links[0] = l(t('Override'), "admin/build/context/$identifier/clone");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        break;
+      case CONTEXT_STORAGE_OVERRIDDEN:
+        $item->type = 'Overridden';
+        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        $links[4] = l(t('Revert'), "admin/build/context/$identifier/delete");
+        break;
+      case CONTEXT_STORAGE_NORMAL:
+        $item->type = 'Normal';
+        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
+        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
+        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
+        $links[4] = l(t('Delete'), "admin/build/context/$identifier/delete");
+    }
+    switch ($context->status) {
+      case CONTEXT_STATUS_DISABLED:
+        $item->classes = 'context-disabled';
+        $links[1] = l(t('Enable'), "admin/build/context/$identifier/enable");
+        break;
+      case CONTEXT_STATUS_ENABLED:
+        $item->classes = 'context-enabled';
+        $links[1] = l(t('Disable'), "admin/build/context/$identifier/disable");
+    }
+    $item->ops = implode(' | ', $links);
+
+    foreach ($conditions as $id => $condition) {
+      if (!empty($context->$id)) {
+        $item->conditions[] = $condition['#title'];
+      }
+    }
+    $item->conditions = isset($item->conditions) ? implode(', ', $item->conditions) : t('none');
+
+    foreach ($reactions as $id => $reaction) {
+      if (!empty($context->$id)) {
+        $item->reactions[] = $reaction['#title'];
+      }
+    }
+    $item->reactions = isset($item->reactions) ? implode(', ', $item->reactions) : t('none');
+
+    $item->description = !empty($context->description) ? filter_xss_admin($context->description) : '';
+    $vars['contexts_tree'][$item->namespace][$item->attribute][$item->name] = $item;
+  }
+
+  $getting_started = theme('advanced_help_topic', 'context_ui', 'getting-started', 'title');
+  if (!$getting_started) {
+    $getting_started = t('Install the advanced help module to view the getting started');
+
+  }
+
+  $vars['help'] = t('Not sure what to do? Try the "!getting-started" page.', array('!getting-started' => $getting_started));
+  $vars['help_type_icon'] = theme('advanced_help_topic', 'context_ui', 'type');
 }
 
 /**
@@ -719,90 +785,6 @@ function theme_context_ui_bulk_export_table($form) {
   $output .= drupal_render($form);
 
   return $output;
-}
-
-/**
- * Generates the main context_ui admin page with a tiered context listing.
- */
-function theme_context_ui_admin($contexts) {
-  $rows = $headings = array();
-  foreach ($contexts as $key => $context) {
-    $row = array();
-
-    $namespace = $context->namespace;
-    $attribute = $context->attribute;
-    $value = $context->value;
-    if (isset($context->cid) && $context->cid) {
-      $identifier = $context->cid;
-    }
-    else {
-      $identifier = $key;
-    }
-
-    // If no heading has been printed for this n/a pair, do so
-    if (!isset($rows["$namespace-$attribute"])) {
-      $row = array(array('data' => "<span class='context-namespace'>$namespace &gt; $attribute</span>", 'colspan' => 2));
-      $rows["$namespace-$attribute"] = $row;
-    }
-
-    // Add row for context
-    $links = array();
-    $icon = theme('advanced_help_topic', 'context_ui', 'type');
-    switch ($context->type) {
-      case CONTEXT_STORAGE_DEFAULT:
-        $type = 'Default';
-        $links[0] = l(t('Override'), "admin/build/context/$identifier/clone");
-        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
-        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
-        break;
-      case CONTEXT_STORAGE_OVERRIDDEN:
-        $type = 'Overridden';
-        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
-        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
-        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
-        $links[4] = l(t('Revert'), "admin/build/context/$identifier/delete");
-        break;
-      case CONTEXT_STORAGE_NORMAL:
-        $type = 'Normal';
-        $links[0] = l(t('Edit'), "admin/build/context/$identifier");
-        $links[2] = l(t('Export'), "admin/build/context/$identifier/export");
-        $links[3] = l(t('Clone'), "admin/build/context/$identifier/clone");
-        $links[4] = l(t('Delete'), "admin/build/context/$identifier/delete");
-    }
-    switch ($context->status) {
-      case CONTEXT_STATUS_DISABLED:
-        $class = 'disabled';
-        $enable = l(t('Enable'), "admin/build/context/$identifier/enable");
-        break;
-      case CONTEXT_STATUS_ENABLED:
-        $class = 'enabled';
-        $enable = l(t('Disable'), "admin/build/context/$identifier/disable");
-    }
-    $links[1] = $enable;
-    if ($icon) {
-      // These spans are used to work-around advanced help's default styling of
-      // floating the help icon left. We would like to display it after the text,
-      // so we put a series of floats next to each other.
-      $data = "<strong>$value</strong> <em><span>($type</span> $icon<span>)</span></em>";
-    }
-    else {
-      $data = "<strong>$value</strong> <em>($type)</em>";
-    }
-    $description = !empty($context->description) ? '<div class="description">'. filter_xss_admin($context->description) .'</div>' : '';
-
-    ksort($links);
-    $rows[$key] = array(
-      'data' => array(
-        array(
-          'data' => $data . $description,
-          'class' => 'context-name '. ($icon? 'icon' : 'no-icon'),
-        ),
-        implode(' | ', $links),
-      ),
-      'class' => 'context-table-row ' . $class,
-    );
-  }
-  return theme('table', array(t('Context'), t('Operations')), $rows, array('class' => 'context-ui-overview'));
 }
 
 /**

@@ -5,30 +5,28 @@
  * Implementation of hook_theme().
  */
 function context_ui_theme() {
-  $items['context_ui_export_form'] = array(
+
+  // This is required so that the preprocess function within gets registered:
+  module_load_include('inc', 'context_ui', 'context_ui.admin');
+
+  // Minor code reduction technique.
+  $base = array(
     'arguments' => array('form' => array()),
     'file' => 'context_ui.admin.inc',
   );
-  $items['context_ui_item_display'] = array(
-    'arguments' => array('form' => array()),
-    'file' => 'context_ui.admin.inc',
+
+  $items['context_ui_export_form'] = $base;
+  $items['context_ui_item_display'] = $base;
+  $items['context_ui_form'] = $base;
+  $items['context_ui_block_ui'] = $base;
+  $items['context_ui_bulk_export_table'] = $base;
+
+  // List contexts (admin landing page).
+ $items['context_ui_list_contexts'] = array(
+   'template' => 'context_ui-list-contexts',
+   'path' => drupal_get_path('module', 'context_ui'),
   );
-  $items['context_ui_form'] = array(
-    'arguments' => array('form' => array()),
-    'file' => 'context_ui.admin.inc',
-  );
-  $items['context_ui_block_ui'] = array(
-    'arguments' => array('form' => array()),
-    'file' => 'context_ui.admin.inc',
-  );
-  $items['context_ui_admin'] = array(
-    'arguments' => array('form' => array()),
-    'file' => 'context_ui.admin.inc',
-  );
-  $items['context_ui_bulk_export_table'] = array(
-    'arguments' => array('form' => array()),
-    'file' => 'context_ui.admin.inc',
-  );
+
   $items['context_devel'] = array(
     'arguments' => array('form' => array()),
   );
@@ -72,12 +70,11 @@ function context_ui_menu() {
   $items['admin/build/context'] = array(
     'title' => 'Context',
     'description' => 'Associate menus, views, blocks, etc. with different contexts to structure your site.',
-    'page callback' => 'context_ui_admin',
+    'page callback' => 'context_ui_list_contexts',
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/build/context/list'] = array(
     'title' => 'List',
-    'page callback' => 'context_ui_admin',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => 0,
   );
@@ -207,13 +204,13 @@ function context_ui_form_block_admin_configure_alter(&$form, $form_state) {
           $row[] = $context->namespace;
           $row[] = $context->attribute;
           $row[] = $context->value;
-          $row[] = $block->region;          
+          $row[] = $block->region;
           $identifier = "{$context->namespace}-{$context->attribute}-{$context->value}";
           $options = array(
             'fragment' => 'context-ui-blocks',
             'query' => 'destination='. $_GET['q'],
           );
-          if ($context->system) {            
+          if ($context->system) {
             $row[] = l(t('Override visibility'), "admin/build/context/$identifier/clone", $options);
           }
           else {
