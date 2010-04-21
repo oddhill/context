@@ -72,21 +72,46 @@ function context_contrib_context_reactions() {
  */
 function context_contrib_nodeapi(&$node, $op, $teaser, $page) {
   if ($op == 'view' && $page && ($menu_ob = menu_get_object()) && $menu_ob->nid == $node->nid) {
-    // Implementation of context for nodequeue.
-    if (module_exists('nodequeue')) {
-      $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
-      while($qid = db_fetch_object($result)) {
-        context_set_by_condition('nodequeue', $qid->qid);
+    context_contrib_node_condition($node, $op);
+  }
+}
+
+/**
+ * Implementation of hook_ctools_render_alter().
+ *
+ * Used to detect the presence of a page manager node view or node form.
+ */
+function context_contrib_ctools_render_alter($info, $page, $args, $contexts, $task, $subtask) {
+  if ($page && in_array($task['name'], array('node_view', 'node_edit'), TRUE)) {
+    foreach ($contexts as $ctools_context) {
+      if ($ctools_context->type === 'node' && !empty($ctools_context->data)) {
+        context_contrib_node_condition($ctools_context->data, $task['name'] === 'node_view' ? 'view' : 'form');
+        break;
       }
     }
+  }
+}
 
-    // Implementation of context for CCK.
-    if (module_exists('content')) {
-      foreach (content_fields() as $field) {
-        if (isset($node->$field['field_name']) && $options = content_allowed_values($field)) {
-          foreach ($node->$field['field_name'] as $item) {
-            context_set_by_condition($field['field_name'], $item['value']);
-          }
+/**
+ * Centralized node condition call function for the ever increasing number of
+ * ways to get at a node view / node form.
+ */
+function context_contrib_node_condition(&$node, $op) {
+
+  // Implementation of context for nodequeue.
+  if (module_exists('nodequeue')) {
+    $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
+    while($qid = db_fetch_object($result)) {
+      context_set_by_condition('nodequeue', $qid->qid);
+    }
+  }
+
+  // Implementation of context for CCK.
+  if (module_exists('content')) {
+    foreach (content_fields() as $field) {
+      if (isset($node->$field['field_name']) && $options = content_allowed_values($field)) {
+        foreach ($node->$field['field_name'] as $item) {
+          context_set_by_condition($field['field_name'], $item['value']);
         }
       }
     }
