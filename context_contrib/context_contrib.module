@@ -71,7 +71,7 @@ function context_contrib_context_reactions() {
  * Implementation of hook_nodeapi().
  */
 function context_contrib_nodeapi(&$node, $op, $teaser, $page) {
-  if ($op == 'view' && $page && arg(0) == 'node') {
+  if ($op == 'view' && $page && ($menu_ob = menu_get_object()) && $menu_ob->nid == $node->nid) {
     // Implementation of context for nodequeue.
     if (module_exists('nodequeue')) {
       $result = db_query("SELECT qid FROM {nodequeue_nodes} WHERE nid = %d", $node->nid);
