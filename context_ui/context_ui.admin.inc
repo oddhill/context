@@ -87,10 +87,13 @@ function context_ui_preprocess_context_ui_list_contexts(&$vars) {
   $getting_started = theme('advanced_help_topic', 'context_ui', 'getting-started', 'title');
   if (!$getting_started) {
     $getting_started = t('Install the advanced help module to view the getting started');
-
+    $vars['help'] = t('If you install the <a href="@advanced_help_link">Advanced Help</a> module you can get more and better help.', array('@advanced_help_link' => url('http://drupal.org/project/advanced_help')));
+  }
+  else {
+    $vars['help'] = t('Not sure what to do? Try the "!getting-started" page.', array('!getting-started' => $getting_started));
   }
 
-  $vars['help'] = t('Not sure what to do? Try the "!getting-started" page.', array('!getting-started' => $getting_started));
+
   $vars['help_type_icon'] = theme('advanced_help_topic', 'context_ui', 'type');
 }
 
@@ -395,7 +398,12 @@ function context_ui_item_display($type, $element) {
   // We're dealing with an item with options --
   // try to grab the display-friendly value
   $items = array();
-  $title = l($element['#title'], $_GET['q'], array('fragment' => $type));
+  $title = l($element['#title'], $_GET['q'], array('fragment' => $type, 'attributes' => array('class' => 'context_ui-item-section-link')));
+  // Check for the extra help:
+  if (isset($element['#help_topic']) && isset($element['#help_module']) && module_exists($element['#help_module'])) {
+    $title = theme('advanced_help_topic', $element['#help_module'], $element['#help_topic']) . $title;
+  }
+
   if (isset($element['#options'])) {
     if (isset($element['#default_value'])) {
       if (is_array($element['#default_value'])) {

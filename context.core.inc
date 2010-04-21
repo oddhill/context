@@ -97,7 +97,9 @@ function context_context_conditions() {
     '#title' => t('Sitewide context'),
     '#type' => 'radios',
     '#options' => array(0 => t('False'), 1 => t('True')),
-    '#description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
+    '#description' => theme('advanced_help_topic', 'context_ui', 'default-contexts') . t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
+    '#help_topic' => 'default-contexts',
+    '#help_module' => 'context_ui',
   );
 
   // Path
@@ -225,6 +227,8 @@ function context_context_reactions() {
       '#options' => $menus,
       '#type' => 'select',
       '#size' => 20,
+      '#help_topic' => 'active-menus',
+      '#help_module' => 'context_ui',
     );
   }
   else {
