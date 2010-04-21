@@ -513,8 +513,7 @@ function context_active_values($type = NULL, $reset = FALSE) {
   if (!isset($value_map) || $reset) {
     $value_map = array();
 
-    // This sucks... @TODO: fix it!!!
-    $keys = array_merge(array_keys(context_reactions()), array_keys(context_conditions()));
+    $keys = array_keys(context_reactions() + context_conditions());
     $keys[] = 'block';
 
     foreach ($keys as $key) {
