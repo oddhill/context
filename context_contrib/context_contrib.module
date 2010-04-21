@@ -55,12 +55,23 @@ function context_contrib_context_conditions() {
  */
 function context_contrib_context_reactions() {
   $items = array();
+
   // CSS Injector
   if (module_exists('css_injector')) {
     $items['css_injector'] = array(
       '#title' => t('CSS injector'),
       '#description' => t('Inject the selected css when this context is set.'),
       '#options' => _context_contrib_get_css_injector(),
+      '#type' => 'checkboxes',
+    );
+   }
+
+  // JS Injector
+  if (module_exists('js_injector')) {
+    $items['js_injector'] = array(
+      '#title' => t('JS injector'),
+      '#description' => t('Inject the selected js when this context is set.'),
+      '#options' => _context_contrib_get_js_injector(),
       '#type' => 'checkboxes',
     );
   }
@@ -186,6 +197,36 @@ function css_injector_context_page_reaction() {
     foreach ($css_rules as $crid) {
       if ($css_rule = _css_injector_load_rule($crid)) {
         drupal_add_css(file_create_path($css_rule['file_path']), 'module', $css_rule['media'], $css_rule['preprocess']);
+      }
+    }
+  }
+  else {
+    return;
+  }
+}
+
+/**
+ * Helper function to generate a list of js_injector files.
+ */
+function _context_contrib_get_js_injector() {
+  $list = array();
+  foreach (_js_injector_load_rule() as $js_rule) {
+    $list[$js_rule['crid']] = $js_rule['title'];
+  }
+  ksort($list);
+  return $list;
+}
+
+
+/**
+ * Implementation hook_context_page_reaction() on behalf of js injector.
+ */
+function js_injector_context_page_reaction() {
+  $js_rules = context_active_values('js_injector');
+  if (!empty($js_rules)) {
+    foreach ($js_rules as $crid) {
+      if ($js_rule = _js_injector_load_rule($crid)) {
+        drupal_add_js(file_create_path($js_rule['file_path']), 'module', $js_rule['scope'], FALSE, $js_rule['cache'], $js_rule['preprocess']);
       }
     }
   }
