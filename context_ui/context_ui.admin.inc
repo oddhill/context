@@ -851,7 +851,7 @@ function context_ui_form_validate($form, &$form_state) {
     $context->attribute = $form_state['values']['attribute'];
     $context->value = $form_state['values']['value'];
     $exists = context_load_context($context);
-    if (isset($exists->cid) && ($exists->cid != $context->cid)) {
+    if (isset($exists->cid) && ($exists->cid != $form_state['values']['cid'])) {
       form_set_error($form_state['values']['value'], t('A user-defined context with this namespace/key/value identifier already exists. Please delete the existing context or change your namespace/key/value identifiers.'));
     }
   }
