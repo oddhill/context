@@ -9,6 +9,7 @@ function context_contrib_context_conditions() {
 
   // Views
   if (module_exists('views')) {
+    drupal_add_js(drupal_get_path('module', 'context_contrib') .'/context_contrib.js');
     $items['views'] = array(
       '#title' => t('Views'),
       '#description' => t('Set this context when displaying the page of one of these views.'),
