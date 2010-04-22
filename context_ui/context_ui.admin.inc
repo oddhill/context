@@ -26,7 +26,7 @@ function context_ui_preprocess_context_ui_list_contexts(&$vars) {
   $vars['contexts_tree'] = array();
 
   foreach ($contexts as $key => $context) {
-    $identifier = (isset($context->cid) && $context->cid) ? $context->cid : key;
+    $identifier = (isset($context->cid) && $context->cid) ? $context->cid : $key;
 
     $item = new stdClass();
     $item->namespace = $context->namespace;
