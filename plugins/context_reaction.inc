@@ -52,9 +52,15 @@ class context_reaction {
    * Retrieve options from the context provided.
    */
   function fetch_from_context($context) {
+
+    $args['__drupal_alter_by_ref'] = array(
+      &$this,
+      &$context
+    );
+
     // Allow other modules to alter the value just before it's returned.
     if (!context_isset('context_ui', 'no_alter')) {
-      drupal_alter('context_reaction_fetch', $this, $context);
+      drupal_alter('context_reaction_fetch', $args);
     }
     return isset($context->reactions[$this->plugin]) ? $context->reactions[$this->plugin] : array();
   }
