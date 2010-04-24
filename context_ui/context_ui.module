@@ -177,7 +177,7 @@ function context_ui_help($path, $arg) {
   switch ($path) {
     case 'admin/build/context':
       return '<p>'.
-        t('Contexts provide you with a way to organize your site using terms familiar to real human beings. You can create a set of sections like <b>"News"</b>, <b>"Projects"</b>, <b>"Staff"</b>, and associate different technical aspects of Drupal to each section. For example, the <b>"News"</b> section may be a collection of <b>Nodes</b>, <b>Views</b>, <b>Menus</b> and <b>Blocks</b>.')
+        t("Contexts provide you with a way to organize your site using terms familiar to real human beings. You can create a set of sections like <em>'News'</em>, <em>'Projects'</em>, <em>'Staff'</em>, and associate different technical aspects of Drupal to each section. For example, the <em>'News'</em> section may be a collection of <em>Nodes</em>, <em>Views</em>, <em>Menus</em> and <em>Blocks</em>.")
         .'</p>';
       break;
   }
