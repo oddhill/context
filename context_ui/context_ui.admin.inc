@@ -987,6 +987,11 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
         $active_themes[] = $theme;
       }
     }
+    
+    // There's a small chance that Drupal doesn't actually have any themes active:
+    if (empty($active_themes)) {
+      $active_themes[] = variable_get('theme_default', 'garland');
+    }
 
     // Load blocks from database
     $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme IN (" . db_placeholders($active_themes, 'varchar') . ") ORDER BY module, delta, weight, region, status", $active_themes);
