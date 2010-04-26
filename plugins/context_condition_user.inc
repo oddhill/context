@@ -11,7 +11,10 @@ class context_condition_user extends context_condition {
 
   function execute($account) {
     $roles = $account->roles;
-    foreach ($roles as $role) {
+    foreach ($roles as $rid => $role) {
+      if ($rid == DRUPAL_ANONYMOUS_RID || $rid == DRUPAL_AUTHENTICATED_RID) {
+        $role = t($role);
+      }
       foreach ($this->get_contexts($role) as $context) {
         $this->condition_met($context, $role);
       }
