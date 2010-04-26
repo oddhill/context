@@ -244,9 +244,7 @@ class context_reaction_block extends context_reaction {
     // Get blocks provided by Drupal core block visibility & merge context blocks in.
     $blocks = block_list($region);
     if (isset($context_blocks[$region])) {
-      foreach ($context_blocks[$region] as $block) {
-        $blocks[] = $block;
-      }
+      $blocks = array_merge($blocks, $context_blocks[$region]);
       uasort($blocks, 'context_reaction_block::block_sort');
     }
     return $blocks;
@@ -255,20 +253,30 @@ class context_reaction_block extends context_reaction {
   /**
    * Build a block's content. Largely taken from block_list().
    */
-  protected function build_block($block) {
+  protected function build_block($block, $reset = FALSE) {
+    // Block caching is not compatible with node_access modules. We also
+    // preserve the submission of forms in blocks, by fetching from cache
+    // only if the request method is 'GET'.
+    static $cacheable;
+    if (!isset($cacheable) || $reset) {
+      $cacheable = !count(module_implements('node_grants')) && $_SERVER['REQUEST_METHOD'] == 'GET';
+    }
+
     if (!isset($block->content)) {
       $block->content = '';
-      // Try fetching the block from cache. Block caching is not compatible with
-      // node_access modules. We also preserve the submission of forms in blocks,
-      // by fetching from cache only if the request method is 'GET'.
-      if (!count(module_implements('node_grants')) && $_SERVER['REQUEST_METHOD'] == 'GET' && ($cid = _block_get_cache_id($block)) && ($cache = cache_get($cid, 'cache_block'))) {
-        $array = $cache->data;
-      }
-      else {
-        $array = module_invoke($block->module, 'block', 'view', $block->delta);
-        if (isset($cid)) {
+      // Try fetching the block from cache.
+      if ($cacheable && ($cid = _block_get_cache_id($block))) {
+        if ($cache = cache_get($cid, 'cache_block')) {
+          $array = $cache->data;
+        }
+        else {
+          $array = module_invoke($block->module, 'block', 'view', $block->delta);
           cache_set($cid, $array, 'cache_block', CACHE_TEMPORARY);
         }
+      }
+      // Otherwise build block.
+      else {
+        $array = module_invoke($block->module, 'block', 'view', $block->delta);
       }
       if (isset($array) && is_array($array)) {
         foreach ($array as $k => $v) {
