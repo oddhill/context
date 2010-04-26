@@ -104,6 +104,11 @@ function template_preprocess_context_block_editable_region(&$vars) {
   $vars['editable'] = isset($vars['editable']) ? $vars['editable'] : TRUE;
 
   $vars['show_always'] = variable_get('context_ui_show_empty_regions', false);
+
+  // Provide the user-friendly name of the region
+  global $theme_key;
+  $regions = system_region_list($theme_key);
+  $vars['region_description'] = isset($regions[$vars['region']]) ? $regions[$vars['region']] : $vars['region'];
 }
 
 /**
