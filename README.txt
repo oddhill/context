@@ -17,7 +17,7 @@ Installation
 ------------
 Context can be installed like any other Drupal module -- place it in
 the modules directory for your site and enable it (and its requirement,
-context) on the `admin/build/modules` page.
+CTools) on the `admin/build/modules` page.
 
 You will probably also want to install Context UI which provides a way for
 you to edit contexts through the Drupal admin interface.
