@@ -139,10 +139,6 @@ class context_condition {
    * Retrieve options from the context provided.
    */
   function fetch_from_context($context, $key = NULL) {
-    // Allow other modules to alter the value just before it's returned.
-    if (!context_isset('context_ui', 'no_alter')) {
-      drupal_alter('context_condition_fetch', $this, $context);
-    }
     if (isset($key)) {
       return isset($context->conditions[$this->plugin][$key]) ? $context->conditions[$this->plugin][$key] : array();
     }

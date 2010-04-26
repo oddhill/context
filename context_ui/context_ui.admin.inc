@@ -65,7 +65,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   // Set a context to prevent implementation of 
   // hook_context_reaction_fetch_alter() from running so we can edit the real
   // values of the context.
-  context_set('context_ui', 'no_alter', TRUE);
+  context_set('context', 'no_alter', TRUE);
   ctools_include('export');
 
   $context = !$context ? ctools_export_new_object('context') : $context;
