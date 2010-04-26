@@ -313,6 +313,7 @@ function context_links($reset = FALSE) {
       }
     }
     drupal_alter('context_links', $links);
+    uasort($links, 'element_sort');
   }
   return $links;
 }
