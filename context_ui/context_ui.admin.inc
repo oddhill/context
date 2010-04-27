@@ -146,7 +146,7 @@ function context_ui_default_values($form, $data) {
 
 /**
  * Generates the omnibus context definition editing form.
- * Note: submission and validation handlers are in context_ui_admin.inc
+ * Note: submission and validation handlers are in context_ui.admin.inc
  *
  * @param $op
  *   The type of form to build. Either "add", "view" or "edit"
@@ -987,7 +987,7 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
         $active_themes[] = $theme;
       }
     }
-    
+
     // There's a small chance that Drupal doesn't actually have any themes active:
     if (empty($active_themes)) {
       $active_themes[] = variable_get('theme_default', 'garland');
