@@ -977,9 +977,6 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
   if (!isset($system_blocks)) {
     $system_blocks = array();
 
-    // Rebuild block "cache"
-    _block_rehash();
-
     // Compute the active themes:
     $active_themes = array();
     foreach (list_themes() as $theme => $theme_ob) {
@@ -992,6 +989,9 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
     if (empty($active_themes)) {
       $active_themes[] = variable_get('theme_default', 'garland');
     }
+
+    // Rebuild block 'cache':
+    _context_ui_block_rehash($active_themes);
 
     // Load blocks from database
     $result = db_query("SELECT module, delta, weight, region, status FROM {blocks} WHERE theme IN (" . db_placeholders($active_themes, 'varchar') . ") ORDER BY module, delta, weight, region, status", $active_themes);
@@ -1057,4 +1057,36 @@ function _context_ui_get_blocks($region = NULL, $context = NULL) {
     return isset($blocks[$region]) ? $blocks[$region] : array();
   }
   return $blocks;
+}
+
+/**
+ * A helper function to rebuild the 'block cache' for a number of given themes.
+ *
+ * This is needed because _block_rehash() uses the global $theme_key to know
+ * which theme's block cache to 'rehash'.
+ * This function has the potential to go horribly wrong, and leave the user
+ * looking at some very random theme.
+ *
+ * Drupal maintains a 'block cache' of all the blocks from different modules in
+ * the 'blocks' table, but it doesn't get rebuilt very often, and it doesn't get
+ * rebuilt for any themes except the active one (in that page request).
+ *
+ * @param $themes
+ *   An array of theme names to rebuild the 'block cache' for.
+ */
+function _context_ui_block_rehash($themes) {
+  global $theme_key;
+
+  // Store the current theme key for later:
+  $previous_theme_key = $theme_key;
+
+  foreach ($themes as $theme) {
+    // Temporarily set the given theme as the active theme:
+    $theme_key = $theme;
+    // Rebuild the 'block cache' for the given theme.
+    _block_rehash();
+  }
+
+  // Restore the previously set theme:
+  $theme_key = $previous_theme_key;
 }
