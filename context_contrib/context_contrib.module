@@ -33,25 +33,6 @@ function context_contrib_context_conditions() {
     );
   }
 
-  if (module_exists('taxonomy')) {
-    $taxonomy = array();
-    foreach (taxonomy_get_vocabularies() as $vid => $vocab) {
-      $taxonomy[$vid .':0'] = '<'. $vocab->name .'>';
-      foreach (taxonomy_get_tree($vid) as $term) {
-        $taxonomy[$vid .':'. $term->tid] = str_repeat('-', $term->depth + 1) .' '. $vocab->name .':  '. $term->name;
-      }
-    }
-    // Terms Selection
-    $items['taxonomy'] = array(
-      '#title' => t('Taxonomy Terms'),
-      '#description' => t('Set this context when a node with a selected term is viewed. Select the vocabulary to set the context when a node contains a term in the vocabulary.'),
-      '#type' => 'select',
-      '#options' => $taxonomy,
-      '#multiple' => TRUE,
-    );
-  }
-
-
   // CCK
   if (module_exists('content')) {
     foreach (content_fields() as $field) {
@@ -144,15 +125,6 @@ function context_contrib_node_condition(&$node, $op) {
           context_set_by_condition($field['field_name'], $item['value']);
         }
       }
-    }
-  }
-
-  // Implementation of context for taxonomy.
-  if (module_exists('taxonomy') && $node->taxonomy) {
-    // Set context for terms
-    foreach ($node->taxonomy as $term) {
-      context_set_by_condition('taxonomy', $term->vid .':'. $term->tid);
-      context_set_by_condition('taxonomy', $term->vid .':0');
     }
   }
 }

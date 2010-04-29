@@ -68,6 +68,8 @@ function context_context_conditions() {
     '#description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
     '#options' => $nodetypes,
     '#type' => 'checkboxes',
+    '#help_topic' => 'node-condition',
+    '#help_module' => 'context_ui',
   );
 
   // User
@@ -92,7 +94,7 @@ function context_context_conditions() {
     );
   }
 
-  // Sitewide context
+  // Sitewide context:
   $items['sitewide'] = array(
     '#title' => t('Sitewide context'),
     '#type' => 'radios',
@@ -102,7 +104,17 @@ function context_context_conditions() {
     '#help_module' => 'context_ui',
   );
 
-  // Path
+  // Default context:
+  $items['default'] = array(
+    '#title' => t('Default context'),
+    '#type' => 'radios',
+    '#options' => array(0 => t('False'), 1 => t('True')),
+    '#description' => theme('advanced_help_topic', 'context_ui', 'default-context') . t('If no other context is activated in this namespace and attribute, should this one be activated?'),
+    '#help_topic' => 'default-context',
+    '#help_module' => 'context_ui',
+  );
+
+  // Path:
   $items['path'] = array(
     '#title' => t('Path'),
     '#description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the "*" character as a wildcard and &lt;front&gt; for the front page.'),
@@ -141,6 +153,30 @@ function context_context_conditions() {
   }
   else {
     $items['menu_trail'] = array('#type' => 'value');
+  }
+
+  if (module_exists('taxonomy')) {
+    $taxonomy = array();
+    $context_taxonomies = variable_get('context_taxonomy_vocabularies', array());
+    foreach (taxonomy_get_vocabularies() as $vid => $vocab) {
+      // Is using this vocab active for context:
+      if (in_array($vid, $context_taxonomies)) {
+        $taxonomy[$vid .':0'] = '<'. $vocab->name .'>';
+        foreach (taxonomy_get_tree($vid) as $term) {
+          $taxonomy[$vid .':'. $term->tid] = str_repeat('-', $term->depth + 1) .' '. $vocab->name .':  '. $term->name;
+        }
+      }
+    }
+    // Terms Selection
+    $items['taxonomy'] = array(
+      '#title' => t('Taxonomy Terms'),
+      '#description' => t('Set this context when a node with a selected term is viewed. Select the vocabulary to set the context when a node contains any term in the vocabulary. Vocabularies and their terms will only appear in this list if you have explicity included them on their settings page.'),
+      '#type' => 'select',
+      '#options' => $taxonomy,
+      '#multiple' => TRUE,
+      '#help_topic' => 'taxonomy-condition',
+    '#help_module' => 'context_ui',
+    );
   }
 
   return $items;
@@ -311,6 +347,15 @@ function context_node_condition(&$node, $op) {
       context_set_by_condition('book', $node->book['menu_name']);
     }
   }
+
+  // Implementation of context for taxonomy.
+  if (module_exists('taxonomy') && $node->taxonomy) {
+    // Set context for terms
+    foreach ($node->taxonomy as $term) {
+      context_set_by_condition('taxonomy', $term->vid .':'. $term->tid);
+      context_set_by_condition('taxonomy', $term->vid .':0');
+    }
+  }
 }
 
 /**
@@ -323,6 +368,40 @@ function context_form_alter(&$form, $form_state, $form_id) {
   if ($form_id == 'system_modules') {
     context_invalidate_cache();
   }
+  if ($form_id == 'taxonomy_form_vocabulary') {
+    // Add the option to include this vocabulary in context conditions:
+    $vid = isset($form['vid']['#value']) ? $form['vid']['#value'] : 0;
+    $form['settings']['context'] = array(
+      '#type' => 'checkbox',
+      '#title' => t('Include as context condition'),
+      '#description' => t('Select to make this vocabulary available for use as a context condition.'),
+      '#default_value' => in_array($vid, variable_get('context_taxonomy_vocabularies', array())),
+    );
+    // Add our submit handler:
+    $form['#submit'][] = 'content_taxonomy_form_vocabulary_submit';
+  }
+}
+
+/**
+ * Form submission handler for the vocabulary add/edit form.
+ *
+ * We store our context specific settings for the given vocabulary, this is so
+ * that people can choose to include specific taxonomies in the taxonomy
+ * condition form.
+ */
+function content_taxonomy_form_vocabulary_submit($form, &$form_state) {
+  $context_vocabularies = variable_get('context_taxonomy_vocabularies', array());
+  $vid = $form_state['values']['vid'];
+
+  if ($form_state['values']['context']) {
+    $context_vocabularies[$vid] = $vid;
+  }
+  else {
+    unset($context_vocabularies[$vid]);
+  }
+
+  // Update the settings:
+  variable_set('context_taxonomy_vocabularies', $context_vocabularies);
 }
 
 /**
@@ -593,6 +672,10 @@ function context_links($reset = FALSE) {
  */
 function context_page_alter(&$vars) {
   module_invoke_all('context_page_condition');
+
+  // One final, special, context reaction, for 'default' contexts:
+  context_set_by_condition('default', 1);
+
   module_invoke_all('context_page_reaction');
 }
 
