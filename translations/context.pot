@@ -3,21 +3,21 @@
 # LANGUAGE translation of Drupal (general)
 # Copyright YEAR NAME <EMAIL@ADDRESS>
 # Generated from files:
-#  context.core.inc,v 1.1.2.3.2.26 2010/04/21 17:16:19 darthsteven
+#  context.core.inc,v 1.1.2.3.2.27 2010/04/29 16:54:34 darthsteven
 #  context.install,v 1.1.2.1.2.6 2009/08/26 04:12:34 yhahn
 #  context.info,v 1.4 2008/07/17 16:57:18 jmiccolis
-#  context_ui.info,v 1.3 2008/07/17 16:57:19 jmiccolis
 #  context_contrib.info,v 1.1.2.1 2009/03/09 06:43:55 yhahn
-#  context_ui.admin.inc,v 1.1.2.7.2.22 2010/04/22 18:23:46 darthsteven
-#  context_ui.module,v 1.13.2.48.2.2 2010/04/21 01:23:38 darthsteven
-#  context_contrib.module,v 1.1.2.2.2.10 2010/04/21 15:14:42 darthsteven
+#  context_ui.admin.inc,v 1.1.2.7.2.25 2010/04/29 06:06:19 darthsteven
+#  context_ui.module,v 1.13.2.48.2.3 2010/04/24 15:39:13 darthsteven
+#  context_ui.info,v 1.3.4.1 2010/04/25 15:30:53 darthsteven
+#  context_contrib.module,v 1.1.2.2.2.11 2010/04/29 16:54:54 darthsteven
 #  context_ui-list-contexts.tpl.php,v 1.1.2.1 2010/04/21 01:23:38 darthsteven
 #
 #, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PROJECT VERSION\n"
-"POT-Creation-Date: 2010-04-26 20:22+0200\n"
+"POT-Creation-Date: 2010-04-29 18:22+0100\n"
 "PO-Revision-Date: YYYY-mm-DD HH:MM+ZZZZ\n"
 "Last-Translator: NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <EMAIL@ADDRESS>\n"
@@ -34,99 +34,123 @@ msgstr ""
 msgid "Set this context when viewing a node page or using the add/edit form of one of these content types."
 msgstr ""
 
-#: context.core.inc:75
+#: context.core.inc:77
 msgid "User pages"
 msgstr ""
 
-#: context.core.inc:76
+#: context.core.inc:78
 msgid "Set this context when a user with selected role(s) is viewed"
 msgstr ""
 
-#: context.core.inc:88
+#: context.core.inc:90
 msgid "Book"
 msgstr ""
 
-#: context.core.inc:89
+#: context.core.inc:91
 msgid "Set this context when a node in the selected book is viewed."
 msgstr ""
 
-#: context.core.inc:97
+#: context.core.inc:99
 msgid "Sitewide context"
 msgstr ""
 
-#: context.core.inc:99
+#: context.core.inc:101;111
 msgid "False"
 msgstr ""
 
-#: context.core.inc:99
+#: context.core.inc:101;111
 msgid "True"
 msgstr ""
 
-#: context.core.inc:100
+#: context.core.inc:102
 msgid "Should this context always be set? If <strong>true</strong>, this context will be active across your entire site."
 msgstr ""
 
-#: context.core.inc:107
+#: context.core.inc:109
+msgid "Default context"
+msgstr ""
+
+#: context.core.inc:112
+msgid "If no other context is activated in this namespace and attribute, should this one be activated?"
+msgstr ""
+
+#: context.core.inc:119
 msgid "Path"
 msgstr ""
 
-#: context.core.inc:108
+#: context.core.inc:120
 msgid "Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the \"*\" character as a wildcard and &lt;front&gt; for the front page."
 msgstr ""
 
-#: context.core.inc:133;223
+#: context.core.inc:145;259
 msgid "None"
 msgstr ""
 
-#: context.core.inc:135
+#: context.core.inc:147
 msgid "Menu trail"
 msgstr ""
 
-#: context.core.inc:136
+#: context.core.inc:148
 msgid "Set this context when any of the selected menu items belong to the current active menu trail."
 msgstr ""
 
-#: context.core.inc:225
+#: context.core.inc:172
+msgid "Taxonomy Terms"
+msgstr ""
+
+#: context.core.inc:173
+msgid "Set this context when a node with a selected term is viewed. Select the vocabulary to set the context when a node contains any term in the vocabulary. Vocabularies and their terms will only appear in this list if you have explicity included them on their settings page."
+msgstr ""
+
+#: context.core.inc:261
 msgid "Active menu"
 msgstr ""
 
-#: context.core.inc:226
+#: context.core.inc:262
 msgid "Display the selected menu item as active in the <strong>$primary_links</strong> or <strong>$secondary_links</strong> of page.tpl.php when this context is set."
 msgstr ""
 
-#: context.core.inc:241
+#: context.core.inc:277
 msgid "Theme variables"
 msgstr ""
 
-#: context.core.inc:243
+#: context.core.inc:279
 msgid "Section title"
 msgstr ""
 
-#: context.core.inc:244
+#: context.core.inc:280
 msgid "Provides this text as a <strong>$section_title</strong> variable for display in page.tpl.php when this context is active."
 msgstr ""
 
-#: context.core.inc:249
+#: context.core.inc:285
 msgid "Section subtitle"
 msgstr ""
 
-#: context.core.inc:250
+#: context.core.inc:286
 msgid "Provides this text as a <strong>$section_subtitle</strong> variable for display in page.tpl.php when this context is active."
 msgstr ""
 
-#: context.core.inc:255
+#: context.core.inc:291
 msgid "Section class"
 msgstr ""
 
-#: context.core.inc:256
+#: context.core.inc:292
 msgid "Provides this text as an additional body class (in <strong>$body_classes</strong> in page.tpl.php) when this section is active."
 msgstr ""
 
-#: context.core.inc:266
+#: context.core.inc:302
 msgid "Disabled regions"
 msgstr ""
 
-#: context.core.inc:556
+#: context.core.inc:376
+msgid "Include as context condition"
+msgstr ""
+
+#: context.core.inc:377
+msgid "Select to make this vocabulary available for use as a context condition."
+msgstr ""
+
+#: context.core.inc:635
 msgid "Add !type"
 msgstr ""
 
@@ -154,20 +178,12 @@ msgstr ""
 msgid "Serialized storage of all associated context items."
 msgstr ""
 
-#: context.info:0;0 context_ui.info:0 context_contrib/context_contrib.info:0 context_ui/context_ui.admin.inc:792 context_ui/context_ui.module:71 context_ui/context_ui.info:0
+#: context.info:0;0 context_contrib/context_contrib.info:0 context_ui/context_ui.admin.inc:792 context_ui/context_ui.module:71 context_ui/context_ui.info:0
 msgid "Context"
 msgstr ""
 
 #: context.info:0
 msgid "Provide modules with a cache that lasts for a single page request."
-msgstr ""
-
-#: context_ui.info:0 context_ui/context_ui.info:0
-msgid "Context UI"
-msgstr ""
-
-#: context_ui.info:0
-msgid "Provides a simple UI for setting up a site structure using Context."
 msgstr ""
 
 #: context_contrib/context_contrib.module:14
@@ -186,27 +202,19 @@ msgstr ""
 msgid "Set this context when a node in the selected nodequeue(s) is viewed."
 msgstr ""
 
-#: context_contrib/context_contrib.module:46
-msgid "Taxonomy Terms"
-msgstr ""
-
-#: context_contrib/context_contrib.module:47
-msgid "Set this context when a node with a selected term is viewed. Select the vocabulary to set the context when a node contains a term in the vocabulary."
-msgstr ""
-
-#: context_contrib/context_contrib.module:81
+#: context_contrib/context_contrib.module:62
 msgid "CSS injector"
 msgstr ""
 
-#: context_contrib/context_contrib.module:82
+#: context_contrib/context_contrib.module:63
 msgid "Inject the selected css when this context is set."
 msgstr ""
 
-#: context_contrib/context_contrib.module:91
+#: context_contrib/context_contrib.module:72
 msgid "JS injector"
 msgstr ""
 
-#: context_contrib/context_contrib.module:92
+#: context_contrib/context_contrib.module:73
 msgid "Inject the selected js when this context is set."
 msgstr ""
 
@@ -527,6 +535,10 @@ msgid "Core attributes"
 msgstr ""
 
 #: context_ui/context_ui.info:0
-msgid "Provides a simple UI for settings up a site structure using Context."
+msgid "Context UI"
+msgstr ""
+
+#: context_ui/context_ui.info:0
+msgid "Provides a simple UI for setting up a site structure using Context."
 msgstr ""
 
