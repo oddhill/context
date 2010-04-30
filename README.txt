@@ -77,6 +77,7 @@ Maintainers
 -----------
 yhahn (Young Hahn)
 jmiccolis (Jeff Miccolis)
+Steven Jones
 
 Contributors
 ------------
