@@ -33,6 +33,8 @@ function context_ui_preprocess_context_ui_list_contexts(&$vars) {
     $item->attribute = $context->attribute;
     $item->name = $context->value;
     $item->ops = array();
+    // Build the array of links:
+    $links = array();
 
     switch ($context->type) {
       case CONTEXT_STORAGE_DEFAULT:
