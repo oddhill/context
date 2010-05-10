@@ -270,7 +270,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
   $weight_delta = round(($block_count + 2) / 2);
 
   foreach ($blocks[0] as $block) {
-    $block_options[$block->module][$block->bid] = $block->label;
+    $block_options[$block->module][$block->bid] = check_plain($block->label);
   }
   ksort($block_options);
 
@@ -323,7 +323,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     if ($system) {
       $system_blocks = array();
       foreach ($system as $block) {
-        $system_blocks[] = $block->label;
+        $system_blocks[] = check_plain($block->label);
       }
       $system_blocks = "<span class='system-blocks'>". implode(", ", $system_blocks) ."</span";
       $form['block']['blocks'][$region]['system'] = array(
@@ -345,7 +345,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
         $form['block']['blocks'][$region][$block->bid] = array(
           '#type' => 'markup',
           '#tree' => TRUE,
-          '#value' => $block->label,
+          '#value' => check_plain($block->label),
           '#weight' => $block->weight,
           'weight' => array(
             '#type' => 'weight',
