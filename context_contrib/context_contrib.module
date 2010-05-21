@@ -38,7 +38,7 @@ function context_contrib_context_conditions() {
     foreach (content_fields() as $field) {
       if ($options = content_allowed_values($field)) {
         $items[$field['field_name']] = array(
-          '#title' => $field['widget']['label'],
+          '#title' => t('CCK Field: @field_label', array('@field_label' => $field['widget']['label'])),
           '#type' => 'checkboxes',
           '#options' => $options,
           '#description' => filter_xss_admin($field['widget']['description']),
