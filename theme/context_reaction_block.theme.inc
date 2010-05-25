@@ -92,6 +92,8 @@ function template_preprocess_context_block_browser(&$vars) {
  * Preprocessor for theme('context_block_browser_item').
  */
 function template_preprocess_context_block_browser_item(&$vars) {
+  $vars['bid'] = $vars['block']->bid;
+  $vars['info'] = check_plain($vars['block']->info);
 }
 
 /**
@@ -118,7 +120,7 @@ function template_preprocess_context_block_editable_block(&$vars) {
   $plugin = context_get_plugin('reaction', 'block');
   $block_info = $plugin->get_blocks();
   $block = $vars['block'];
-  $vars['label'] = isset($block_info[$block->bid]) ? $block_info[$block->bid]->info : $block->bid;
+  $vars['label'] = isset($block_info[$block->bid]) ? check_plain($block_info[$block->bid]->info) : $block->bid;
   $vars['tools'] = l('X', $_GET['q'], array('fragment' => 'remove', 'attributes' => array('class' => 'remove')));
   $vars['class'] = !empty($block->context) ? "editable edit-{$block->context}" : '';
 }

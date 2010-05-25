@@ -9,7 +9,6 @@ class context_reaction_block extends context_reaction {
    * Options form.
    */
   function options_form($context) {
-    // init_theme();
     $theme_key = variable_get('theme_default', 'garland');
     $weight_delta = $this->max_block_weight();
 
@@ -44,7 +43,7 @@ class context_reaction_block extends context_reaction {
           '#options' => array(),
         );
       }
-      $form['selector'][$block->module]['#options'][$block->bid] = $block->info;
+      $form['selector'][$block->module]['#options'][$block->bid] = check_plain($block->info);
     }
     ksort($form['selector']);
 
@@ -64,7 +63,7 @@ class context_reaction_block extends context_reaction {
       foreach ($this->get_blocks($region, $context) as $block) {
         if (!empty($block->context)) {
           $form['blocks'][$region][$block->bid] = array(
-            '#value' => $block->info,
+            '#value' => check_plain($block->info),
             '#weight' => $block->weight,
             '#type' => 'markup',
             '#tree' => TRUE,
