@@ -10,6 +10,23 @@ class context_reaction {
   var $description;
 
   /**
+   * Clone our references when we're being cloned.
+   *
+   * PHP 5.3 performs 'shallow' clones when clone()'ing objects, meaning that
+   * any objects or arrays referenced by this object will not be copied, the
+   * cloned object will just reference our objects/arrays instead. By iterating
+   * over our properties and serializing and unserializing them, we force PHP to
+   * copy them.
+   */
+  function __clone() {
+    foreach ($this as $key => $val) {
+      if (is_object($val) || (is_array($val))) {
+        $this->{$key} = unserialize(serialize($val));
+      }
+    }
+  }
+
+  /**
    * Constructor. Do not override.
    */
   function __construct($plugin, $info) {
