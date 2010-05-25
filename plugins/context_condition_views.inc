@@ -10,6 +10,7 @@ class context_condition_views extends context_condition {
     $enabled_views = array();
 
     $views = views_get_all_views();
+    ksort($views);
 
     foreach ($views as $view) {
       if (!isset($views[$view->name]->disabled) || !$views[$view->name]->disabled) {
@@ -25,7 +26,6 @@ class context_condition_views extends context_condition {
         $enabled_views += $displays;
       }
     }
-    ksort($enabled_views);
     return $enabled_views;
   }
 
