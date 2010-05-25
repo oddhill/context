@@ -209,7 +209,7 @@ function context_load($name = NULL, $reset = FALSE) {
   }
   if (isset($name)) {
     // Allow other modules to alter the value just before it's returned.
-    if (!context_get('context', 'no_alter') && isset($contexts[$name]) && !isset($altered[$name])) {
+    if (isset($contexts[$name]) && !isset($altered[$name])) {
       $altered[$name] = TRUE;
       drupal_alter('context_load', $contexts[$name]);
     }
