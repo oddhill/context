@@ -225,6 +225,7 @@ class context_reaction_block extends context_reaction {
     static $context_blocks;
     if (!isset($context_blocks)) {
       $context_blocks = array();
+      $info = $this->get_blocks();
       foreach ($this->get_contexts() as $context) {
         $options = $this->fetch_from_context($context);
         if (!empty($options['blocks'])) {
@@ -232,6 +233,7 @@ class context_reaction_block extends context_reaction {
             $block = (object) $block;
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
+            $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : BLOCK_NO_CACHE;
             $block = $this->build_block($block);
             if (!empty($block->content)) {
               $context_blocks[$block->region][] = $block;
@@ -490,13 +492,9 @@ class context_reaction_block extends context_reaction {
 
       // Ensure $bid is valid.
       $info = $this->get_blocks();
-      if (isset($info[$bid]->info)) {
-        $block = new StdClass();
+      if (isset($info[$bid])) {
+        $block = $info[$bid];
         $block->context = $context;
-        $block->module = $module;
-        $block->delta = $delta;
-        $block->info = isset($info[$bid]->info) ? $info[$bid]->info : '';
-        $block->bid = $bid;
         $block->region = '';
 
         $block_view = module_invoke($module, 'block', 'view', $delta);
