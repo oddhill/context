@@ -159,42 +159,12 @@ function context_ui_menu() {
     'type' => MENU_LOCAL_TASK,
   );
 
-  // AHAH callback for block plugin.
-  $items['context/ajax-block-view'] = array(
-    'title' => 'Block view',
-    'description' => 'AJAX callback for rendering a block.',
-    'page callback' => 'context_ui_menu_plugin',
-    'page arguments' => array('reaction', 'block', 'ajax'),
-    'access callback' => 'user_access',
-    'access arguments' => array('access content'),
-    'type' => MENU_CALLBACK,
-  );
-
   foreach ($items as $path => $item) {
     $items[$path]['access callback'] = isset($items[$path]['access callback']) ? $items[$path]['access callback'] : 'user_access';
     $items[$path]['access arguments'] = isset($items[$path]['access arguments']) ? $items[$path]['access arguments'] : array('administer site configuration');
     $items[$path]['file'] = 'context_ui.admin.inc';
   }
   return $items;
-}
-
-/**
- * Router to handle plugin methods as menu callbacks.
- */
-function context_ui_menu_plugin() {
-  $args = func_get_args();
-  if (isset($args[0], $args[1], $args[2])) {
-    $type = array_shift($args);
-    $key = array_shift($args);
-    $method = array_shift($args);
-    if ($plugin = context_get_plugin($type, $key)) {
-      if (method_exists($plugin, $method)) {
-        return call_user_func(array($plugin, $method), $args);
-      }
-    }
-  }
-  drupal_not_found();
-  exit;
 }
 
 /**

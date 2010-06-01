@@ -193,19 +193,19 @@ function DrupalContextBlockEditor(editor) {
 
     if (ui.item.is('.context-block-addable')) {
       var bid = ui.item.attr('id').split('context-block-addable-')[1];
-      var params = {
-        'path': Drupal.settings.contextBlockEditor.path,
-        'bid': bid,
-        'context': context
-      };
-      $.getJSON(Drupal.settings.contextBlockEditor.ajax, params, function(data) {
+
+      // Construct query params for our AJAX block request.
+      var params = Drupal.settings.contextBlockEditor.params;
+      params.context_block = bid + ',' + context;
+
+      $.getJSON(Drupal.settings.contextBlockEditor.path, params, function(data) {
         if (data.status) {
           var newBlock = $(data.block);
           newBlock.addClass('draggable');
           if ($('script', newBlock)) {
             $('script', newBlock).remove();
           }
-          
+
           newBlock = ui.item.replaceWith(newBlock);
 
           $.each(data.css, function(k, v){

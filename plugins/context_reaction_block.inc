@@ -120,8 +120,8 @@ class context_reaction_block extends context_reaction {
       static $once;
       if (!isset($once)) {
         $settings = array(
-          'path' => $_GET['q'],
-          'ajax' => url('context/ajax-block-view'),
+          'path' => url($_GET['q']),
+          'params' => (object) $_GET,
           'scriptPlaceholder' => theme('context_block_script_placeholder', ''),
         );
         drupal_add_js(array('contextBlockEditor' => $settings), 'setting');
@@ -181,7 +181,8 @@ class context_reaction_block extends context_reaction {
    * Execute.
    */
   function execute($region) {
-    return $this->render_editable($region);
+    // If the context_block querystring param is set, switch to AJAX rendering.
+    return isset($_GET['context_block']) ? $this->render_ajax($_GET['context_block']) : $this->render_editable($region);
   }
 
   /**
@@ -470,24 +471,17 @@ class context_reaction_block extends context_reaction {
   }
 
   /**
-   * Menu callback for AJAX requests. See context_ui_menu() to see how this is called.
+   * Block renderer for AJAX requests. Triggered when $_GET['context_block']
+   * is set. See ->execute() for how this is called.
    */
-  function ajax($args) {
-    if (isset($_GET['bid'], $_GET['context'])) {
-      // Set the header right away. This will inform any players in the stack
-      // that we are in the middle of responding to an AJAX request.
-      drupal_set_header('Content-Type: text/javascript; charset=utf-8');
+  function render_ajax($param) {
+    // Set the header right away. This will inform any players in the stack
+    // that we are in the middle of responding to an AJAX request.
+    drupal_set_header('Content-Type: text/javascript; charset=utf-8');
 
-      $bid = $_GET['bid'];
-      $context = $_GET['context'];
+    if (strpos($param, ',') !== FALSE) {
+      list($bid, $context) = explode(',', $param);
       list($module, $delta) = explode('-', $bid, 2);
-
-      // Spoof the $_GET request and go so far as executing the page handler in
-      // case the block relies on some contextual information from the page build.
-      if (isset($_GET['path'])) {
-        $_GET['q'] = $_GET['path'];
-        menu_execute_active_handler($_GET['q']);
-      }
 
       // Ensure $bid is valid.
       $info = $this->get_blocks();
@@ -495,17 +489,11 @@ class context_reaction_block extends context_reaction {
         $block = $info[$bid];
         $block->context = $context;
         $block->region = '';
+        $block = $this->build_block($block);
 
-        $block_view = module_invoke($module, 'block', 'view', $delta);
-        if (!empty($block_view)) {
-          foreach ($block_view as $k => $v) {
-            $block->{$k} = $v;
-          }
-        }
         if (empty($block->content)) {
           $block->content = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
         }
-        $block = $this->build_block($block);
 
         $css = array();
 
@@ -523,7 +511,6 @@ class context_reaction_block extends context_reaction {
             }
           }
         }
-
         echo drupal_to_js(array(
           'status' => 1,
           'block' => theme('context_block_editable_block', $block),
