@@ -49,6 +49,14 @@ function _context_context_plugins() {
       'parent' => 'context_condition',
     ),
   );
+  $plugins['context_condition_user_page'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') .'/plugins',
+      'file' => 'context_condition_user_page.inc',
+      'class' => 'context_condition_user_page',
+      'parent' => 'context_condition',
+    ),
+  );
   $plugins['context_condition_menu'] = array(
     'handler' => array(
       'path' => drupal_get_path('module', 'context') .'/plugins',

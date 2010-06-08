@@ -27,6 +27,11 @@ function context_context_registry() {
       'description' => t('Set this context when the current user has one of the selected role(s).'),
       'plugin' => 'context_condition_user',
     ),
+    'user_page' => array(
+      'title' => t('User page'),
+      'description' => t('Set this context when viewing a user page.'),
+      'plugin' => 'context_condition_user_page',
+    ),
     'menu' => array(
       'title' => t('Menu'),
       'description' => t('Set this context when any of the selected menu items belong to the current active menu trail.'),
@@ -262,6 +267,17 @@ function context_form_comment_form_alter(&$form, $form_state) {
 function context_views_pre_view($view, $args) {
   if ($plugin = context_get_plugin('condition', 'views')) {
     $plugin->execute($view);
+  }
+}
+
+/**
+ * Implementation of hook_user().
+ */
+function context_user($op, &$edit, &$account, $category = NULL) {
+  if (in_array($op, array('view', 'form', 'register'))) {
+    if ($plugin = context_get_plugin('condition', 'user_page')) {
+      $plugin->execute($op);
+    }
   }
 }
 
