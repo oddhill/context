@@ -276,7 +276,7 @@ function context_views_pre_view($view, $args) {
 function context_user($op, &$edit, &$account, $category = NULL) {
   if (in_array($op, array('view', 'form', 'register'))) {
     if ($plugin = context_get_plugin('condition', 'user_page')) {
-      $plugin->execute($op);
+      $plugin->execute($account, $op);
     }
   }
 }
