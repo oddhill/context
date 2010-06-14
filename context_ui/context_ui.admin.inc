@@ -311,7 +311,7 @@ function context_ui_import_submit($form, &$form_state) {
   $items = array();
   if ($import = $form_state['values']['import']) {
     ob_start();
-    $context = eval($import);
+    eval($import);
     ob_end_clean();
   }
   if (is_object($context)) {
@@ -327,7 +327,7 @@ function context_ui_import_submit($form, &$form_state) {
     }
   }
   else {
-    drupal_set_message(t('An error occurred while importing. Please check your context definition.', 'error'));
+    drupal_set_message(t('An error occurred while importing. Please check your context definition.'), 'error');
     $form_state['redirect'] = 'admin/build/context';
   }
 }
