@@ -36,11 +36,12 @@ class context_condition_menu extends context_condition {
     // menu_get_active_trail() is written this will often not work for active
     // menu items outside the standard navigation tree. See menu_set_active_trail()
     // and menu_get_active_menu_name() for the details.
-    $trail = menu_get_active_trail();
-    foreach ($trail as $item) {
-      if (!empty($item['href'])) {
-        foreach ($this->get_contexts($item['href']) as $context) {
-          $this->condition_met($context, $item['href']);
+    if ($this->condition_used() && $trail = menu_get_active_trail()) {
+      foreach ($trail as $item) {
+        if (!empty($item['href'])) {
+          foreach ($this->get_contexts($item['href']) as $context) {
+            $this->condition_met($context, $item['href']);
+          }
         }
       }
     }

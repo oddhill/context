@@ -6,7 +6,7 @@
  */
 class context_condition_bookroot extends context_condition_node {
   function execute($node, $op) {
-    if (!empty($node->book['bid'])) {
+    if ($this->condition_used() && !empty($node->book['bid'])) {
       $type = db_result(db_query("SELECT type FROM {node} WHERE nid = %d", $node->book['bid']));
       $book = new stdClass();
       $book->type = $type;

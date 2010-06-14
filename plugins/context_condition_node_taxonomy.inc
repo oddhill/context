@@ -29,8 +29,7 @@ class context_condition_node_taxonomy extends context_condition_node {
   }
 
   function execute($node, $op) {
-    $map = context_condition_map();
-    if (!empty($map['node_taxonomy']) && !empty($node->taxonomy)) {
+    if ($this->condition_used() && !empty($node->taxonomy)) {
       foreach ($node->taxonomy as $term) {
         foreach ($this->get_contexts($term->tid) as $context) {
           // Check the node form option.

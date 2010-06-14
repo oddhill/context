@@ -136,6 +136,16 @@ class context_condition {
   }
 
   /**
+   * Check whether this condition is used by any contexts. Can be used to
+   * prevent expensive condition checks from being triggered when no contexts
+   * use this condition.
+   */
+  function condition_used() {
+    $map = context_condition_map();
+    return !empty($map[$this->plugin]);
+  }
+
+  /**
    * Retrieve all contexts with the condition value provided.
    */
   function get_contexts($value) {
