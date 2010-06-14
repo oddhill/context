@@ -249,6 +249,8 @@ function context_node_condition(&$node, $op) {
       $plugin->execute($node, $op);
     }
   }
+  // Allow other plugins to easily be triggered on node-related events.
+  drupal_alter('context_node_condition', $node, $op);
 }
 
 /**
@@ -256,8 +258,8 @@ function context_node_condition(&$node, $op) {
  */
 function context_form_comment_form_alter(&$form, $form_state) {
   if ($nid = $form['nid']['#value']) {
-    $plugin = context_get_plugin('condition', 'node');
-    $plugin->execute($node = node_load($nid), 'comment');
+    $node = node_load($nid);
+    context_node_condition($node, 'comment');
   }
 }
 
