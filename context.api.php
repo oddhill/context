@@ -68,3 +68,20 @@ function hook_context_registry_alter(&$registry) {
     $registry['reactions']['baz']['plugin'] = 'custom_context_reaction_baz';
   }
 }
+
+/**
+ * Alter/add a condition to a node-related event.
+ *
+ * Allows modules to add one or more context condition plugin executions to a
+ * node view, form, etc.
+ *
+ * @param $node
+ *   The node object.
+ * @param $op
+ *   The node-related operation: 'node', 'form', 'comment'.
+ */
+function hook_context_node_condition_alter(&$node, $op) {
+  if ($plugin = context_get_plugin('condition', 'bar')) {
+    $plugin->execute($node, $op);
+  }
+}
