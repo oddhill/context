@@ -163,15 +163,14 @@ function context_context_plugins() {
  * Implementation of hook_init().
  */
 function context_init() {
-  $map = context_condition_map();
-  if (!empty($map['path']) && $plugin = context_get_plugin('condition', 'path')) {
+  if ($plugin = context_get_plugin('condition', 'path')) {
     $plugin->execute();
   }
-  if (!empty($map['language']) && $plugin = context_get_plugin('condition', 'language')) {
+  if ($plugin = context_get_plugin('condition', 'language')) {
     global $language;
     $plugin->execute($language->language);
   }
-  if (!empty($map['user']) && $plugin = context_get_plugin('condition', 'user')) {
+  if ($plugin = context_get_plugin('condition', 'user')) {
     global $user;
     $plugin->execute($user);
   }
