@@ -247,7 +247,7 @@ class context_reaction_block extends context_reaction {
     $blocks = block_list($region);
     if (isset($context_blocks[$region])) {
       $blocks = array_merge($blocks, $context_blocks[$region]);
-      uasort($blocks, 'context_reaction_block::block_sort');
+      uasort($blocks, array('context_reaction_block', 'block_sort'));
     }
     return $blocks;
   }
@@ -404,7 +404,7 @@ class context_reaction_block extends context_reaction {
           }
         }
       }
-      uasort($blocks, "context_reaction_block::block_sort");
+      uasort($blocks, array('context_reaction_block', 'block_sort'));
     }
     return $blocks;
   }
