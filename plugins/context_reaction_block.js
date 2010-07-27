@@ -20,20 +20,6 @@ Drupal.behaviors.contextReactionBlock = function(context) {
     });
 
   //
-  // Editor ===========================================================
-  //
-  // Attach handlers to editable blocks.
-  // This lives outside the block editor class as it may needs to be
-  // called each time Drupal.attachBehaviors() is called.
-  $('div.context-block:not(.processed)').each(function() {
-    $('a.remove', $(this)).click(function() {
-      $(this).parents('div.context-block').remove();
-      Drupal.contextBlockEditor.updateBlocks();
-      return false;
-    });
-  });
-
-  //
   // Admin Form =======================================================
   //
   // ContextBlockForm: Init.
@@ -135,6 +121,27 @@ function DrupalContextBlockForm(blockForm) {
  */
 function DrupalContextBlockEditor(editor) {
   this.state = {};
+  this.blocks = {};
+  this.regions = {};
+
+  this.initBlocks = function(blocks) {
+    this.blocks = blocks;
+    blocks.each(function() {
+      $(this).addClass('draggable');
+      $(this).prepend($('<a class="context-block-handle"></a>'));
+      $(this).prepend($('<a class="context-block-remove"></a>').click(function() {
+        $(this).parents('div.block').eq(0).fadeOut('medium', function() {
+          $(this).remove();
+          Drupal.contextBlockEditor.updateBlocks();
+        });
+        return false;
+      }));
+    });
+  };
+
+  this.initRegions = function(regions) {
+    this.regions = regions;
+  };
 
   /**
    * Update UI to match the current block states.
@@ -155,22 +162,36 @@ function DrupalContextBlockEditor(editor) {
       }
     });
 
-    // Clean up after jQuery UI. Sometimes addables get left -- not good.
-    $('.context-block-item.ui-sortable-helper').remove();
-
     // Mark empty regions.
-    $('.context-block-region').each(function() {
-      if ($('div.context-block', this).size() > 0) {
+    $(this.regions).each(function() {
+      if ($('div.block:has(a.context-block)', this).size() > 0) {
         $(this).removeClass('context-block-region-empty');
       }
       else {
         $(this).addClass('context-block-region-empty');
       }
     });
-
-    // Mark any blocks that have forms as draggable by handle only.
-    $('.context-block-region > div.context-block:has(form)').addClass('context-block-handleonly');
   };
+
+  /**
+   * Live update a region.
+   */
+  this.updateRegion = function(event, ui, region, op) {
+    switch (op) {
+      case 'over':
+        $(region).removeClass('context-block-region-empty');
+        break;
+      case 'out':
+        if (
+          $('div.draggable-placeholder', region).size() === 0 &&
+          $('div.block:has(a.context-block)', region).size() == 1 &&
+          $('div.block:has(a.context-block)', region).attr('id') == ui.item.attr('id')
+        ) {
+          $(region).addClass('context-block-region-empty');
+        }
+        break;
+    }
+  }
 
   /**
    * Remove script elements while dragging & dropping.
@@ -188,9 +209,6 @@ function DrupalContextBlockEditor(editor) {
    * Add a block to a region through an AHAH load of the block contents.
    */
   this.addBlock = function(event, ui, editor, context) {
-    // Remove empty regionism early.
-    editor.removeClass('context-block-region-empty');
-
     if (ui.item.is('.context-block-addable')) {
       var bid = ui.item.attr('id').split('context-block-addable-')[1];
 
@@ -198,15 +216,20 @@ function DrupalContextBlockEditor(editor) {
       var params = Drupal.settings.contextBlockEditor.params;
       params.context_block = bid + ',' + context;
 
+      // Replace item with loading block.
+      var blockLoading = $('<div class="context-block-loading"></div>');
+      ui.item.addClass('context-block-added');
+      ui.item.after(blockLoading);
+      ui.sender.append(ui.item);
+
       $.getJSON(Drupal.settings.contextBlockEditor.path, params, function(data) {
         if (data.status) {
           var newBlock = $(data.block);
-          newBlock.addClass('draggable');
           if ($('script', newBlock)) {
             $('script', newBlock).remove();
           }
-
-          newBlock = ui.item.replaceWith(newBlock);
+          Drupal.contextBlockEditor.initBlocks(newBlock);
+          blockLoading.replaceWith(newBlock);
 
           $.each(data.css, function(k, v){
             var cssfile = Drupal.settings.basePath + v;
@@ -223,7 +246,7 @@ function DrupalContextBlockEditor(editor) {
         }
       });
     }
-    else if (ui.item.is('.context-block')) {
+    else if (ui.item.is(':has(a.context-block)')) {
       Drupal.contextBlockEditor.updateBlocks();
     }
   };
@@ -232,10 +255,10 @@ function DrupalContextBlockEditor(editor) {
    * Update form hidden field with JSON representation of current block visibility states.
    */
   this.setState = function() {
-    $('div.context-block-region').each(function() {
-      var region = $(this).attr('id').split('context-block-region-')[1];
+    $(this.regions).each(function() {
+      var region = $('a.context-block-region', this).attr('id').split('context-block-region-')[1];
       var blocks = [];
-      $('div.context-block', $(this)).each(function() {
+      $('a.context-block', $(this)).each(function() {
         if ($(this).attr('class').indexOf('edit-') != -1) {
           var bid = $(this).attr('id').split('context-block-')[1];
           var context = $(this).attr('class').split('edit-')[1].split(' ')[0];
@@ -256,13 +279,13 @@ function DrupalContextBlockEditor(editor) {
    */
   this.disableTextSelect = function() {
     if ($.browser.safari) {
-      $('div.context-block:not(:has(input,textarea))').css('WebkitUserSelect','none');
+      $('div.block:has(a.context-block):not(:has(input,textarea))').css('WebkitUserSelect','none');
     }
     else if ($.browser.mozilla) {
-      $('div.context-block:not(:has(input,textarea))').css('MozUserSelect','none');
+      $('div.block:has(a.context-block):not(:has(input,textarea))').css('MozUserSelect','none');
     }
     else if ($.browser.msie) {
-      $('div.context-block:not(:has(input,textarea))').bind('selectstart.contextBlockEditor', function() { return false; });
+      $('div.block:has(a.context-block):not(:has(input,textarea))').bind('selectstart.contextBlockEditor', function() { return false; });
     }
     else {
       $(this).bind('mousedown.contextBlockEditor', function() { return false; });
@@ -297,25 +320,33 @@ function DrupalContextBlockEditor(editor) {
     $(document.body).addClass('context-editing');
 
     this.disableTextSelect();
-
-    $('div.context-block-region > div.edit-'+context).addClass('draggable');
+    this.initBlocks($('div.block:has(a.context-block.edit-'+context+')'));
+    this.initRegions($('a.context-block-region').parent());
+    this.updateBlocks();
 
     // First pass, enable sortables on all regions.
-    var params = {
-      revert: true,
-      dropOnEmpty: true,
-      placeholder: 'draggable-placeholder',
-      forcePlaceholderSize: true,
-      start: function(event, ui) { Drupal.contextBlockEditor.scriptFix(event, ui, editor, context); },
-      stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); },
-      items: '> div.editable',
-      handle: 'div.handle'
-    };
-    $('div.context-block-region').sortable(params);
+    $(this.regions).each(function() {
+      var region = $(this);
+      var params = {
+        containment: 'document',
+        revert: true,
+        dropOnEmpty: true,
+        placeholder: 'draggable-placeholder',
+        forcePlaceholderSize: true,
+        items: '> div.block:has(a.context-block.editable)',
+        handle: 'a.context-block-handle',
+        start: function(event, ui) { Drupal.contextBlockEditor.scriptFix(event, ui, editor, context); },
+        stop: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); },
+        receive: function(event, ui) { Drupal.contextBlockEditor.addBlock(event, ui, editor, context); },
+        over: function(event, ui) { Drupal.contextBlockEditor.updateRegion(event, ui, region, 'over'); },
+        out: function(event, ui) { Drupal.contextBlockEditor.updateRegion(event, ui, region, 'out'); }
+      };
+      region.sortable(params);
+    });
 
     // Second pass, hook up all regions via connectWith to each other.
-    $('div.context-block-region').each(function() {
-      $(this).sortable('option', 'connectWith', ['div.context-block-region']);
+    $(this.regions).each(function() {
+      $(this).sortable('option', 'connectWith', ['.ui-sortable']);
     });
 
     // Terrible, terrible workaround for parentoffset issue in Safari.
@@ -334,8 +365,13 @@ function DrupalContextBlockEditor(editor) {
   this.editFinish = function() {
     this.enableTextSelect();
 
-    $('div.context-block-region > div.draggable').removeClass('draggable');
-    $('div.context-block-region').sortable('destroy');
+    // Remove UI elements.
+    $(this.blocks).each(function() {
+      $('a.context-block-handle, a.context-block-remove', this).remove();
+      $(this).removeClass('draggable');
+    });
+    this.regions.sortable('destroy');
+
     this.setState();
 
     // Unhack the user agent.
@@ -349,21 +385,17 @@ function DrupalContextBlockEditor(editor) {
   // form values from previous page load.
   $('select.context-block-browser-categories', editor).val(0).change(function() {
     var category = $(this).val();
-    $('div.category').hide();
-    $('div.category-'+category).show();
+    var params = {
+      containment: 'document',
+      revert: true,
+      dropOnEmpty: true,
+      placeholder: 'draggable-placeholder',
+      forcePlaceholderSize: true,
+      helper: 'clone',
+      appendTo: 'body',
+      connectWith: ($.ui.version === '1.6') ? ['.ui-sortable'] : '.ui-sortable'
+    };
+    $('div.category', editor).hide().sortable('destroy');
+    $('div.category-'+category, editor).show().sortable(params);
   });
-
-  // Add draggable handler for addables.
-  var options = {
-    appendTo: 'body',
-    helper: 'clone',
-    zIndex: '2700',
-    connectToSortable: ($.ui.version === '1.6') ? ['div.context-block-region'] : 'div.context-block-region',
-    start: function(event, ui) { $(document.body).addClass('context-block-adding'); },
-    stop: function(event, ui) { $(document.body).removeClass('context-block-adding'); }
-  };
-  $('div.context-block-addable', editor).draggable(options);
-
-  // Set the block states.
-  this.updateBlocks();
 }

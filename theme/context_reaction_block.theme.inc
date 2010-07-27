@@ -100,11 +100,29 @@ function template_preprocess_context_block_browser_item(&$vars) {
  * Preprocessor for theme('context_block_editable_region').
  */
 function template_preprocess_context_block_editable_region(&$vars) {
-  $vars['class'] = empty($vars['blocks']) ? 'context-block-region-empty' : '';
+  // Check requirements.
+  // Generally speaking, it does not make sense to allow anonymous users to
+  // edit a context inline. Though it may be possible to save (and restore)
+  // an edited context to an anonymous user's cookie or session, it's an
+  // edge case and probably not something we want to encourage anyway.
+  static $requirements;
+  if (!isset($requirements)) {
+    global $user;
+    if (module_exists('jquery_ui') && $user->uid) {
+      $requirements = TRUE;
+      jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
+      drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
+      drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
+    }
+    else {
+      $requirements = FALSE;
+    }
+  }
 
   // Killswitch flag allowing other preprocessors to abort editable regions entirely.
-  $vars['editable'] = isset($vars['editable']) ? $vars['editable'] : TRUE;
+  $vars['editable'] = $requirements;
 
+  // Show when empty?
   $vars['show_always'] = variable_get('context_ui_show_empty_regions', false);
 
   // Provide the user-friendly name of the region
@@ -117,10 +135,5 @@ function template_preprocess_context_block_editable_region(&$vars) {
  * Preprocessor for theme('context_block_editable_block').
  */
 function template_preprocess_context_block_editable_block(&$vars) {
-  $plugin = context_get_plugin('reaction', 'block');
-  $block_info = $plugin->get_blocks();
-  $block = $vars['block'];
-  $vars['label'] = isset($block_info[$block->bid]) ? check_plain($block_info[$block->bid]->info) : $block->bid;
-  $vars['tools'] = l('X', $_GET['q'], array('fragment' => 'remove', 'attributes' => array('class' => 'remove')));
-  $vars['class'] = !empty($block->context) ? "editable edit-{$block->context}" : '';
+  $vars['block']->content .= "<a id='context-block-{$vars['block']->module}-{$vars['block']->delta}' class='context-block editable edit-{$vars['block']->context}'></a>";
 }

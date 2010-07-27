@@ -182,39 +182,10 @@ class context_reaction_block extends context_reaction {
    */
   function execute($region) {
     // If the context_block querystring param is set, switch to AJAX rendering.
-    return isset($_GET['context_block']) ? $this->render_ajax($_GET['context_block']) : $this->render_editable($region);
-  }
-
-  /**
-   * Render a region with editable markup.
-   */
-  protected function render_editable($region) {
-    // Generally speaking, it does not make sense to allow anonymous users to
-    // edit a context inline. Though it may be possible to save (and restore)
-    // an edited context to an anonymous user's cookie or session, it's an
-    // edge case and probably not something we want to encourage anyway.
-    global $user;
-    if (module_exists('jquery_ui') && $user->uid) {
-      jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
-      drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
-      drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
-      $output = theme('context_block_editable_region', $region, $this->block_list($region));
-      return $output . drupal_get_content($region);
+    if (isset($_GET['context_block'])) {
+      return $this->render_ajax($_GET['context_block']);
     }
-    return $this->render_region($region);
-  }
-
-  /**
-   * Render a region.
-   */
-  protected function render_region($region) {
-    $output = '';
-    if ($list = $this->block_list($region)) {
-      foreach ($list as $key => $block) {
-        $output .= theme("block", $block);
-      }
-    }
-    return $output . drupal_get_content($region);
+    return theme('context_block_editable_region', $region, $this->block_list($region));
   }
 
   /**
