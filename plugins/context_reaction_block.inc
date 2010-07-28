@@ -390,7 +390,7 @@ class context_reaction_block extends context_reaction {
   /**
    * Compatibility wrapper around json_decode().
    */
-  static function json_decode($json, $assoc = FALSE) {
+  protected function json_decode($json, $assoc = FALSE) {
     // Requires PHP 5.2.
     if (function_exists('json_decode')) {
       return json_decode($json, $assoc);
