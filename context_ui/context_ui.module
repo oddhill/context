@@ -292,7 +292,7 @@ function context_ui_editor($form_state, $contexts) {
  */
 function context_ui_editor_process($values) {
   $context = $values['context'];
-  foreach (array_keys(context_conditions(TRUE)) as $condition) {
+  foreach (array_keys(context_conditions()) as $condition) {
     if (isset($values['condition'][$condition])) {
       $plugin = context_get_plugin('condition', $condition);
       if ($plugin && method_exists($plugin, 'editor_form_submit')) {
@@ -303,7 +303,7 @@ function context_ui_editor_process($values) {
       unset($context->conditions[$condition]);
     }
   }
-  foreach (array_keys(context_reactions(TRUE)) as $reaction) {
+  foreach (array_keys(context_reactions()) as $reaction) {
     if (isset($values["reaction-{$reaction}"])) {
       $plugin = context_get_plugin('reaction', $reaction);
       if ($plugin && method_exists($plugin, 'editor_form_submit')) {
