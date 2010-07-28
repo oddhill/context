@@ -185,17 +185,34 @@ class context_reaction_block extends context_reaction {
     if (isset($_GET['context_block'])) {
       return $this->render_ajax($_GET['context_block']);
     }
-    return theme('context_block_editable_region', $region, $this->block_list($region));
+    if ($this->is_enabled_region($region)) {
+      return theme('context_block_editable_region', $region, $this->block_list($region));
+    }
+    return '';
+  }
+
+  /**
+   * Return a list of enabled regions for which blocks should be built.
+   * Split out into a separate method for easy overrides in extending classes.
+   */
+  protected function is_enabled_region($region) {
+    global $theme;
+    $regions = array_keys(system_region_list($theme));
+    return in_array($region, $regions, TRUE);
   }
 
   /**
   * An alternative version of block_list() that provides any context enabled blocks.
   */
   protected function block_list($region) {
-    // Static cache active context blocks when first called.
-    static $context_blocks;
-    if (!isset($context_blocks)) {
-      $context_blocks = array();
+    static $build_queue;
+    static $context_blocks = array();
+
+    // Static cache a region => block array of blocks that should be built *if*
+    // the given region is requested. Note that the blocks are not themselves
+    // built in this first run as not all regions may be requested even if
+    // active contexts include blocks in those regions.
+    if (!isset($build_queue)) {
       $info = $this->get_blocks();
       foreach ($this->get_contexts() as $context) {
         $options = $this->fetch_from_context($context);
@@ -205,16 +222,25 @@ class context_reaction_block extends context_reaction {
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
             $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : BLOCK_NO_CACHE;
-            $block = $this->build_block($block);
-            if (!empty($block->content)) {
-              $context_blocks[$block->region][] = $block;
-            }
+            $build_queue[$block->region][] = $block;
           }
         }
       }
     }
 
-    // Get blocks provided by Drupal core block visibility & merge context blocks in.
+    // Context blocks.
+    if (!isset($context_blocks[$region])) {
+      $context_blocks[$region] = array();
+      if (!empty($build_queue[$region])) {
+        foreach ($build_queue[$region] as $block) {
+          $block = $this->build_block($block);
+          if (!empty($block->content)) {
+            $context_blocks[$region][] = $block;
+          }
+        }
+      }
+    }
+    // Core blocks.
     $blocks = block_list($region);
     if (isset($context_blocks[$region])) {
       $blocks = array_merge($blocks, $context_blocks[$region]);

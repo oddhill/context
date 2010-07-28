@@ -3,18 +3,15 @@
 
 class context_layouts_reaction_block extends context_reaction_block {
   /**
-   * Override of execute method. Only render regions provided by the active layout.
+   * Override of is_enabled_region().
+   * Check that there is an active layout and it supports the given region.
    */
-  function execute($region) {
+  protected function is_enabled_region($region) {
     $layout = $this->get_active_layout();
-    // Check that there is an active layout and it supports regions.
     if ($layout && isset($layout['regions']) && is_array($layout['regions'])) {
-      return in_array($region, $layout['regions'], TRUE) ? parent::execute($region) : '';
+      return in_array($region, $layout['regions'], TRUE) && parent::is_enabled_region($region);
     }
-    // Theme doesn't support layouts or the layout hasn't specified regions, fall through.
-    else {
-      return parent::execute($region);
-    }
+    return parent::is_enabled_region($region);
   }
 
   /**
@@ -30,6 +27,10 @@ class context_layouts_reaction_block extends context_reaction_block {
           return $info ? $layouts[$values['layout']] : $values['layout'];
         }
       }
+    }
+    // Fallback to default layout if provided.
+    if (isset($layouts['default'])) {
+      return $info ? $layouts['default'] : 'default';
     }
     return FALSE;
   }
