@@ -134,8 +134,9 @@ class context_reaction_block extends context_reaction {
       );
       $form['browser'] = array(
         '#type' => 'markup',
-        '#value' => theme('context_block_browser', $this->get_blocks(), $context),
+        '#value' => theme('context_block_browser', $this->get_blocks(NULL, NULL, $this->rebuild_needed()), $context),
       );
+      $this->rebuild_needed(FALSE);
     }
     return $form;
   }
@@ -313,6 +314,16 @@ class context_reaction_block extends context_reaction {
   }
 
   /**
+   * Check or set whether a rebuild of the block info cache is needed.
+   */
+  function rebuild_needed($set = NULL) {
+    if (isset($set) && $set != variable_get('context_block_rebuild_needed', FALSE)) {
+      variable_set('context_block_rebuild_needed', $set);
+    }
+    return (bool) variable_get('context_block_rebuild_needed', FALSE);
+  }
+
+  /**
    * Helper function to generate a list of blocks from a specified region. If provided a context object,
    * will generate a full list of blocks for that region distinguishing between system blocks and
    * context-provided blocks.
@@ -330,13 +341,7 @@ class context_reaction_block extends context_reaction {
 
     if (!isset($block_info) || $reset) {
       $block_info = array();
-
-      // Force a reset of the block info cache when on admin pages as a
-      // variety of administrative UI tasks can create or alter block info.
-      if (arg(0) === 'admin') {
-        context_cache_set('block_info', NULL);
-      }
-      else if (!$reset) {
+      if (!$reset) {
         $block_info = context_cache_get('block_info');
       }
       if (empty($block_info)) {

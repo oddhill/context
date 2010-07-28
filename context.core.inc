@@ -226,6 +226,12 @@ function context_form_alter(&$form, $form_state, $form_id) {
   else if ($form_id == 'system_modules') {
     context_invalidate_cache();
   }
+  // Clear out block info cache when an admin area form is submitted.
+  if (arg(0) === 'admin' && !empty($form_state['post']) && (!isset($form_state['method']) || $form_state['method'] !== 'get')) {
+    if ($plugin = context_get_plugin('reaction', 'block')) {
+      $plugin->rebuild_needed(TRUE);
+    }
+  }
 }
 
 /**
