@@ -220,6 +220,7 @@ function context_ui_form_admin_settings_form_alter(&$form, $form_state) {
 function context_ui_editor($form_state, $contexts) {
   $form = array(
     '#attributes' => array('class' => 'context-editor'),
+    '#theme' => array('context_ui_editor'),
     'editables' => array('#type' => 'markup'),
     'contexts' => array('#tree' => TRUE),
     'buttons' => array('#tree' => FALSE),
