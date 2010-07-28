@@ -39,8 +39,8 @@ class context_reaction_menu extends context_reaction {
    */
   function execute(&$vars) {
     if (variable_get('menu_primary_links_source', 'primary-links') == variable_get('menu_secondary_links_source', 'secondary-links')) {
-      $vars['primary_links'] = $this->menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links'));
-      $vars['secondary_links'] = $this->menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1);
+      $vars['primary_links'] = theme_get_setting('toggle_primary_links') ? $this->menu_navigation_links(variable_get('menu_primary_links_source', 'primary-links')) : $vars['primary_links'];
+      $vars['secondary_links'] = theme_get_setting('toggle_secondary_links') ? $this->menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1) : $vars['secondary_links'];
     }
 
     $vars['primary_links'] = $this->menu_set_active($vars['primary_links']);
