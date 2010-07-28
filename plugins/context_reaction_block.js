@@ -245,7 +245,7 @@ DrupalContextBlockEditor.prototype.addBlock = function(event, ui, editor, contex
     params.context_block = bid + ',' + context;
 
     // Replace item with loading block.
-    var blockLoading = $('<div class="context-block-loading"></div>');
+    var blockLoading = $('<div class="context-block-item context-block-loading"><span class="icon"></span></div>');
     ui.item.addClass('context-block-added');
     ui.item.after(blockLoading);
     ui.sender.append(ui.item);
@@ -256,18 +256,18 @@ DrupalContextBlockEditor.prototype.addBlock = function(event, ui, editor, contex
         if ($('script', newBlock)) {
           $('script', newBlock).remove();
         }
-        blockLoading.replaceWith(newBlock);
-        self.initBlocks(newBlock);
-        self.updateBlocks();
-
-        $.each(data.css, function(k, v){
-          var cssfile = Drupal.settings.basePath + v;
-          if ($('head link[href $='+cssfile+']').length === 0 ) {
-            $('head').append('<link type="text/css" rel="stylesheet" media="all" href="' + cssfile + " />'");
-          }
+        blockLoading.fadeOut(function() {
+          $(this).replaceWith(newBlock);
+          self.initBlocks(newBlock);
+          self.updateBlocks();
+          $.each(data.css, function(k, v){
+            var cssfile = Drupal.settings.basePath + v;
+            if ($('head link[href $='+cssfile+']').length === 0 ) {
+              $('head').append('<link type="text/css" rel="stylesheet" media="all" href="' + cssfile + " />'");
+            }
+          });
+          Drupal.attachBehaviors();
         });
-
-        Drupal.attachBehaviors();
       }
       else {
         ui.item.remove();

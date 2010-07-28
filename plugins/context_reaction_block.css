@@ -14,22 +14,46 @@ div.context-block-browser div.category { display:none; }
 div.context-block-item,
 div.context-block-browser div.draggable-placeholder,
 #admin-toolbar div.context-block-browser div.context-block-item {
-  font-weight:bold;
   font-size:11px;
-  line-height:15px;
+  line-height:20px;
+  height:20px;
 
+  text-shadow:#333 0px 1px 0px;
   color:#fff;
-  background:#333;
-  padding:10px 10px 9px;
-  margin:0px 0px 1px;
-  overflow:hidden;
+
+  padding:5px 4px 4px 5px;
+  margin:0px 1px 1px 0px;
   max-width:300px;
+  white-space:nowrap;
+  overflow:hidden;
+
+  background:url(context_reaction_block.png) 0px -40px repeat-x;
+  position:relative;
 
   -moz-border-radius:5px;
   -webkit-border-radius:5px;
   -moz-user-select:none;
   -webkit-user-select:none;
   }
+
+  div.context-block-item span.icon {
+    background:url(context_reaction_block.png) 0px -80px no-repeat;
+    display:block;
+    width:20px;
+    height:20px;
+    float:left;
+    margin-right:5px;
+    }
+
+  div.context-block-loading { max-width:none; }
+
+  div.context-block-loading span.icon {
+    background-position:-20px -80px;
+    float:none;
+    margin:0px auto;
+    }
+
+  div.context-block-browser div.draggable-placeholder { padding:2px 1px 1px 2px; }
 
   #admin-toolbar.horizontal div.context-block-browser div.draggable-placeholder,
   #admin-toolbar.horizontal div.context-block-browser div.context-block-item {
