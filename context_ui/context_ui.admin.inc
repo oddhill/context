@@ -344,7 +344,9 @@ function context_ui_import_submit($form, &$form_state) {
 function context_ui_export(&$form_state, $context) {
   ctools_include('export');
   drupal_set_title(t('Export %title', array('%title' => $context->name)));
-  return ctools_export_form($form_state, context_export_context($context), t('Export'));
+  $form = ctools_export_form($form_state, context_export_context($context), t('Export'));
+  $form['code']['#description'] = t('To use this context export in a module enable the <strong>Bulk Export</strong> module and select contexts to export on the !bulkexporter page.', array('!bulkexporter' => l(t('Bulk Exporter'), 'admin/build/bulkexport')));
+  return $form;
 }
 
 /**
