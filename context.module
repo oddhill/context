@@ -57,7 +57,7 @@ function context_context($op = CONTEXT_GET, $namespace = NULL, $attribute = NULL
           return TRUE;
         }
         // set to true if key is a usable identifier. otherwise, allow a key or object to be inserted
-        if (!$value) {
+        if ($value === NULL) {
           if (is_string($attribute) || is_int($attribute)) {
             $context[(string) $namespace][(string) $attribute] = TRUE;
             return TRUE;
@@ -68,7 +68,7 @@ function context_context($op = CONTEXT_GET, $namespace = NULL, $attribute = NULL
           }
         }
         // set value if key is valid
-        if ((is_string($attribute) || is_int($attribute)) && $value) {
+        if ((is_string($attribute) || is_int($attribute)) && $value !== NULL) {
           $context[$namespace][$attribute] = $value;
           return TRUE;
         }
