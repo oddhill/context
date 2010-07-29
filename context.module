@@ -131,15 +131,6 @@ function context_clear() {
  */
 
 /**
- * Implementation of hook_ctools_plugin_api().
- */
-function context_ctools_plugin_api($module, $api) {
-  if ($module == 'context' && $api == 'plugins') {
-    return array('version' => 3);
-  }
-}
-
-/**
  * Implementation of hook_ctools_plugin_plugins().
  */
 function context_ctools_plugin_plugins() {
