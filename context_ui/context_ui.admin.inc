@@ -62,10 +62,6 @@ function context_ui_admin_submit(&$form, &$form_state) {
  *   A Drupal form array.
  */
 function context_ui_form(&$form_state, $op, $context = NULL) {
-  // Set a context to prevent implementation of 
-  // hook_context_reaction_fetch_alter() from running so we can edit the real
-  // values of the context.
-  context_set('context', 'no_alter', TRUE);
   ctools_include('export');
 
   $context = !$context ? ctools_export_new_object('context') : $context;
@@ -155,7 +151,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     ),
     'plugins' => array('#tree' => TRUE),
   );
-  $conditions = array_keys(context_conditions(TRUE));
+  $conditions = array_keys(context_conditions());
   sort($conditions);
   foreach ($conditions as $condition) {
     if ($plugin = context_get_plugin('condition', $condition)) {
@@ -187,7 +183,7 @@ function context_ui_form(&$form_state, $op, $context = NULL) {
     ),
     'plugins' => array('#tree' => TRUE),
   );
-  $reactions = array_keys(context_reactions(TRUE));
+  $reactions = array_keys(context_reactions());
   sort($reactions);
   foreach ($reactions as $reaction) {
     if ($plugin = context_get_plugin('reaction', $reaction)) {
