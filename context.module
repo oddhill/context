@@ -371,7 +371,7 @@ function context_condition_map($reset = FALSE) {
       $condition_map = $cache;
     }
     else {
-      foreach (array_keys(context_conditions('condition')) as $condition) {
+      foreach (array_keys(context_conditions()) as $condition) {
         if ($plugin = context_get_plugin('condition', $condition)) {
           foreach (context_enabled_contexts() as $context) {
             $values = $plugin->fetch_from_context($context, 'values');
