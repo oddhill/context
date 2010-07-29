@@ -148,15 +148,29 @@ class context_condition {
   /**
    * Retrieve all contexts with the condition value provided.
    */
-  function get_contexts($value) {
+  function get_contexts($value = NULL) {
     $map = context_condition_map();
     $map = isset($map[$this->plugin]) ? $map[$this->plugin] : array();
 
     $contexts = array();
-    if ((is_string($value) || is_numeric($value)) && isset($map[$value]) && is_array($map[$value])) {
-      foreach ($map[$value] as $name) {
-        $context = context_load($name);
-        $contexts[$context->name] = $context;
+    if (isset($value) && (is_string($value) || is_numeric($value))) {
+      if (isset($map[$value]) && is_array($map[$value])) {
+        foreach ($map[$value] as $name) {
+          if (!isset($contexts[$name])) {
+            $context = context_load($name);
+            $contexts[$context->name] = $context;
+          }
+        }
+      }
+    }
+    else {
+      foreach ($map as $submap) {
+        foreach ($submap as $name) {
+          if (!isset($contexts[$name])) {
+            $context = context_load($name);
+            $contexts[$context->name] = $context;
+          }
+        }
       }
     }
     return $contexts;
