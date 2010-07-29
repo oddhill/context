@@ -270,7 +270,7 @@ DrupalContextBlockEditor.prototype.addBlock = function(event, ui, editor, contex
         });
       }
       else {
-        ui.item.remove();
+        blockLoading.fadeOut(function() { $(this).remove(); });
       }
     });
   }
