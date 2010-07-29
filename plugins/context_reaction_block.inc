@@ -187,7 +187,9 @@ class context_reaction_block extends context_reaction {
    */
   function execute($region) {
     // If the context_block querystring param is set, switch to AJAX rendering.
-    if (isset($_GET['context_block'])) {
+    // Note that we check the output buffer for any content to ensure that we
+    // are not in the middle of a PHP template render.
+    if (isset($_GET['context_block']) && !ob_get_contents()) {
       return $this->render_ajax($_GET['context_block']);
     }
     if ($this->is_enabled_region($region)) {
@@ -211,15 +213,19 @@ class context_reaction_block extends context_reaction {
   */
   protected function block_list($region) {
     static $build_queue;
+    static $build_contexts;
     static $context_blocks = array();
 
     // Static cache a region => block array of blocks that should be built *if*
     // the given region is requested. Note that the blocks are not themselves
     // built in this first run as not all regions may be requested even if
     // active contexts include blocks in those regions.
-    if (!isset($build_queue)) {
+    $contexts = context_active_contexts();
+    if (!isset($build_queue) || $build_contexts != array_keys($contexts)) {
       $info = $this->get_blocks();
-      foreach ($this->get_contexts() as $context) {
+      $build_queue = array();
+      $build_contexts = array_keys($contexts);
+      foreach ($contexts as $context) {
         $options = $this->fetch_from_context($context);
         if (!empty($options['blocks'])) {
           foreach ($options['blocks'] as $block) {
