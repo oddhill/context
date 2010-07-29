@@ -9,6 +9,10 @@ class context_reaction_block extends context_reaction {
    * Options form.
    */
   function options_form($context) {
+    // Rebuild the block info cache if necessary.
+    $this->get_blocks(NULL, NULL, $this->rebuild_needed());
+    $this->rebuild_needed(FALSE);
+
     $theme_key = variable_get('theme_default', 'garland');
     $weight_delta = $this->max_block_weight();
 
