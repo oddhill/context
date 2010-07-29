@@ -392,9 +392,12 @@ function context_condition_map($reset = FALSE) {
 
 /**
  * Invalidates all context caches().
+ * @TODO: Update to use a CTools API function for clearing plugin caches
+ * when/if it becomes available.
  */
 function context_invalidate_cache() {
   cache_clear_all('context', 'cache', TRUE);
+  cache_clear_all('plugins:context', 'cache', TRUE);
 }
 
 /**
