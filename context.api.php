@@ -85,3 +85,23 @@ function hook_context_node_condition_alter(&$node, $op) {
     $plugin->execute($node, $op);
   }
 }
+
+/**
+ * Alter a context directly after it has been loaded. Allows modules to alter
+ * a context object's reactions. While you may alter conditions, this will
+ * generally have no effect as conditions are cached for performance and
+ * contexts are loaded after conditions are checked, not before.
+ *
+ * @param &$context
+ *   The context object by reference.
+ */
+function hook_context_load_alter(&$context) {
+  if ($context->name === 'foo' && isset($context->reactions['block'])) {
+    $context->reactions['block']['blocks']['locale-0'] = array(
+      'module' => 'locale',
+      'delta' => '0',
+      'region' => 'header',
+      'weight' => '2',
+    );
+  }
+}
