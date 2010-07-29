@@ -80,7 +80,7 @@ class context_reaction_menu extends context_reaction {
       // that includes active classes
       foreach ($links as $key => $link) {
         if (!empty($link['href']) && in_array($link['href'], $active_paths)) {
-          if (isset($links['attributes']['class'])) {
+          if (isset($link['attributes']['class'])) {
             $link['attributes']['class'] .= ' active';
           }
           else {
