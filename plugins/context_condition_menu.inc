@@ -60,11 +60,18 @@ class context_condition_menu extends context_condition {
    * Override of execute().
    */
   function execute() {
-    // Menu trail condition integration. Note that because of the way
-    // menu_get_active_trail() is written this will often not work for active
-    // menu items outside the standard navigation tree. See menu_set_active_trail()
-    // and menu_get_active_menu_name() for the details.
-    if ($this->condition_used() && $trail = menu_get_active_trail()) {
+    if ($this->condition_used()) {
+      // Menu trail condition integration. Note that because of the way
+      // menu_get_active_trail() is written this will often not work for active
+      // menu items outside the standard navigation tree without the additional
+      // helper code below.
+      if (menu_get_active_menu_name() === 'navigation') {
+        $item = menu_get_item();
+        if ($menu_name = db_result(db_query("SELECT menu_name FROM {menu_links} WHERE link_path = '%s'", $item['href']))) {
+          menu_set_active_menu_name($menu_name);
+        }
+      }
+      $trail = menu_get_active_trail();
       foreach ($trail as $item) {
         if (!empty($item['href'])) {
           foreach ($this->get_contexts($item['href']) as $context) {
