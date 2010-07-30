@@ -211,7 +211,7 @@ class context_reaction_block extends context_reaction {
   /**
   * An alternative version of block_list() that provides any context enabled blocks.
   */
-  protected function block_list($region) {
+  function block_list($region) {
     static $build_queue;
     static $build_contexts;
     static $context_blocks = array();
