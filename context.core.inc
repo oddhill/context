@@ -7,6 +7,11 @@
 function context_context_registry() {
   $registry = array();
   $registry['conditions'] = array(
+    'context' => array(
+      'title' => t('Context'),
+      'description' => t('Set this context on the basis of other active contexts. Put each context on a separate line. You can use the <code>*</code> character as a wildcard and <code>~</code> to exclude one or more contexts.'),
+      'plugin' => 'context_condition_context',
+    ),
     'node' => array(
       'title' => t('Node type'),
       'description' => t('Set this context when viewing a node page or using the add/edit form of one of these content types.'),
@@ -19,7 +24,7 @@ function context_context_registry() {
     ),
     'path' => array(
       'title' => t('Path'),
-      'description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the "*" character as a wildcard and &lt;front&gt; for the front page.'),
+      'description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the "*" character as a wildcard and <code>~</code> to exclude one or more paths. Use &lt;front&gt; for the site front page.'),
       'plugin' => 'context_condition_path',
     ),
     'user' => array(
@@ -362,6 +367,9 @@ function context_context_page_condition() {
   }
   if ($plugin = context_get_plugin('condition', 'sitewide')) {
     $plugin->execute(1);
+  }
+  if ($plugin = context_get_plugin('condition', 'context')) {
+    $plugin->execute();
   }
 }
 

@@ -17,6 +17,14 @@ function _context_context_plugins() {
       'class' => 'context_condition',
     ),
   );
+  $plugins['context_condition_context'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') .'/plugins',
+      'file' => 'context_condition_context.inc',
+      'class' => 'context_condition_context',
+      'parent' => 'context_condition_path',
+    ),
+  );
   $plugins['context_condition_node'] = array(
     'handler' => array(
       'path' => drupal_get_path('module', 'context') .'/plugins',
