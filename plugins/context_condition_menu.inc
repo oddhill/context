@@ -5,6 +5,9 @@
  * Expose menu items as a context condition.
  */
 class context_condition_menu extends context_condition {
+  /**
+   * Override of condition_values().
+   */
   function condition_values() {
     $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
     $root_menus = array();
@@ -15,8 +18,12 @@ class context_condition_menu extends context_condition {
       }
       else {
         $link = menu_link_load($id[1]);
+        $identifier = $link['link_path'];
         $root_menu = $root_menus[$id[0]];
-        $menus[$root_menu][$link['link_path']] = $name;
+        while (isset($menus[$root_menu][$identifier])) {
+          $identifier .= "'";
+        }
+        $menus[$root_menu][$identifier] = $name;
       }
       unset($menus[$key]);
     }
@@ -24,6 +31,10 @@ class context_condition_menu extends context_condition {
     return $menus;
   }
 
+  /**
+   * Override of condition_form().
+   * Use multiselect widget.
+   */
   function condition_form($context) {
     $form = parent::condition_form($context);
     $form['#type'] = 'select';
@@ -31,6 +42,23 @@ class context_condition_menu extends context_condition {
     return $form;
   }
 
+  /**
+   * Override of condition_form_submit().
+   * Trim any identifier padding for non-unique path menu items.
+   */
+  function condition_form_submit($values) {
+    // Trim any identifier padding for non-unique path menu items.
+    $values = parent::condition_form_submit($values);
+    $trimmed = array();
+    foreach ($values as $key => $value) {
+      $trimmed[trim($key, "'")] = trim($value, "'");
+    }
+    return $trimmed;
+  }
+
+  /**
+   * Override of execute().
+   */
   function execute() {
     // Menu trail condition integration. Note that because of the way
     // menu_get_active_trail() is written this will often not work for active

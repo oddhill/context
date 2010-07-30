@@ -18,8 +18,12 @@ class context_reaction_menu extends context_reaction {
       }
       else {
         $link = menu_link_load($id[1]);
+        $identifier = $link['link_path'];
         $root_menu = $root_menus[$id[0]];
-        $menus[$root_menu][$link['link_path']] = $name;
+        while (isset($menus[$root_menu][$identifier])) {
+          $identifier .= "'";
+        }
+        $menus[$root_menu][$identifier] = $name;
       }
       unset($menus[$key]);
     }
@@ -31,6 +35,14 @@ class context_reaction_menu extends context_reaction {
       '#type' => 'select',
       '#default_value' => $this->fetch_from_context($context),
     );
+  }
+
+  /**
+   * Override of options_form_submit().
+   * Trim any identifier padding for non-unique path menu items.
+   */
+  function options_form_submit($values) {
+    return trim($values, "'");
   }
 
   /**
