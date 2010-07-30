@@ -150,6 +150,15 @@ function context_context_plugins() {
   return _context_context_plugins();
 }
 
+
+/**
+ * Implementation of hook_context_registry().
+ */
+function context_context_registry() {
+  module_load_include('inc', 'context', 'context.plugins');
+  return _context_context_registry();
+}
+
 /**
  * Implementation of hook_init().
  */
