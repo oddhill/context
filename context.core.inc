@@ -270,6 +270,9 @@ function context_context_page_condition() {
  * Implementation of hook_context_page_reaction().
  */
 function context_context_page_reaction() {
+  if ($plugin = context_get_plugin('reaction', 'breadcrumb')) {
+    $plugin->execute();
+  }
   if ($plugin = context_get_plugin('reaction', 'css_injector')) {
     $plugin->execute();
   }

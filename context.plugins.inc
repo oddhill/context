@@ -82,6 +82,11 @@ function _context_context_registry() {
       'description' => t('Control block visibility using context.'),
       'plugin' => 'context_reaction_block',
     ),
+    'breadcrumb' => array(
+      'title' => t('Breadcrumb'),
+      'description' => t('Set the breadcrumb trail to the selected menu item.'),
+      'plugin' => 'context_reaction_breadcrumb',
+    ),
     'menu' => array(
       'title' => t('Menu'),
       'description' => t('Control menu active class using context.'),
@@ -245,6 +250,14 @@ function _context_context_plugins() {
       'file' => 'context_reaction_block.inc',
       'class' => 'context_reaction_block',
       'parent' => 'context_reaction',
+    ),
+  );
+  $plugins['context_reaction_breadcrumb'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') .'/plugins',
+      'file' => 'context_reaction_breadcrumb.inc',
+      'class' => 'context_reaction_breadcrumb',
+      'parent' => 'context_reaction_menu',
     ),
   );
   $plugins['context_reaction_menu'] = array(

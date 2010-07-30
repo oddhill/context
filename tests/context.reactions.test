@@ -81,3 +81,40 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
     context_delete($context);
   }
 }
+
+class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Reaction: breadcrumb'),
+      'description' => t('Test breadcrumb reaction.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools');
+    $admin_user = $this->drupalCreateUser(array('administer nodes', 'administer site configuration'));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('path' => array('values' => array('node')));
+    $context->reactions = array('breadcrumb' => 'admin/build');
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    variable_set('theme_default', 'garland');
+    $this->refreshVariables();
+
+    $output = $this->drupalGet('node');
+    $this->assertText('Home › Administer › Site building');
+    $output = $this->drupalGet('user');
+    $this->assertNoText('Home › Administer › Site building');
+
+    // Cleanup
+    context_delete($context);
+  }
+}
