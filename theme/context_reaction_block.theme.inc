@@ -135,5 +135,6 @@ function template_preprocess_context_block_editable_region(&$vars) {
  * Preprocessor for theme('context_block_editable_block').
  */
 function template_preprocess_context_block_editable_block(&$vars) {
+  $vars['empty'] = empty($vars['block']->content);
   $vars['block']->content .= "<a id='context-block-{$vars['block']->module}-{$vars['block']->delta}' class='context-block editable edit-{$vars['block']->context}'></a>";
 }

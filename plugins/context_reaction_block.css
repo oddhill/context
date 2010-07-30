@@ -123,7 +123,10 @@ body.context-editing div.draggable:hover a.context-block-remove {
   right:-5px;
   }
 
+div.context-block-hidden { display:none !important; }
+
 div.block div.context-block-empty {
+  text-align:center;
   padding:10px;
   opacity:.5;
   background:#fff;

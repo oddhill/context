@@ -245,9 +245,7 @@ class context_reaction_block extends context_reaction {
       if (!empty($build_queue[$region])) {
         foreach ($build_queue[$region] as $block) {
           $block = $this->build_block($block);
-          if (!empty($block->content)) {
-            $context_blocks[$region][] = $block;
-          }
+          $context_blocks[$region][] = $block;
         }
       }
     }
