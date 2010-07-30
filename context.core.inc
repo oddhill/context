@@ -282,11 +282,12 @@ function context_context_page_reaction() {
  * Implementation of preprocess_page().
  */
 function context_preprocess_page(&$vars) {
-  $plugin = context_get_plugin('reaction', 'menu');
-  $plugin->execute($vars);
-  $plugin = context_get_plugin('reaction', 'theme');
-  $plugin->execute($vars);
-
+  if ($plugin = context_get_plugin('reaction', 'menu')) {
+    $plugin->execute($vars);
+  }
+  if ($plugin = context_get_plugin('reaction', 'theme')) {
+    $plugin->execute($vars);
+  }
   if ($context_links = context_links()) {
     $vars['context_links'] = theme('links', $context_links);
   }
