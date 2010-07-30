@@ -46,7 +46,7 @@ Drupal.behaviors.contextReactionBlock = function(context) {
 /**
  * Context block form. Default form for editing context block reactions.
  */
-function DrupalContextBlockForm(blockForm) {
+DrupalContextBlockForm = function(blockForm) {
   this.state = {};
 
   this.setState = function() {
@@ -79,7 +79,7 @@ function DrupalContextBlockForm(blockForm) {
 
   // Tabledrag
   // Add additional handlers to update our blocks.
-  for (var base in Drupal.settings.tableDrag) {
+  $.each(Drupal.settings.tableDrag, function(base) {
     var table = $('#' + base + ':not(.processed)', blockForm);
     if (table && table.is('.context-blockform-region')) {
       table.addClass('processed');
@@ -88,7 +88,7 @@ function DrupalContextBlockForm(blockForm) {
         return;
       });
     }
-  }
+  });
 
   // Add blocks to a region
   $('td.blocks a', blockForm).each(function() {
@@ -116,7 +116,7 @@ function DrupalContextBlockForm(blockForm) {
       return false;
     });
   });
-}
+};
 
 /**
  * Context block editor. AHAH editor for live block reaction editing.
