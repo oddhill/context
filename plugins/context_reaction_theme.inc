@@ -63,10 +63,9 @@ class context_reaction_theme extends context_reaction {
    * additional classes onto the 'body_classes'.
    */
   function execute(&$vars) {
-    $contexts = context_active_contexts();
     $classes = array();
 
-    foreach ($contexts as $k => $v) {
+    foreach ($this->get_contexts() as $k => $v) {
       if (!empty($v->reactions[$this->plugin]['title']) && !isset($vars['section_title'])) {
         $vars['section_title'] = $v->reactions[$this->plugin]['title'];
       }

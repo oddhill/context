@@ -60,9 +60,8 @@ class context_reaction_menu extends context_reaction {
   }
 
   function get_active_paths() {
-    $contexts = context_active_contexts();
     $active_paths = array();
-    foreach ($contexts as $context) {
+    foreach ($this->get_contexts() as $context) {
       if (isset($context->reactions[$this->plugin])) {
         $active_paths[] = $context->reactions[$this->plugin];
       }
@@ -119,10 +118,8 @@ class context_reaction_menu extends context_reaction {
     // Retrieve original path so we can repair it after our hack.
     $original_path = $_GET['q'];
 
-    $active_paths = $this->get_active_paths();
-    $contexts = context_active_contexts();
     // Retrieve the first active menu path found.
-    if (!empty($active_paths)) {
+    if ($active_paths = $this->get_active_paths()) {
       $path = current($active_paths);
       if (menu_get_item($path)) {
         menu_set_active_item($path);
