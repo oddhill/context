@@ -410,6 +410,13 @@ function context_invalidate_cache() {
 }
 
 /**
+ * Implementation of hook_flush_caches().
+ */
+function context_flush_caches() {
+  context_invalidate_cache();
+}
+
+/**
  * Recursive helper function to determine whether an array and its
  * children are entirely empty.
  */
