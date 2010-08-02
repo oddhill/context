@@ -15,4 +15,10 @@ class context_condition_sitewide extends context_condition {
     $form['#weight'] = -10;
     return $form;
   }
+
+  function execute($value) {
+    foreach ($this->get_contexts($value) as $context) {
+      $this->condition_met($context, $value);
+    }
+  }
 }

@@ -46,11 +46,16 @@ class context_reaction {
   }
 
   /**
-   * Public method that is called from hooks or other integration
-   * points with Drupal.
+   * Public method that is called from hooks or other integration points with
+   * Drupal. Note that it is not implemented in the base class, allowing
+   * extending classes to change the function signature if necessary.
+   *
+   * function execute($value) {
+   *   foreach ($this->get_contexts($value) as $context) {
+   *     $this->condition_met($context, $value);
+   *   }
+   * }
    */
-  function execute() {
-  }
 
   /**
    * Retrieve active contexts that have values for this reaction.

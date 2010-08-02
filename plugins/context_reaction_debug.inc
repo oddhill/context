@@ -5,7 +5,7 @@
  * Output context debug information.
  */
 class context_reaction_debug extends context_reaction {
-  function options_form() {
+  function options_form($context) {
     return array('debug' => array('#type' => 'value', '#value' => TRUE));
   }
 

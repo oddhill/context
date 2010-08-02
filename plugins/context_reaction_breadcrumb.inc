@@ -8,7 +8,7 @@ class context_reaction_breadcrumb extends context_reaction_menu {
   /**
    * Override of execute().
    */
-  function execute() {
+  function execute(&$vars = NULL) {
     if ($active_paths = $this->get_active_paths()) {
       $breadcrumb = array(l(t('Home'), '<front>', array('purl' =>array('disabled' => TRUE))));
       foreach ($active_paths as $path) {
