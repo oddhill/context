@@ -11,7 +11,7 @@ class context_condition_node_taxonomy extends context_condition_node {
       foreach (taxonomy_get_vocabularies() as $vocab) {
         if (empty($vocab->tags)) {
           foreach (taxonomy_get_tree($vocab->vid) as $term) {
-            $values[$term->tid] = $term->name;
+            $values[$term->tid] = check_plain($term->name);
           }
         }
       }

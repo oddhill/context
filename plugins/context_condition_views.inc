@@ -14,13 +14,13 @@ class context_condition_views extends context_condition {
 
     foreach ($views as $view) {
       if (!isset($views[$view->name]->disabled) || !$views[$view->name]->disabled) {
-        $enabled_views[$view->name] = $view->name;
+        $enabled_views[$view->name] = check_plain($view->name);
 
         // Provide more granular options for each page display
         $displays = array();
         foreach ($view->display as $id => $display) {
           if ($display->display_plugin == 'page') {
-            $displays[$view->name .":". $id] = "-- {$display->display_title}";
+            $displays[$view->name .":". $id] = check_plain("-- {$display->display_title}");
           }
         }
         $enabled_views += $displays;

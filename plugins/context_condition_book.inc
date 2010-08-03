@@ -8,7 +8,7 @@ class context_condition_book extends context_condition {
   function condition_values() {
     $values = array();
     foreach (book_get_books() as $book) {
-      $values[$book['menu_name']] = $book['title'];
+      $values[$book['menu_name']] = check_plain($book['title']);
     }
     return $values;
   }

@@ -9,13 +9,13 @@ class context_condition_user extends context_condition {
     $values = array();
     foreach (user_roles() as $rid => $role_name) {
       if ($rid == DRUPAL_ANONYMOUS_RID) {
-        $values['anonymous user'] = $role_name;
+        $values['anonymous user'] = check_plain($role_name);
       }
       elseif ($rid == DRUPAL_AUTHENTICATED_RID) {
-        $values['authenticated user'] = $role_name;
+        $values['authenticated user'] = check_plain($role_name);
       }
       else {
-        $values[$role_name] = $role_name;
+        $values[$role_name] = check_plain($role_name);
       }
     }
     return $values;
