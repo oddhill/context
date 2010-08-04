@@ -44,6 +44,29 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
   }
 }
 
+class ContextReactionBlockAjaxTest extends DrupalWebTestCase {
+  function getInfo() {
+    return array(
+      'name' => t('Reaction: block ajax'),
+      'description' => t('Test block reaction ajax behavior.'),
+      'group' => t('Context'),
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools');
+  }
+
+  function test() {
+    $this->drupalGet('node', array(
+      'query' => array('context_block' => 'user-3,testcontext')
+    ));
+
+    $this->assertText('"status": 1');
+    $this->assertText("Who\'s online");
+  }
+}
+
 class ContextReactionMenuTest extends DrupalWebTestCase {
   function getInfo() {
     return array(
