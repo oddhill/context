@@ -20,7 +20,13 @@ class context_reaction_debug extends context_reaction {
     $contexts = context_active_contexts();
     foreach ($contexts as $context) {
       if (!empty($context->reactions['debug'])) {
-        drupal_set_message(t("Active context: @name", array('@name' => $context->name)));
+        if (user_access('administer site configuration') && module_exists('context_ui')) {
+          $name = l($context->name, "admin/build/context/list/{$context->name}", array('query' => 'destination=' . $_GET['q']));
+        }
+        else {
+          $name = check_plain($context->name);
+        }
+        drupal_set_message(t("Active context: !name", array('!name' => $name)));
       }
     }
   }
