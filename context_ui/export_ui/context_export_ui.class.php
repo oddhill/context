@@ -51,8 +51,18 @@ class context_export_ui extends ctools_export_ui {
       'class' => 'ctools-export-ui-operations'
     );
 
-    // Sort by tag, status, name.
-    $this->sorts["{$tag}:{$name}"] = $tag . empty($item->disabled) . $name;
+    // Sort by tag, name.
+    $this->sorts["{$tag}:{$name}"] = $tag . $name;
+  }
+
+  /**
+   * Override of edit_form_submit().
+   * Don't copy values from $form_state['values'].
+   */
+  function edit_form_submit(&$form, &$form_state) {
+    if (!empty($this->plugin['form']['submit'])) {
+      $this->plugin['form']['submit']($form, $form_state);
+    }
   }
 }
 
@@ -70,14 +80,8 @@ class context_export_ui extends ctools_export_ui {
  */
 function context_ui_form(&$form, &$form_state) {
   $context = $form_state['item'];
-
   $form['#base'] = 'context_ui_form';
   $form['#theme'] = 'context_ui_form';
-
-  $form['context'] = array(
-    '#type' => 'value',
-    '#value' => $context,
-  );
 
   // Core context definition
   $form['info']['#type'] = 'fieldset';
@@ -173,17 +177,17 @@ function context_ui_form(&$form, &$form_state) {
 }
 
 /**
- * Produces a context object from submitted form values.
+ * Modifies a context object from submitted form values.
  *
+ * @param $context
+ *   The context object to modify.
  * @param $form
  *   A form array with submitted values
  *
  * @return
  *   A context object
  */
-function context_ui_form_process($form) {
-  ctools_include('export');
-  $context = ctools_export_new_object('context');
+function context_ui_form_process($context, $form) {
   $context->name = isset($form['name']) ? $form['name'] : NULL;
   $context->description = isset($form['description']) ? $form['description'] : NULL;
   $context->tag = isset($form['tag']) ? $form['tag'] : NULL;
@@ -226,5 +230,5 @@ function context_ui_form_process($form) {
  * Submit handler for main context_ui form.
  */
 function context_ui_form_submit($form, &$form_state) {
-  $form_state['item'] = context_ui_form_process($form_state['values']);
+  $form_state['item'] = context_ui_form_process($form_state['item'], $form_state['values']);
 }
