@@ -260,6 +260,22 @@ function context_delete($context) {
 }
 
 /**
+ * Exports the specified context.
+ */
+function context_export($context, $indent = '') {
+  $strings = array();
+  foreach (array('description', 'tag') as $id) {
+    if (!empty($context->$id)) {
+      $strings[] = $indent . "  t('" . str_replace("'", "\'", $context->$id) . "'),";
+    }
+  }
+  sort($strings);
+  $extra = implode("\n", array_unique($strings));
+  $extra = "\n". $indent ."\$translatables['" . $context->name . "'] = array(\n". $extra . "\n" . $indent . ");\n";
+  return ctools_export_object('context', $context, $indent) . $extra;
+}
+
+/**
  * API FUNCTIONS ======================================================
  */
 
@@ -273,22 +289,6 @@ function context_context_list() {
     $list[$context->name] = $context->name;
   }
   return $list;
-}
-
-/**
- * CTools export function.
- */
-function context_export_context($context, $indent = '') {
-  $strings = array();
-  foreach (array('description', 'tag') as $id) {
-    if (!empty($context->$id)) {
-      $strings[] = $indent . "  t('" . str_replace("'", "\'", $context->$id) . "'),";
-    }
-  }
-  sort($strings);
-  $extra = implode("\n", array_unique($strings));
-  $extra = "\n". $indent ."\$translatables['" . $context->name . "'] = array(\n". $extra . "\n" . $indent . ");\n";
-  return ctools_export_object('context', $context, $indent) . $extra;
 }
 
 /**

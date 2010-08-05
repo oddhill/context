@@ -45,7 +45,7 @@ class ContextUiTestCase extends DrupalWebTestCase {
       'reactions[plugins][menu]' => 'node/add/page',
     );
     $this->drupalPost('admin/build/context/add', $edit, 'Save');
-    $this->assertText('Saved context '. $context->name, 'Context saved.');
+    $this->assertText($context->name . ' has been created.', 'Context saved.');
 
   }
 }

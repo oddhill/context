@@ -36,6 +36,7 @@ function context_schema() {
         'minimum_version' => 3,
         'current_version' => 3,
       ),
+      'export callback' => 'context_export',
     ),
     'fields' => array(
       'name' => array(
