@@ -350,6 +350,7 @@ DrupalContextBlockEditor.prototype.editStart = function(editor, context) {
   // However it's necessary that we trigger this class addition before
   // we call .sortable() as the empty regions need to be visible.
   $(document.body).addClass('context-editing');
+  this.editor.addClass('context-editing');
 
   this.disableTextSelect();
   this.initBlocks($('div.block:has(a.context-block.edit-'+context+')'));
@@ -395,6 +396,7 @@ DrupalContextBlockEditor.prototype.editStart = function(editor, context) {
   * Finish editing. Remove handlers.
   */
 DrupalContextBlockEditor.prototype.editFinish = function() {
+  this.editor.removeClass('context-editing');
   this.enableTextSelect();
 
   // Remove UI elements.
