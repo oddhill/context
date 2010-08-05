@@ -434,3 +434,33 @@ function context_ui_form_submit($form, &$form_state) {
   }
   $form_state['redirect'] = 'admin/build/context';
 }
+
+/**
+ * Settings form.
+ */
+function context_ui_settings(&$form_state) {
+  $form = array();
+  foreach (context_conditions() as $condition => $info) {
+    if ($plugin = context_get_plugin('condition', $condition)) {
+      $settings_form = $plugin->settings_form();
+      if ($settings_form) {
+        $form['conditions'][$reaction] = $settings_form;
+        $form['conditions'][$reaction]['#tree'] = FALSE;
+        $form['conditions'][$reaction]['#type'] = 'fieldset';
+        $form['conditions'][$reaction]['#title'] = $info['title'];
+      }
+    }
+  }
+  foreach (context_reactions() as $reaction => $info) {
+    if ($plugin = context_get_plugin('reaction', $reaction)) {
+      $settings_form = $plugin->settings_form();
+      if ($settings_form) {
+        $form['reactions'][$reaction] = $settings_form;
+        $form['reactions'][$reaction]['#tree'] = FALSE;
+        $form['reactions'][$reaction]['#type'] = 'fieldset';
+        $form['reactions'][$reaction]['#title'] = $info['title'];
+      }
+    }
+  }
+  return system_settings_form($form);
+}

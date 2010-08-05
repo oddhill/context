@@ -46,6 +46,13 @@ class context_reaction {
   }
 
   /**
+   * Settings form. Provide variable settings for your reaction.
+   */
+  function settings_form() {
+    return array();
+  }
+
+  /**
    * Public method that is called from hooks or other integration points with
    * Drupal. Note that it is not implemented in the base class, allowing
    * extending classes to change the function signature if necessary.

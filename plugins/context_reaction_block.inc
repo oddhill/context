@@ -146,8 +146,8 @@ class context_reaction_block extends context_reaction {
   }
 
   /**
-  * Submit handler context editor form.
-  */
+   * Submit handler context editor form.
+   */
   function editor_form_submit(&$context, $values) {
     $edited = !empty($values['state']) ? (array) $this->json_decode($values['state']) : array();
 
@@ -180,6 +180,30 @@ class context_reaction_block extends context_reaction {
     }
 
     return $options;
+  }
+
+  /**
+   * Settings form for variables.
+   */
+  function settings_form() {
+    $form = array();
+    $form['context_reaction_block_disable_core'] = array(
+      '#title' => t('Core block system'),
+      '#type' => 'select',
+      '#options' => array(
+        FALSE => t('Enabled'),
+        TRUE => t('Disabled'),
+      ),
+      '#default_value' => variable_get('context_reaction_block_disable_core', FALSE),
+      '#description' => t('If enabled Context will include blocks enabled through the core block system when rendering regions. Disable to improve performance and hide the core block administration UI.')
+    );
+    $form['context_reaction_block_all_regions'] = array(
+      '#title' => t('Show all regions'),
+      '#type' => 'checkbox',
+      '#default_value' => variable_get('context_reaction_block_all_regions', FALSE),
+      '#description' => t('Show all regions including those that are empty. Enable if you are administering your site using the inline editor.')
+    );
+    return $form;
   }
 
   /**
@@ -249,8 +273,8 @@ class context_reaction_block extends context_reaction {
         }
       }
     }
-    // Core blocks.
-    $blocks = block_list($region);
+    // Get core blocks only if enabled.
+    $blocks = !variable_get('context_reaction_block_disable_core', FALSE) ? block_list($region) : array();
     if (isset($context_blocks[$region])) {
       $blocks = array_merge($blocks, $context_blocks[$region]);
       uasort($blocks, array('context_reaction_block', 'block_sort'));
@@ -293,8 +317,11 @@ class context_reaction_block extends context_reaction {
       }
     }
     if (!empty($block->content)) {
-      global $user, $theme_key;
-      $block->title = db_result(db_query("SELECT title FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block->module, $block->delta, $theme_key));
+      // Only query for custom block title if block core compatibility is enabled.
+      if (!variable_get('context_reaction_block_disable_core', FALSE)) {
+        global $user, $theme_key;
+        $block->title = db_result(db_query("SELECT title FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block->module, $block->delta, $theme_key));
+      }
       // Override default block title if a custom display title is present.
       if (!empty($block->title)) {
         // Check plain here to allow module generated titles to keep any markup.

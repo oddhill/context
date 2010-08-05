@@ -13,6 +13,9 @@ function context_install() {
  */
 function context_uninstall() {
   drupal_uninstall_schema('context');
+  variable_del('context_ui_show_empty_regions');
+  variable_del('context_reaction_block_disable_core');
+  variable_del('context_reaction_block_all_regions');
 }
 
 /**
@@ -266,6 +269,17 @@ function context_update_6303() {
   );
   db_add_field($ret, 'context', 'condition_mode', $spec);
   return $ret;
+}
+
+/**
+ * Update 6304: Rename variable 'context_ui_show_empty_regions'.
+ */
+function context_update_6304() {
+  if (!db_result(db_query("SELECT name FROM {variable} WHERE name = 'context_reaction_block_all_regions'"))) {
+    db_query("UPDATE {variable} SET name = 'context_reaction_block_all_regions' WHERE name = 'context_ui_show_empty_regions'");
+    return array(array('success' => TRUE, 'query' => 'Variable renamed successfully.'));
+  }
+  return array();
 }
 
 /**

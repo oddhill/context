@@ -2,6 +2,20 @@
 // $Id$
 
 /**
+ * Implementation of hook_menu_alter().
+ * If core block handling is disabled, remove menu items.
+ */
+function context_menu_alter(&$items) {
+  if (variable_get('context_reaction_block_disable_core', FALSE)) {
+    foreach ($items as $path => $item) {
+      if (strpos($path, 'admin/build/block') === 0) {
+        unset($items[$path]);
+      }
+    }
+  }
+}
+
+/**
  * Implementation of hook_theme().
  */
 function context_theme() {

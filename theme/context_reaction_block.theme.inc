@@ -123,7 +123,7 @@ function template_preprocess_context_block_editable_region(&$vars) {
   $vars['editable'] = $requirements;
 
   // Show when empty?
-  $vars['show_always'] = variable_get('context_ui_show_empty_regions', false);
+  $vars['show_always'] = variable_get('context_reaction_block_all_regions', FALSE);
 
   // Provide the user-friendly name of the region
   global $theme_key;

@@ -81,6 +81,13 @@ class context_condition {
   }
 
   /**
+   * Settings form. Provide variable settings for your condition.
+   */
+  function settings_form() {
+    return array();
+  }
+
+  /**
    * Context editor form for conditions.
    */
   function editor_form($context) {
