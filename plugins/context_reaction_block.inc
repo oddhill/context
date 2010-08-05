@@ -217,9 +217,35 @@ class context_reaction_block extends context_reaction {
       return $this->render_ajax($_GET['context_block']);
     }
     if ($this->is_enabled_region($region)) {
-      return theme('context_block_editable_region', $region, $this->block_list($region));
+      return theme('context_block_editable_region', $region, $this->block_list($region), $this->is_editable());
     }
     return '';
+  }
+
+  /**
+   * Determine whether inline editing requirements are met and that the current
+   * user may edit.
+   */
+  protected function is_editable($reset = FALSE) {
+    // Check requirements.
+    // Generally speaking, it does not make sense to allow anonymous users to
+    // edit a context inline. Though it may be possible to save (and restore)
+    // an edited context to an anonymous user's cookie or session, it's an
+    // edge case and probably not something we want to encourage anyway.
+    static $editable;
+    if (!isset($editable) || $reset) {
+      global $user;
+      if (module_exists('jquery_ui') && $user->uid) {
+        $editable = TRUE;
+        jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
+        drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
+        drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
+      }
+      else {
+        $editable = FALSE;
+      }
+    }
+    return $editable;
   }
 
   /**
@@ -269,7 +295,11 @@ class context_reaction_block extends context_reaction {
       if (!empty($build_queue[$region])) {
         foreach ($build_queue[$region] as $block) {
           $block = $this->build_block($block);
-          $context_blocks[$region][] = $block;
+          // Only include blocks with content unless inline editing is enabled
+          // in which case all blocks should be included.
+          if (!empty($block->content) || $this->is_editable()) {
+            $context_blocks[$region][] = $block;
+          }
         }
       }
     }

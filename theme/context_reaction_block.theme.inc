@@ -100,35 +100,15 @@ function template_preprocess_context_block_browser_item(&$vars) {
  * Preprocessor for theme('context_block_editable_region').
  */
 function template_preprocess_context_block_editable_region(&$vars) {
-  // Check requirements.
-  // Generally speaking, it does not make sense to allow anonymous users to
-  // edit a context inline. Though it may be possible to save (and restore)
-  // an edited context to an anonymous user's cookie or session, it's an
-  // edge case and probably not something we want to encourage anyway.
-  static $requirements;
-  if (!isset($requirements)) {
-    global $user;
-    if (module_exists('jquery_ui') && $user->uid) {
-      $requirements = TRUE;
-      jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
-      drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
-      drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
-    }
-    else {
-      $requirements = FALSE;
-    }
+  if (!empty($vars['editable'])) {
+    // Show when empty?
+    $vars['show_always'] = variable_get('context_reaction_block_all_regions', FALSE);
+
+    // Provide the user-friendly name of the region
+    global $theme_key;
+    $regions = system_region_list($theme_key);
+    $vars['region_description'] = isset($regions[$vars['region']]) ? $regions[$vars['region']] : $vars['region'];
   }
-
-  // Killswitch flag allowing other preprocessors to abort editable regions entirely.
-  $vars['editable'] = $requirements;
-
-  // Show when empty?
-  $vars['show_always'] = variable_get('context_reaction_block_all_regions', FALSE);
-
-  // Provide the user-friendly name of the region
-  global $theme_key;
-  $regions = system_region_list($theme_key);
-  $vars['region_description'] = isset($regions[$vars['region']]) ? $regions[$vars['region']] : $vars['region'];
 }
 
 /**
