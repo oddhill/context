@@ -199,11 +199,11 @@ function context_ui_task_access($context, $op) {
  */
 function context_ui_help($path, $arg) {
   switch ($path) {
+    case 'admin/help#context_ui':
+      $output = file_get_contents(drupal_get_path('module', 'context_ui') .'/README.txt');
+      return module_exists('markdown') ? filter_xss_admin(module_invoke('markdown', 'filter', 'process', 0, -1, $output)) : '<pre>'. check_plain($output) .'</pre>';
     case 'admin/build/context':
-      return '<p>'.
-        t('Contexts provide you with a way to organize your site using terms familiar to real human beings. You can create a set of sections like <b>"News"</b>, <b>"Projects"</b>, <b>"Staff"</b>, and associate different technical aspects of Drupal to each section. For example, the <b>"News"</b> section may be a collection of <b>Nodes</b>, <b>Views</b>, <b>Menus</b> and <b>Blocks</b>.')
-        .'</p>';
-      break;
+      return '<p>'. t('Context allows you to manage contextual conditions and reactions for different portions of your site. You can think of each context as representing a "section" of your site. For each context, you can choose the conditions that trigger this context to be active and choose different aspects of Drupal that should react to this active context.') .'</p>';
   }
 }
 

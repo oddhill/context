@@ -2,6 +2,17 @@
 // $Id$
 
 /**
+ * Implementation of hook_help().
+ */
+function context_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#context':
+      $output = file_get_contents(drupal_get_path('module', 'context') .'/README.txt');
+      return module_exists('markdown') ? filter_xss_admin(module_invoke('markdown', 'filter', 'process', 0, -1, $output)) : '<pre>'. check_plain($output) .'</pre>';
+  }
+}
+
+/**
  * Implementation of hook_menu_alter().
  * If core block handling is disabled, remove menu items.
  */
