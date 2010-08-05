@@ -265,6 +265,7 @@ class context_reaction_block extends context_reaction {
     static $build_queue;
     static $build_contexts;
     static $context_blocks = array();
+    static $empty_blocks = array();
 
     // Static cache a region => block array of blocks that should be built *if*
     // the given region is requested. Note that the blocks are not themselves
@@ -292,23 +293,33 @@ class context_reaction_block extends context_reaction {
     // Context blocks.
     if (!isset($context_blocks[$region])) {
       $context_blocks[$region] = array();
+      $empty_blocks[$region] = array();
       if (!empty($build_queue[$region])) {
         foreach ($build_queue[$region] as $block) {
           $block = $this->build_block($block);
-          // Only include blocks with content unless inline editing is enabled
-          // in which case all blocks should be included.
-          if (!empty($block->content) || $this->is_editable()) {
+          if (!empty($block->content)) {
             $context_blocks[$region][] = $block;
+          }
+          else {
+            $empty_blocks[$region][] = $block;
           }
         }
       }
     }
+
     // Get core blocks only if enabled.
     $blocks = !variable_get('context_reaction_block_disable_core', FALSE) ? block_list($region) : array();
-    if (isset($context_blocks[$region])) {
-      $blocks = array_merge($blocks, $context_blocks[$region]);
-      uasort($blocks, array('context_reaction_block', 'block_sort'));
+    $blocks = array_merge($blocks, $context_blocks[$region]);
+
+    // Only include empty blocks if all regions should be shown or there are
+    // non-empty blocks in the same region.
+    $all_regions = variable_get('context_reaction_block_all_regions', FALSE);
+    if ($this->is_editable() && ($all_regions || !empty($blocks))) {
+      $blocks = array_merge($blocks, $empty_blocks[$region]);
     }
+
+    // Sort everything.
+    uasort($blocks, array('context_reaction_block', 'block_sort'));
     return $blocks;
   }
 
