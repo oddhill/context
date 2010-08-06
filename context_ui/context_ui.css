@@ -74,12 +74,6 @@ table.context-admin td.ctools-export-ui-name {
 
 table.context-admin td.ctools-export-ui-operations { white-space:nowrap; }
 
-table.context-admin td.ctools-export-ui-operations li,
-table.context-admin td.ctools-export-ui-operations a {
-  display:inline;
-  float:none;
-  }
-
 table.context-admin td.ctools-export-ui-storage { color:#999; }
 
 table.context-admin div.description {

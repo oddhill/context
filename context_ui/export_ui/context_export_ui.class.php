@@ -47,7 +47,7 @@ class context_export_ui extends ctools_export_ui {
       'class' => 'ctools-export-ui-storage'
     );
     $this->rows["{$tag}:{$name}"]['data'][] = array(
-      'data' => theme('links', $operations),
+      'data' => theme('links', $operations, array('class' => 'links inline')),
       'class' => 'ctools-export-ui-operations'
     );
 
