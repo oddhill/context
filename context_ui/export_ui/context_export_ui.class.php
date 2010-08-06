@@ -87,6 +87,11 @@ function context_ui_form(&$form, &$form_state) {
   $form['info']['#type'] = 'fieldset';
   $form['info']['#tree'] = FALSE;
 
+  // Swap out name validator. Allow dashes.
+  if (isset($form['info']['name']['#element_validate'])) {
+    $form['info']['name']['#element_validate'] = array('context_ui_edit_name_validate');
+  }
+
   $form['info']['tag'] = array(
     '#title' => t('Tag'),
     '#type' => 'textfield',
@@ -231,4 +236,21 @@ function context_ui_form_process($context, $form) {
  */
 function context_ui_form_submit($form, &$form_state) {
   $form_state['item'] = context_ui_form_process($form_state['item'], $form_state['values']);
+}
+
+/**
+ * Replacement for ctools_export_ui_edit_name_validate(). Allow dashes.
+ */
+function context_ui_edit_name_validate($element, &$form_state) {
+  $plugin = $form_state['plugin'];
+  // Check for string identifier sanity
+  if (!preg_match('!^[a-z0-9_-]+$!', $element['#value'])) {
+    form_error($element, t('The export id can only consist of lowercase letters, underscores, dashes, and numbers.'));
+    return;
+  }
+
+  // Check for name collision
+  if (empty($form_state['item']->export_ui_allow_overwrite) && $exists = ctools_export_crud_load($plugin['schema'], $element['#value'])) {
+    form_error($element, t('A @plugin with this name already exists. Please choose another name or delete the existing item before creating a new one.', array('@plugin' => $plugin['title singular'])));
+  }
 }
