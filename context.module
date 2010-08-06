@@ -263,16 +263,24 @@ function context_delete($context) {
  * Exports the specified context.
  */
 function context_export($context, $indent = '') {
-  $strings = array();
-  foreach (array('description', 'tag') as $id) {
-    if (!empty($context->$id)) {
-      $strings[] = $indent . "  t('" . str_replace("'", "\'", $context->$id) . "'),";
+  $output = ctools_export_object('context', $context, $indent);
+  $translatables = array();
+  foreach (array('description', 'tag') as $key) {
+    if (!empty($context->{$key})) {
+      $translatables[] = $context->{$key};
     }
   }
-  sort($strings);
-  $extra = implode("\n", array_unique($strings));
-  $extra = "\n". $indent ."\$translatables['" . $context->name . "'] = array(\n". $extra . "\n" . $indent . ");\n";
-  return ctools_export_object('context', $context, $indent) . $extra;
+  $translatables = array_filter(array_unique($translatables));
+  if (!empty($translatables)) {
+    $output .= "\n";
+    $output .= "{$indent}// Translatables\n";
+    $output .= "{$indent}// Included for use with string extractors like potx.\n";
+    sort($translatables);
+    foreach ($translatables as $string) {
+      $output .= "{$indent}t(" . ctools_var_export($string) . ");\n";
+    }
+  }
+  return $output;
 }
 
 /**
