@@ -125,7 +125,7 @@ class context_reaction_block extends context_reaction {
       if (!isset($once)) {
         $settings = array(
           'path' => url($_GET['q']),
-          'params' => (object) $_GET,
+          'params' => (object) array_diff_key($_GET, array('q' => '')),
           'scriptPlaceholder' => theme('context_block_script_placeholder', ''),
         );
         drupal_add_js(array('contextBlockEditor' => $settings), 'setting');
@@ -553,6 +553,13 @@ class context_reaction_block extends context_reaction {
    * is set. See ->execute() for how this is called.
    */
   function render_ajax($param) {
+    // Besure the page isn't a 404 or 403.
+    $headers = drupal_set_header();
+    foreach (explode("\n", $headers) as $header) {
+      if ($header == "HTTP/1.1 404 Not Found" || $header == "HTTP/1.1 403 Forbidden") {
+        return;
+      }
+    }
     // Set the header right away. This will inform any players in the stack
     // that we are in the middle of responding to an AJAX request.
     drupal_set_header('Content-Type: text/javascript; charset=utf-8');
