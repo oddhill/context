@@ -167,7 +167,7 @@ table.context-admin input.form-text { width:90%; }
 
   .context-plugins .context-plugin-forms .active-form { display:block; }
 
-  .context-plugins .context-plugin-form {
-    max-height:400px;
+  .context-plugins .context-plugin-form .form-checkboxes {
+    max-height:300px;
     overflow:auto;
     }
