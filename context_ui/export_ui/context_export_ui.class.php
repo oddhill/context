@@ -39,7 +39,7 @@ class context_export_ui extends ctools_export_ui {
     $this->rows["{$tag}:{$name}"]['data'] = array();
     $this->rows["{$tag}:{$name}"]['class'] = !empty($item->disabled) ? 'ctools-export-ui-disabled' : 'ctools-export-ui-enabled';
     $this->rows["{$tag}:{$name}"]['data'][] = array(
-      'data' => check_plain($name) . "<div class='description'>{$item->description}</div>",
+      'data' => check_plain($name) . "<div class='description'>" . check_plain($item->description) . "</div>",
       'class' => 'ctools-export-ui-name'
     );
     $this->rows["{$tag}:{$name}"]['data'][] = array(
