@@ -69,7 +69,7 @@ div.context-block-added { display:none !important; }
 /**
  * Inline editing elements ============================================
  */
-a.context-block-region,
+a.context-block-region { display:none; }
 a.context-block { display:none !important; }
 
 body.context-editing div.context-block-region-empty a.context-block-region {
