@@ -2,8 +2,6 @@
 // $Id$
 
 class ContextUnitTest extends DrupalWebTestCase {
-  protected $profile = 'testing';
-
   public function getInfo() {
     return array(
       'name' => t('API unit tests'),
