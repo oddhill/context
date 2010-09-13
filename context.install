@@ -5,7 +5,7 @@
  * Implementation of hook_install().
  */
 function context_install() {
-  drupal_install_schema('context');
+  // Nothing todo...
 }
 
 /**

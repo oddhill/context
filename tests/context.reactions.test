@@ -2,6 +2,8 @@
 // $Id$
 
 class ContextReactionBlockTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Reaction: block'),
@@ -45,6 +47,8 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
 }
 
 class ContextReactionBlockAjaxTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Reaction: block ajax'),
@@ -68,6 +72,8 @@ class ContextReactionBlockAjaxTest extends DrupalWebTestCase {
 }
 
 class ContextReactionMenuTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Reaction: menu'),
@@ -106,6 +112,8 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
 }
 
 class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Reaction: breadcrumb'),
