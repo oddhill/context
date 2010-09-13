@@ -2,6 +2,8 @@
 // $Id$
 
 class ContextConditionUserTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: user'),
@@ -56,6 +58,8 @@ class ContextConditionUserTest extends DrupalWebTestCase {
 }
 
 class ContextConditionUserPageTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: user page'),
@@ -119,6 +123,8 @@ class ContextConditionUserPageTest extends DrupalWebTestCase {
 }
 
 class ContextConditionNodeTaxonomyTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: taxonomy'),
@@ -179,6 +185,8 @@ class ContextConditionNodeTaxonomyTest extends DrupalWebTestCase {
 }
 
 class ContextConditionLanguageTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: language'),
@@ -218,6 +226,8 @@ class ContextConditionLanguageTest extends DrupalWebTestCase {
 }
 
 class ContextConditionSitewideTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: sitewide'),
@@ -250,6 +260,8 @@ class ContextConditionSitewideTest extends DrupalWebTestCase {
 }
 
 class ContextConditionPathTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: path'),
@@ -292,6 +304,8 @@ class ContextConditionPathTest extends DrupalWebTestCase {
 }
 
 class ContextConditionContextTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: context'),
@@ -334,6 +348,8 @@ class ContextConditionContextTest extends DrupalWebTestCase {
 }
 
 class ContextConditionNodeTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: node'),
@@ -387,6 +403,8 @@ class ContextConditionNodeTest extends DrupalWebTestCase {
 }
 
 class ContextConditionMenuTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: menu'),
@@ -425,6 +443,8 @@ class ContextConditionMenuTest extends DrupalWebTestCase {
 }
 
 class ContextConditionBookTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: book'),
@@ -467,6 +487,8 @@ class ContextConditionBookTest extends DrupalWebTestCase {
 }
 
 class ContextConditionBookroot extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
   function getInfo() {
     return array(
       'name' => t('Condition: bookroot'),
