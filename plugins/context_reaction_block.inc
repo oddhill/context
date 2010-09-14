@@ -209,17 +209,21 @@ class context_reaction_block extends context_reaction {
   /**
    * Execute.
    */
-  function execute($region) {
-    // If the context_block querystring param is set, switch to AJAX rendering.
-    // Note that we check the output buffer for any content to ensure that we
-    // are not in the middle of a PHP template render.
-    if (isset($_GET['context_block']) && !ob_get_contents()) {
-      return $this->render_ajax($_GET['context_block']);
+  function execute(&$page) {
+    global $theme;
+
+    // The theme system might not yet be initialized. We need $theme.
+    drupal_theme_initialize();
+
+    // Populate all block regions
+    $all_regions = system_region_list($theme);
+
+    // Load all region content assigned via blocks.
+    foreach (array_keys($all_regions) as $region) {
+      if ($this->is_enabled_region($region)) {
+        $page[$region] = isset($page[$region]) ? array_merge($page[$region], $this->block_get_blocks_by_region($region)) : $this->block_get_blocks_by_region($region);
+      }
     }
-    if ($this->is_enabled_region($region)) {
-      return theme('context_block_editable_region', $region, $this->block_list($region), $this->is_editable());
-    }
-    return '';
   }
 
   /**
@@ -259,127 +263,47 @@ class context_reaction_block extends context_reaction {
   }
 
   /**
-  * An alternative version of block_list() that provides any context enabled blocks.
+  * Get a renderable array of a region containing all enabled blocks.
   */
-  function block_list($region) {
-    static $build_queue;
-    static $build_contexts;
-    static $context_blocks = array();
-    static $empty_blocks = array();
+  function block_get_blocks_by_region($region) {
+    module_load_include('module', 'block', 'block');
 
-    // Static cache a region => block array of blocks that should be built *if*
-    // the given region is requested. Note that the blocks are not themselves
-    // built in this first run as not all regions may be requested even if
-    // active contexts include blocks in those regions.
+    $build = array();
+    if ($list = $this->block_list($region)) {
+      $build = _block_get_renderable_array($list);
+    }
+    return $build;
+  }
+
+  /**
+   * An alternative version of block_list() that provides any context enabled blocks.
+   */
+  function block_list($region) {
+    module_load_include('module', 'block', 'block');
+
+    $context_blocks = &drupal_static('context_reaction_block_list');;
     $contexts = context_active_contexts();
-    if (!isset($build_queue) || $build_contexts != array_keys($contexts)) {
+    if (!isset($context_blocks)) {
       $info = $this->get_blocks();
-      $build_queue = array();
-      $build_contexts = array_keys($contexts);
+      $context_blocks = array();
       foreach ($contexts as $context) {
         $options = $this->fetch_from_context($context);
         if (!empty($options['blocks'])) {
           foreach ($options['blocks'] as $block) {
             $block = (object) $block;
+            $block->title = NULL;
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
             $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : BLOCK_NO_CACHE;
-            $build_queue[$block->region][] = $block;
+            $context_blocks[$block->region][$block->bid] = $block;
           }
         }
       }
-    }
-
-    // Context blocks.
-    if (!isset($context_blocks[$region])) {
-      $context_blocks[$region] = array();
-      $empty_blocks[$region] = array();
-      if (!empty($build_queue[$region])) {
-        foreach ($build_queue[$region] as $block) {
-          $block = $this->build_block($block);
-          if (!empty($block->content)) {
-            $context_blocks[$region][] = $block;
-          }
-          else {
-            $empty_blocks[$region][] = $block;
-          }
-        }
+      foreach ($context_blocks as $r => $blocks) {
+        $context_blocks[$r] = _block_render_blocks($blocks);
       }
     }
-
-    // Get core blocks only if enabled.
-    $blocks = !variable_get('context_reaction_block_disable_core', FALSE) ? block_list($region) : array();
-    $blocks = array_merge($blocks, $context_blocks[$region]);
-
-    // Only include empty blocks if all regions should be shown or there are
-    // non-empty blocks in the same region.
-    $all_regions = variable_get('context_reaction_block_all_regions', FALSE);
-    if ($this->is_editable() && ($all_regions || !empty($blocks))) {
-      $blocks = array_merge($blocks, $empty_blocks[$region]);
-    }
-
-    // Sort everything.
-    uasort($blocks, array('context_reaction_block', 'block_sort'));
-    return $blocks;
-  }
-
-  /**
-   * Build a block's content. Largely taken from block_list().
-   */
-  protected function build_block($block, $reset = FALSE) {
-    // Block caching is not compatible with node_access modules. We also
-    // preserve the submission of forms in blocks, by fetching from cache
-    // only if the request method is 'GET'.
-    static $cacheable;
-    if (!isset($cacheable) || $reset) {
-      $cacheable = !count(module_implements('node_grants')) && $_SERVER['REQUEST_METHOD'] == 'GET';
-    }
-
-    if (!isset($block->content)) {
-      $block->content = '';
-      // Try fetching the block from cache.
-      if ($cacheable && ($cid = _block_get_cache_id($block))) {
-        if ($cache = cache_get($cid, 'cache_block')) {
-          $array = $cache->data;
-        }
-        else {
-          $array = module_invoke($block->module, 'block', 'view', $block->delta);
-          cache_set($cid, $array, 'cache_block', CACHE_TEMPORARY);
-        }
-      }
-      // Otherwise build block.
-      else {
-        $array = module_invoke($block->module, 'block', 'view', $block->delta);
-      }
-      if (isset($array) && is_array($array)) {
-        foreach ($array as $k => $v) {
-          $block->$k = $v;
-        }
-      }
-    }
-    if (!empty($block->content)) {
-      // Only query for custom block title if block core compatibility is enabled.
-      if (!variable_get('context_reaction_block_disable_core', FALSE)) {
-        global $user, $theme_key;
-        $block->title = db_select('block')
-          ->fields('block', array('title'))
-          ->condition('module', $block->module)
-          ->condition('delta', $block->delta)
-          ->condition('theme', $theme_key)
-          ->execute()
-          ->fetchField();
-        // $block->title = db_result(db_query("SELECT title FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block->module, $block->delta, $theme_key));
-      }
-      // Override default block title if a custom display title is present.
-      if (!empty($block->title)) {
-        // Check plain here to allow module generated titles to keep any markup.
-        $block->subject = $block->title == '<none>' ? '' : check_plain($block->title);
-      }
-      if (!isset($block->subject)) {
-        $block->subject = '';
-      }
-    }
-    return $block;
+    return isset($context_blocks[$region]) ? $context_blocks[$region] : array();
   }
 
   /**

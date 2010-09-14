@@ -13,24 +13,19 @@ function context_help($path, $arg) {
 }
 
 /**
- * Implementation of hook_menu_alter().
- * If core block handling is disabled, remove menu items.
- */
-function context_menu_alter(&$items) {
-  if (variable_get('context_reaction_block_disable_core', FALSE)) {
-    foreach ($items as $path => $item) {
-      if (strpos($path, 'admin/build/block') === 0) {
-        unset($items[$path]);
-      }
-    }
-  }
-}
-
-/**
  * Implementation of hook_theme().
  */
 function context_theme() {
   $items = array();
+  if (!module_exists('block')) {
+    $items['block'] = array(
+      'render element' => 'elements',
+      'template' => 'block',
+      'path' => drupal_get_path('module', 'block'),
+      'file' => 'block.module',
+      'template' => 'block',
+    );
+  }
   $items['context_block_form'] = array(
     'render element' => 'form',
     'path' => drupal_get_path('module', 'context') . '/theme',
@@ -93,16 +88,6 @@ function context_theme_registry_alter(&$theme_registry) {
   $position = array_search('template_preprocess_page', $theme_registry['page']['preprocess functions']);
   $position = $position ? $position + 1 : 2;
   array_splice($theme_registry['page']['preprocess functions'], $position, 0, 'context_preprocess_page');
-
-  // Reroute theme_blocks() through context_blocks to determine block
-  // visibility by context. Only override theme_blocks() if a theme
-  // has not overridden it. It is the responsibility of any themes
-  // implementing theme_blocks() to take advantage of context block
-  // visibility on their own.
-  if (!isset($theme_registry['blocks']['type']) || !in_array($theme_registry['blocks']['type'], array('base_theme_engine', 'theme_engine')) && !isset($theme_registry['blocks']['file'])) {
-    unset($theme_registry['blocks']['preprocess functions']);
-    $theme_registry['blocks']['function'] = 'context_blocks';
-  }
 }
 
 /**
@@ -227,16 +212,13 @@ function context_user_view($account, $view_mode) {
 }
 
 /**
- * BLOCK HANDLING =====================================================
+ * Implements hook_page_build().
  */
-
-/**
- * This override of theme_blocks() is called because of an alter of the
- * theme registry. See context_theme_registry_alter().
- */
-function context_blocks($region) {
+function context_page_build(&$page) {
+  module_invoke_all('context_page_condition');
+  module_invoke_all('context_page_reaction');
   if ($plugin = context_get_plugin('reaction', 'block')) {
-    return $plugin->execute($region);
+    $plugin->execute($page);
   }
 }
 
@@ -277,17 +259,6 @@ function context_links($reset = FALSE) {
     uasort($links, 'element_sort');
   }
   return $links;
-}
-
-/**
- * A preprocess_page() function that is called *before* all other
- * preprocessors (including template_preprocess_page()). This allows
- * any final context conditions to be set and any initial reactions
- * to be triggered.
- */
-function context_page_alter(&$vars) {
-  module_invoke_all('context_page_condition');
-  module_invoke_all('context_page_reaction');
 }
 
 /**

@@ -14,7 +14,9 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('context', 'ctools');
-    $admin_user = $this->drupalCreateUser(array('administer site configuration'));
+    $admin_user = $this->drupalCreateUser(array(
+      'administer site configuration'
+    ));
     $this->drupalLogin($admin_user);
   }
 
@@ -24,15 +26,19 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
     $context->name = 'testcontext';
     $context->conditions = array('sitewide' => array('values' => array(1)));
     $context->reactions = array('block' => array('blocks' => array(
-      'user-3' => array(
+      'user-online' => array(
         'module' => 'user',
-        'delta' => 3,
-        'region' => 'right',
+        'delta' => 'online',
+        'region' => 'sidebar_first',
         'weight' => 0,
       ),
     )));
     $saved = context_save($context);
     $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    theme_enable(array('bartik'));
+    variable_set('theme_default', 'bartik');
+    $this->refreshVariables();
 
     $this->drupalGet('node');
     $this->assertText('Who\'s online');
