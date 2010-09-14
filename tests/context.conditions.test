@@ -201,8 +201,8 @@ class ContextConditionLanguageTest extends DrupalWebTestCase {
     $this->drupalLogin($admin_user);
 
     // Set up Spanish as second language.
-    $this->drupalPost('admin/settings/language/add', array('langcode' => 'es'), t('Add language'));
-    $this->drupalPost('admin/settings/language/configure', array('language_negotiation' => 1), t('Save settings'));
+    $this->drupalPost('admin/config/regional/language/add', array('langcode' => 'es'), t('Add language'));
+    $this->drupalPost('admin/config/regional/language/configure', array('language[enabled][locale-url]' => 1), t('Save settings'));
   }
 
   function test() {
