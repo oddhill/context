@@ -21,7 +21,15 @@ class context_export_ui extends ctools_export_ui {
   }
 
   function list_render(&$form_state) {
-    return theme('table', $this->list_table_header(), $this->rows, array('class' => 'context-admin', 'id' => 'ctools-export-ui-list-items'));
+    $table = array(
+      'header' => $this->list_table_header(),
+      'rows' => $this->rows, 
+      'attributes' => array(
+        'class' => array('context-admin'),
+        'id' => 'ctools-export-ui-list-items',
+      ),
+    );
+    return theme('table', $table);
   }
 
   function list_build_row($item, &$form_state, $operations) {
@@ -31,24 +39,27 @@ class context_export_ui extends ctools_export_ui {
     $tag = !empty($item->tag) ? $item->tag : t('< Untagged >');
     if (!isset($this->rows[$tag])) {
       $this->rows[$tag]['data'] = array();
-      $this->rows[$tag]['data'][] = array('data' => check_plain($tag), 'colspan' => 3, 'class' => 'tag');
+      $this->rows[$tag]['data'][] = array('data' => check_plain($tag), 'colspan' => 3, 'class' => array('tag'));
       $this->sorts["{$tag}"] = $tag;
     }
 
     // Build row for each context item.
     $this->rows["{$tag}:{$name}"]['data'] = array();
-    $this->rows["{$tag}:{$name}"]['class'] = !empty($item->disabled) ? 'ctools-export-ui-disabled' : 'ctools-export-ui-enabled';
+    $this->rows["{$tag}:{$name}"]['class'] = !empty($item->disabled) ? array('ctools-export-ui-disabled') : array('ctools-export-ui-enabled');
     $this->rows["{$tag}:{$name}"]['data'][] = array(
       'data' => check_plain($name) . "<div class='description'>" . check_plain($item->description) . "</div>",
-      'class' => 'ctools-export-ui-name'
+      'class' => array('ctools-export-ui-name')
     );
     $this->rows["{$tag}:{$name}"]['data'][] = array(
       'data' => check_plain($item->type),
-      'class' => 'ctools-export-ui-storage'
+      'class' => array('ctools-export-ui-storage')
     );
     $this->rows["{$tag}:{$name}"]['data'][] = array(
-      'data' => theme('links', $operations, array('class' => 'links inline')),
-      'class' => 'ctools-export-ui-operations'
+      'data' => theme('links', array(
+        'links' => $operations,
+        'attributes' => array('class' => array('links inline'))
+      )),
+      'class' => array('ctools-export-ui-operations'),
     );
 
     // Sort by tag, name.
@@ -70,13 +81,10 @@ class context_export_ui extends ctools_export_ui {
 /**
  * Generates the omnibus context definition editing form.
  *
- * @param $op
- *   The type of form to build. Either "add", "view" or "edit"
- * @param $cid
- *   The db context identifier - required when $op == "edit"
- *
- * @return
- *   A Drupal form array.
+ * @param $form
+ *   Form array to populate.
+ * @param $form_state
+ *   Form state array
  */
 function context_ui_form(&$form, &$form_state) {
   $context = $form_state['item'];
@@ -130,7 +138,7 @@ function context_ui_form(&$form, &$form_state) {
       '#default_value' => 0,
     ),
     'state' => array(
-      '#attributes' => array('class' => 'context-plugins-state'),
+      '#attributes' => array('class' => array('context-plugins-state')),
       '#type' => 'hidden',
     ),
     'plugins' => array('#tree' => TRUE),
@@ -162,7 +170,7 @@ function context_ui_form(&$form, &$form_state) {
       '#default_value' => 0,
     ),
     'state' => array(
-      '#attributes' => array('class' => 'context-plugins-state'),
+      '#attributes' => array('class' => array('context-plugins-state')),
       '#type' => 'hidden',
     ),
     'plugins' => array('#tree' => TRUE),
@@ -178,7 +186,6 @@ function context_ui_form(&$form, &$form_state) {
       $form['reactions']['selector']['#options'][$reaction] = $plugin->title;
     }
   }
-  return $form;
 }
 
 /**

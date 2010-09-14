@@ -16,19 +16,19 @@ function context_ui_ctools_plugin_directory($module, $plugin) {
 function context_ui_theme() {
   $items = array();
   $items['context_ui_form'] = array(
-    'arguments' => array('form' => array()),
+    'render element' => 'form',
     'path' => drupal_get_path('module', 'context_ui') .'/theme',
     'template' => 'context-ui-form',
     'file' => 'theme.inc',
   );
   $items['context_ui_plugins'] = array(
-    'arguments' => array('form' => array()),
+    'render element' => 'form',
     'path' => drupal_get_path('module', 'context_ui') .'/theme',
     'template' => 'context-ui-plugins',
     'file' => 'theme.inc',
   );
   $items['context_ui_editor'] = array(
-    'arguments' => array('form' => array()),
+    'variables' => array('form' => array()),
     'path' => drupal_get_path('module', 'context_ui') .'/theme',
     'template' => 'context-ui-editor',
     'file' => 'theme.inc',

@@ -17,6 +17,6 @@
     <?php print theme('links', $plugins, array('class' => 'context-plugin-list')) ?>
   </div>
 
-  <?php print drupal_render($form) ?>
+  <?php print drupal_render_children($form) ?>
 
 </div>

@@ -4,7 +4,7 @@
 $plugin = array(
   'schema' => 'context',
   'menu' => array(
-    'menu prefix' => 'admin/build',
+    'menu prefix' => 'admin/structure',
     'menu item' => 'context',
     'menu title' => 'Context',
     'menu description' => 'Associate menus, views, blocks, etc. with different contexts to structure your site.',
