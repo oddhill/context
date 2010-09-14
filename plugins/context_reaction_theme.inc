@@ -72,9 +72,8 @@ class context_reaction_theme extends context_reaction {
         $vars['section_subtitle'] = t($v->reactions[$this->plugin]['subtitle']);
       }
       if (!empty($v->reactions[$this->plugin]['class'])) {
-        $classes[$v->reactions[$this->plugin]['class']] = $v->reactions[$this->plugin]['class'];
+        $vars['classes_array'][] = $v->reactions[$this->plugin]['class'];
       }
     }
-    $vars['body_classes'] .= !empty($classes) ? ' '. implode(' ', $classes) : '';
   }
 }
