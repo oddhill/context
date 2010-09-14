@@ -429,8 +429,8 @@ class context_reaction_block extends context_reaction {
       }
       if (empty($block_info)) {
         $block_info = array();
-        foreach (module_implements('block') as $module) {
-          $module_blocks = module_invoke($module, 'block', 'list');
+        foreach (module_implements('block_info') as $module) {
+          $module_blocks = module_invoke($module, 'block_info');
           if (!empty($module_blocks)) {
             foreach ($module_blocks as $delta => $block) {
               $block = (object) $block;
