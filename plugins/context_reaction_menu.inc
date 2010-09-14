@@ -9,7 +9,7 @@ class context_reaction_menu extends context_reaction {
    * Provide a form element that allow the admin to chose a menu item.
    */
   function options_form($context) {
-    $menus = menu_parent_options(array_reverse(menu_get_menus()), NULL);
+    $menus = menu_parent_options(menu_get_menus(), array('mlid' => 0));
     $root_menus = array();
     foreach ($menus as $key => $name) {
       $id = explode(':', $key);
