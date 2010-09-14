@@ -255,7 +255,7 @@ function context_links($reset = FALSE) {
         $add_url = 'node/add/'. str_replace('_', '-', $type);
         $item = menu_get_item($add_url);
         if ($item && $item['access'] && strpos($_GET['q'], $add_url) !== 0) {
-          $links[$type] = array('title' => t('Add @type', array('@type' => node_get_types('name', $type))), 'href' => $add_url);
+          $links[$type] = array('title' => t('Add @type', array('@type' => node_type_get_name($type))), 'href' => $add_url);
         }
       }
     }

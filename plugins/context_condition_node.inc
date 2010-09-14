@@ -22,7 +22,7 @@ define('CONTEXT_NODE_FORM_ONLY', 2);
 class context_condition_node extends context_condition {
   function condition_values() {
     $values = array();
-    foreach (node_get_types() as $type) {
+    foreach (node_type_get_types() as $type) {
       $values[$type->type] = check_plain($type->name);
     }
     return $values;
