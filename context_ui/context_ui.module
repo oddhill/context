@@ -37,40 +37,42 @@ function context_ui_theme() {
 }
 
 /**
- * Implementation of hook_block().
+ * Implementation of hook_block_info().
  */
-function context_ui_block($op = 'list', $delta = 0, $edit = array()) {
-  switch ($op) {
-    case 'list':
-      $blocks = array();
-      if (module_exists('jquery_ui') && module_exists('admin')) {
-        $blocks['editor'] = array('info' => t('Context editor'), 'admin' => TRUE);
+function context_ui_block_info() {
+    $blocks = array();
+    if (module_exists('jquery_ui') && module_exists('admin')) {
+      $blocks['editor'] = array('info' => t('Context editor'), 'admin' => TRUE);
+    }
+    if (module_exists('devel')) {
+      $blocks['devel'] = array('info' => t('Context inspector'), 'admin' => TRUE);
+    }
+    return $blocks;
+}
+
+/**
+ * Implementation of hook_block_view().
+ */
+function context_ui_block_view($delta = '') {
+  switch ($delta) {
+    case 'editor':
+      if (user_access('administer site configuration') && strpos($_GET['q'], 'admin/build/context') === FALSE && $contexts = context_active_contexts()) {
+        return array(
+          'subject' => t('Context editor'),
+          'content' => drupal_get_form('context_ui_editor', $contexts),
+        );
       }
-      if (module_exists('devel')) {
-        $blocks['devel'] = array('info' => t('Context inspector'), 'admin' => TRUE);
-      }
-      return $blocks;
-    case 'view':
-      switch ($delta) {
-        case 'editor':
-          if (user_access('administer site configuration') && strpos($_GET['q'], 'admin/build/context') === FALSE && $contexts = context_active_contexts()) {
-            return array(
-              'subject' => t('Context editor'),
-              'content' => drupal_get_form('context_ui_editor', $contexts),
-            );
-          }
-          break;
-        case 'devel':
-          if (module_exists('devel') && $all = context_get()) {
-            return array(
-              'subject' => t('Context inspector'),
-              'content' => kdevel_print_object($all),
-            );
-          }
-          break;
+      break;
+    case 'devel':
+      if (module_exists('devel') && $all = context_get()) {
+        return array(
+          'subject' => t('Context inspector'),
+          'content' => kdevel_print_object($all),
+        );
       }
       break;
   }
+  break;
 }
 
 /**
