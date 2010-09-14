@@ -361,7 +361,14 @@ class context_reaction_block extends context_reaction {
       // Only query for custom block title if block core compatibility is enabled.
       if (!variable_get('context_reaction_block_disable_core', FALSE)) {
         global $user, $theme_key;
-        $block->title = db_result(db_query("SELECT title FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block->module, $block->delta, $theme_key));
+        $block->title = db_select('block')
+          ->fields('block', array('title'))
+          ->condition('module', $block->module)
+          ->condition('delta', $block->delta)
+          ->condition('theme', $theme_key)
+          ->execute()
+          ->fetchField();
+        // $block->title = db_result(db_query("SELECT title FROM {blocks} WHERE module = '%s' AND delta = '%s' AND theme = '%s'", $block->module, $block->delta, $theme_key));
       }
       // Override default block title if a custom display title is present.
       if (!empty($block->title)) {
@@ -442,9 +449,13 @@ class context_reaction_block extends context_reaction {
 
       // Gather only region info from the database.
       $theme_key = variable_get('theme_default', 'garland');
-      $result = db_query("SELECT module,weight,delta,region,status FROM {blocks} WHERE theme = '%s' ORDER BY weight ASC", $theme_key);
-      while ($row = db_fetch_object($result)) {
-        if ($row->status && isset($block_info["{$row->module}-{$row->delta}"])) {
+      $result = db_select('block')
+        ->fields('block', array('module','weight','delta','region'))
+        ->condition('theme', $theme_key)
+        ->condition('status', 1)
+        ->execute();
+      foreach ($result as $row) {
+        if (isset($block_info["{$row->module}-{$row->delta}"])) {
           $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
           $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
         }
