@@ -131,12 +131,14 @@ function context_clear() {
  */
 
 /**
- * Implementation of hook_ctools_plugin_plugins().
+ * Implementation of hook_ctools_plugin_type().
  */
-function context_ctools_plugin_plugins() {
+function context_ctools_plugin_type() {
   return array(
-    'cache' => TRUE,
-    'use hooks' => TRUE,
+    'plugins' => array(
+      'cache' => TRUE,
+      'use hooks' => TRUE,
+    ),
   );
 }
 
