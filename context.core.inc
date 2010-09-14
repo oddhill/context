@@ -140,9 +140,6 @@ function context_form_alter(&$form, $form_state, $form_id) {
   if (!empty($form['#node_edit_form']) && arg(0) != 'admin') {
     context_node_condition($form['#node'], 'form');
   }
-  else if ($form_id == 'system_modules') {
-    context_invalidate_cache();
-  }
   // Clear out block info cache when an admin area form is submitted.
   if (arg(0) === 'admin' && !empty($form_state['post']) && (!isset($form_state['method']) || $form_state['method'] !== 'get')) {
     if ($plugin = context_get_plugin('reaction', 'block')) {
@@ -177,6 +174,31 @@ function context_node_condition(&$node, $op) {
 }
 
 /**
+ * Implementation of hook_form_alter() for system_modules_form.
+ */
+function context_form_system_modules_form_alter(&$form, $form_state) {
+  context_invalidate_cache();
+}
+
+/**
+ * Implementation of hook_form_alter() for user_profile_form.
+ */
+function context_form_user_profile_form_alter(&$form, $form_state) {
+  if ($plugin = context_get_plugin('condition', 'user_page')) {
+    $plugin->execute($form['#user'], 'form');
+  }
+}
+
+/**
+ * Implementation of hook_form_alter() for user_register_form.
+ */
+function context_form_user_register_form(&$form, $form_state) {
+  if ($plugin = context_get_plugin('condition', 'user_page')) {
+    $plugin->execute($form['#user'], 'register');
+  }
+}
+
+/**
  * Implementation of hook_form_alter() for comment_form.
  */
 function context_form_comment_form_alter(&$form, $form_state) {
@@ -198,11 +220,9 @@ function context_views_pre_view($view, $args) {
 /**
  * Implementation of hook_user().
  */
-function context_user($op, &$edit, &$account, $category = NULL) {
-  if (in_array($op, array('view', 'form', 'register'))) {
-    if ($plugin = context_get_plugin('condition', 'user_page')) {
-      $plugin->execute($account, $op);
-    }
+function context_user_view($account, $view_mode) {
+  if ($view_mode === 'full' && $plugin = context_get_plugin('condition', 'user_page')) {
+    $plugin->execute($account, 'view');
   }
 }
 

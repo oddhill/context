@@ -39,9 +39,8 @@ class ContextConditionUserTest extends DrupalWebTestCase {
   function tearDown() {
     parent::tearDown();
     context_delete($this->context);
-    $edit = array();
-    user_delete($edit, $this->user1->uid);
-    user_delete($edit, $this->user2->uid);
+    user_delete($this->user1->uid);
+    user_delete($this->user2->uid);
   }
 
   function test() {
@@ -87,8 +86,8 @@ class ContextConditionUserPageTest extends DrupalWebTestCase {
     parent::tearDown();
     context_delete($this->context);
     $edit = array();
-    user_delete($edit, $this->user1->uid);
-    user_delete($edit, $this->user2->uid);
+    user_delete($this->user1->uid);
+    user_delete($this->user2->uid);
   }
 
   function test() {
