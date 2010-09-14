@@ -5,12 +5,13 @@
  * Block form.
  */
 function theme_context_block_form($vars) {
-  $output = drupal_render_children($vars['form']);
-
   $row = array(
     array('data' => drupal_render($vars['form']['blocks']), 'class' => array('blocks')),
     array('data' => drupal_render($vars['form']['selector']) . drupal_render($vars['form']['block']['help']), 'class' => array('selector')),
   );
+
+  $output = drupal_render_children($vars['form']);
+
   $table = array(
     'rows' => array($row),
     'attributes' => array('id' => 'context-blockform'),
