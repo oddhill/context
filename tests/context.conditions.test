@@ -419,8 +419,8 @@ class ContextConditionMenuTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('context', 'ctools');
-    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    parent::setUp('context', 'ctools', 'blog');
+    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes', 'create blog content'));
     $this->drupalLogin($admin_user);
   }
 
