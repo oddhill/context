@@ -14,7 +14,7 @@
       <?php print drupal_render($form['selector']) ?>
       <?php print drupal_render($form['state']) ?>
     </div>
-    <?php print theme('links', $plugins, array('class' => 'context-plugin-list')) ?>
+    <?php print theme('links', array('links' => $plugins, 'attributes' => array('class' => array('context-plugin-list')))) ?>
   </div>
 
   <?php print drupal_render_children($form) ?>
