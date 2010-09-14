@@ -130,7 +130,11 @@ class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('context', 'ctools');
-    $admin_user = $this->drupalCreateUser(array('administer nodes', 'administer site configuration'));
+    $admin_user = $this->drupalCreateUser(array(
+      'access administration pages',
+      'administer nodes',
+      'administer site configuration'
+    ));
     $this->drupalLogin($admin_user);
   }
 
@@ -139,17 +143,18 @@ class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
     $context = ctools_export_new_object('context');
     $context->name = 'testcontext';
     $context->conditions = array('path' => array('values' => array('node')));
-    $context->reactions = array('breadcrumb' => 'admin/build');
+    $context->reactions = array('breadcrumb' => 'admin/structure');
     $saved = context_save($context);
     $this->assertTrue($saved, "Context 'testcontext' saved.");
 
-    variable_set('theme_default', 'garland');
+    theme_enable(array('bartik'));
+    variable_set('theme_default', 'bartik');
     $this->refreshVariables();
 
     $output = $this->drupalGet('node');
-    $this->assertText('Home › Administer › Site building');
+    $this->assertText('Home » Administer » Structure');
     $output = $this->drupalGet('user');
-    $this->assertNoText('Home › Administer › Site building');
+    $this->assertNoText('Home » Administer » Structure');
 
     // Cleanup
     context_delete($context);
