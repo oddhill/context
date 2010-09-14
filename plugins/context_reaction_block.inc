@@ -372,16 +372,18 @@ class context_reaction_block extends context_reaction {
       drupal_alter('context_block_info', $block_info);
 
       // Gather only region info from the database.
-      $theme_key = variable_get('theme_default', 'garland');
-      $result = db_select('block')
-        ->fields('block', array('module','weight','delta','region'))
-        ->condition('theme', $theme_key)
-        ->condition('status', 1)
-        ->execute();
-      foreach ($result as $row) {
-        if (isset($block_info["{$row->module}-{$row->delta}"])) {
-          $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
-          $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
+      if (module_exists('block')) {
+        $theme_key = variable_get('theme_default', 'garland');
+        $result = db_select('block')
+          ->fields('block', array('module','weight','delta','region'))
+          ->condition('theme', $theme_key)
+          ->condition('status', 1)
+          ->execute();
+        foreach ($result as $row) {
+          if (isset($block_info["{$row->module}-{$row->delta}"])) {
+            $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
+            $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
+          }
         }
       }
     }
