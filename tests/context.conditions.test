@@ -17,11 +17,12 @@ class ContextConditionUserTest extends DrupalWebTestCase {
     $this->user1 = $this->drupalCreateUser(array('access content', 'administer site configuration'));
     $this->user2 = $this->drupalCreateUser(array('access content'));
 
-    // Grab role from user1.
+    // The role name is not reliably put on the user object. Retrive from
+    // user_roles().
     $role = '';
-    foreach ($this->user1->roles as $r) {
-      if ($r !== 'authenticated user') {
-        $role = $r;
+    foreach (array_keys($this->user1->roles) as $rid) {
+      if ($rid !== DRUPAL_AUTHENTICATED_RID) {
+        $role = user_role_load($rid)->name;
         break;
       }
     }
