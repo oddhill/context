@@ -9,25 +9,30 @@ class context_reaction_menu extends context_reaction {
    * Provide a form element that allow the admin to chose a menu item.
    */
   function options_form($context) {
-    $menus = menu_parent_options(menu_get_menus(), array('mlid' => 0));
-    $root_menus = array();
-    foreach ($menus as $key => $name) {
-      $id = explode(':', $key);
-      if ($id[1] == '0') {
-        $root_menus[$id[0]] = check_plain($name);
-      }
-      else {
-        $link = menu_link_load($id[1]);
-        $identifier = $link['link_path'];
-        $root_menu = $root_menus[$id[0]];
-        while (isset($menus[$root_menu][$identifier])) {
-          $identifier .= "'";
+    if (module_exists('menu')) {
+      $menus = menu_parent_options(menu_get_menus(), array('mlid' => 0));
+      $root_menus = array();
+      foreach ($menus as $key => $name) {
+        $id = explode(':', $key);
+        if ($id[1] == '0') {
+          $root_menus[$id[0]] = check_plain($name);
         }
-        $menus[$root_menu][$identifier] = $name;
+        else {
+          $link = menu_link_load($id[1]);
+          $identifier = $link['link_path'];
+          $root_menu = $root_menus[$id[0]];
+          while (isset($menus[$root_menu][$identifier])) {
+            $identifier .= "'";
+          }
+          $menus[$root_menu][$identifier] = $name;
+        }
+        unset($menus[$key]);
       }
-      unset($menus[$key]);
+      array_unshift($menus, "-- ". t('None') ." --");
     }
-    array_unshift($menus, "-- ". t('None') ." --");
+    else {
+      $menus = array();
+    }
     return array(
       '#title' => $this->title,
       '#description' => $this->description,
