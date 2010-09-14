@@ -32,12 +32,12 @@ function context_menu_alter(&$items) {
 function context_theme() {
   $items = array();
   $items['context_block_form'] = array(
-    'arguments' => array('form' => array()),
+    'render element' => 'form',
     'path' => drupal_get_path('module', 'context') . '/theme',
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_regions_form'] = array(
-    'arguments' => array('form' => array()),
+    'render element' => 'form',
     'path' => drupal_get_path('module', 'context') . '/theme',
     'file' => 'context_reaction_block.theme.inc',
   );

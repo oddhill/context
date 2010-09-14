@@ -4,20 +4,27 @@
 /**
  * Block form.
  */
-function theme_context_block_form($form) {
-  $rows = array(array(
-    array('data' => drupal_render($form['blocks']), 'class' => 'blocks'),
-    array('data' => drupal_render($form['selector']) . drupal_render($form['block']['help']), 'class' => 'selector'),
-  ));
-  $output = drupal_render($form);
-  $output .= theme('table', array(), $rows, array('id' => 'context-blockform'));
-  return $output;;
+function theme_context_block_form($vars) {
+  $output = drupal_render_children($vars['form']);
+
+  $row = array(
+    array('data' => drupal_render($vars['form']['blocks']), 'class' => array('blocks')),
+    array('data' => drupal_render($vars['form']['selector']) . drupal_render($vars['form']['block']['help']), 'class' => array('selector')),
+  );
+  $table = array(
+    'rows' => array($row),
+    'attributes' => array('id' => 'context-blockform'),
+  );
+  $output .= theme('table', $table);
+  return $output;
 }
 
 /**
  * Generates the AJAX enabled block administration portion of the context_ui admin form.
  */
-function theme_context_block_regions_form($form) {
+function theme_context_block_regions_form($vars) {
+  $form = $vars['form'];
+
   // Add draggable weights
   drupal_add_js('misc/tableheader.js');
   drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
@@ -28,25 +35,25 @@ function theme_context_block_regions_form($form) {
   foreach (element_children($form) as $region) {
     $attr = array(
       'id' => "context-blockform-region-{$region}",
-      'class' => "context-blockform-region",
+      'class' => array("context-blockform-region"),
     );
     drupal_add_tabledrag($attr['id'], 'order', 'sibling', 'block-weight', NULL, NULL, FALSE);
     $rows = array();
     foreach (element_children($form[$region]) as $id) {
-      $form[$region][$id]['weight']['#attributes'] = array('class' => 'block-weight');
+      $form[$region][$id]['weight']['#attributes'] = array('class' => array('block-weight'));
       $label = $form[$region][$id]['#value'];
-      $remove = l('X', $_GET['q'], array('fragment' => 'remove', 'attributes' => array('class' => 'remove')));
+      $remove = l('X', $_GET['q'], array('fragment' => 'remove', 'attributes' => array('class' => array('remove'))));
       $rows[] = array(
         'data' => array($label . drupal_render($form[$region][$id]['weight']), $remove),
-        'class' => 'draggable',
+        'class' => array('draggable'),
         'id' => $id,
       );
     }
     $output .= "<div class='label context-blockform-regionlabel-{$region}'>";
-    $output .= l('+ '. t('Add'), $_GET['q'], array('fragment' => $region, 'attributes' => array('class' => 'add-block')));
+    $output .= l('+ '. t('Add'), $_GET['q'], array('fragment' => $region, 'attributes' => array('class' => array('add-block'))));
     $output .= $form[$region]['#title'];
     $output .= "</div>";
-    $output .= theme('table', array(), $rows, $attr);
+    $output .= theme('table', array('rows' => $rows, 'attributes' => $attr));
   }
   return $output;
 }
@@ -66,7 +73,7 @@ function template_preprocess_context_block_browser(&$vars) {
   $categories = array(
     '#type' => 'select',
     '#options' => array(0 => '<'. t('Choose a category') .'>'),
-    '#attributes' => array('class' => 'context-block-browser-categories'),
+    '#attributes' => array('class' => array('context-block-browser-categories')),
     '#value' => 0,
     '#size' => 1,
     '#id' => '',
