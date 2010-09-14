@@ -83,8 +83,13 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('context', 'ctools');
-    $admin_user = $this->drupalCreateUser(array('administer nodes', 'administer site configuration'));
+    parent::setUp('context', 'ctools', 'menu', 'blog');
+    $admin_user = $this->drupalCreateUser(array(
+      'administer menu',
+      'administer nodes',
+      'administer site configuration',
+      'create blog content',
+    ));
     $this->drupalLogin($admin_user);
   }
 
@@ -97,8 +102,9 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
     $saved = context_save($context);
     $this->assertTrue($saved, "Context 'testcontext' saved.");
 
-    variable_set('menu_primary_links_source', 'navigation');
-    variable_set('theme_default', 'garland');
+    $this->drupalPost('admin/structure/menu/settings', array('menu_main_links_source' => 'management'), 'Save configuration');
+    theme_enable(array('bartik'));
+    variable_set('theme_default', 'bartik');
     $this->refreshVariables();
 
     $output = $this->drupalGet('user');
