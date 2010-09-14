@@ -1,6 +1,6 @@
 // $Id$
-
-Drupal.behaviors.contextReactionBlock = function(context) {
+(function($){
+Drupal.behaviors.contextReactionBlock = {attach: function(context) {
   $('form.context-editor:not(.context-block-processed)')
     .addClass('context-block-processed')
     .each(function() {
@@ -41,7 +41,7 @@ Drupal.behaviors.contextReactionBlock = function(context) {
       return false;
     });
   });
-};
+}};
 
 /**
  * Context block form. Default form for editing context block reactions.
@@ -413,3 +413,5 @@ DrupalContextBlockEditor.prototype.editFinish = function() {
     $.browser.mozilla = false;
   }
 };
+
+})(jQuery);

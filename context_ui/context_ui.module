@@ -124,7 +124,7 @@ function context_ui_editor($form_state, $contexts) {
     $done = l(t('Done'), $_GET['q'], array('fragment' => $context->name, 'attributes' => array('class' => 'done')));
     $items[] = array(
       'data' => "<div class='label'>" . (empty($context->description) ? $context->name : check_plain($context->description)) ."</div><div class='links'>{$edit} {$done}</div>",
-      'class' => 'context-editable clear-block',
+      'class' => 'context-editable clearfix',
       'id' => "context-editable-trigger-{$context->name}",
     );
     $form_context = array(

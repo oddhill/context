@@ -1,4 +1,4 @@
-<div class='context-editor clear-block'>
+<div class='context-editor clearfix'>
   <?php print drupal_render($form) ?>
   <div class='contexts'>
     <?php foreach (element_children($contexts) as $context): ?>

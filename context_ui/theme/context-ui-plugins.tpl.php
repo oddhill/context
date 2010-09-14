@@ -1,4 +1,4 @@
-<div class='context-plugins clear-block'>
+<div class='context-plugins clearfix'>
   <div class='context-plugin-forms'>
     <?php foreach (element_children($form['plugins']) as $plugin): ?>
       <div class='context-plugin-form context-plugin-form-<?php print $plugin ?>'>
