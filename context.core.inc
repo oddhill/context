@@ -94,12 +94,6 @@ function context_theme_registry_alter(&$theme_registry) {
   $position = $position ? $position + 1 : 2;
   array_splice($theme_registry['page']['preprocess functions'], $position, 0, 'context_preprocess_page');
 
-  // Add a page preprocess function to the very top of the theme_page()
-  // stack so that we can actually set contexts *before* the page theming
-  // is executed.
-  if (!in_array('context_page_alter', $theme_registry['page']['preprocess functions'])) {
-    array_unshift($theme_registry['page']['preprocess functions'], 'context_page_alter');
-  }
   // Reroute theme_blocks() through context_blocks to determine block
   // visibility by context. Only override theme_blocks() if a theme
   // has not overridden it. It is the responsibility of any themes
@@ -127,10 +121,10 @@ function context_ctools_render_alter($info, $page, $args, $contexts, $task, $sub
 }
 
 /**
- * Implementation of hook_nodeapi().
+ * Implementation of hook_node_view().
  */
-function context_nodeapi(&$node, $op, $teaser, $page) {
-  if ($op == 'view' && $page) {
+function context_node_view($node, $view_mode) {
+  if ($view_mode === 'full') {
     $object = menu_get_object();
     if (isset($object->nid) && $object->nid === $node->nid) {
       context_node_condition($node, 'view');
@@ -143,7 +137,7 @@ function context_nodeapi(&$node, $op, $teaser, $page) {
  */
 function context_form_alter(&$form, $form_state, $form_id) {
   // Prevent this from firing on admin pages... damn form driven apis...
-  if ($form['#id'] === 'node-form' && arg(0) != 'admin') {
+  if (!empty($form['#node_edit_form']) && arg(0) != 'admin') {
     context_node_condition($form['#node'], 'form');
   }
   else if ($form_id == 'system_modules') {
@@ -307,7 +301,7 @@ function context_context_page_reaction() {
 }
 
 /**
- * Implementation of preprocess_page().
+ * Implementation of hook_page_alter().
  */
 function context_preprocess_page(&$vars) {
   if ($plugin = context_get_plugin('reaction', 'menu')) {

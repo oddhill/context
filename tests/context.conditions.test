@@ -359,8 +359,13 @@ class ContextConditionNodeTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('context', 'ctools', 'blog');
-    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    parent::setUp('context', 'ctools', 'blog', 'book');
+    $admin_user = $this->drupalCreateUser(array(
+      'administer site configuration',
+      'administer nodes',
+      'create blog content',
+      'create book content'
+    ));
     $this->drupalLogin($admin_user);
   }
 
@@ -376,14 +381,14 @@ class ContextConditionNodeTest extends DrupalWebTestCase {
     $this->drupalGet("node/add/blog");
     $this->assertNoText('Active context: testcontext');
 
-    $this->drupalGet("node/add/page");
+    $this->drupalGet("node/add/book");
     $this->assertNoText('Active context: testcontext');
 
     $node = $this->drupalCreateNode(array('type' => 'blog'));
     $this->drupalGet("node/{$node->nid}");
     $this->assertText('Active context: testcontext');
 
-    $node = $this->drupalCreateNode(array('type' => 'page'));
+    $node = $this->drupalCreateNode(array('type' => 'book'));
     $this->drupalGet("node/{$node->nid}");
     $this->assertNoText('Active context: testcontext');
 
@@ -394,7 +399,7 @@ class ContextConditionNodeTest extends DrupalWebTestCase {
     $this->drupalGet("node/add/blog");
     $this->assertText('Active context: testcontext');
 
-    $this->drupalGet("node/add/page");
+    $this->drupalGet("node/add/book");
     $this->assertNoText('Active context: testcontext');
 
     // Cleanup
