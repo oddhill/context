@@ -504,7 +504,12 @@ class ContextConditionBookroot extends DrupalWebTestCase {
 
   function setUp() {
     parent::setUp('context', 'ctools', 'book', 'menu');
-    $admin_user = $this->drupalCreateUser(array('administer site configuration', 'administer nodes'));
+    $admin_user = $this->drupalCreateUser(array(
+      'administer site configuration',
+      'administer nodes',
+      'create book content',
+      'edit any book content',
+    ));
     $this->drupalLogin($admin_user);
     variable_set('book_allowed_types', array('book', 'page'));
   }
