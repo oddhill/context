@@ -80,7 +80,7 @@ function context_ui_block_view($delta = '') {
  */
 function context_ui_menu() {
   $items = array();
-  $items['admin/build/context/settings'] = array(
+  $items['admin/structure/context/settings'] = array(
     'title' => 'Settings',
     'access callback' => 'user_access',
     'access arguments' => array('administer site configuration'),
@@ -240,7 +240,7 @@ function context_ui_editor_cancel(&$form, &$form_state) {
 /**
  * Settings form.
  */
-function context_ui_settings(&$form_state) {
+function context_ui_settings($form, &$form_state) {
   $form = array();
   foreach (context_conditions() as $condition => $info) {
     if ($plugin = context_get_plugin('condition', $condition)) {
