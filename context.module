@@ -138,6 +138,7 @@ function context_ctools_plugin_type() {
     'plugins' => array(
       'cache' => TRUE,
       'use hooks' => TRUE,
+      'classes' => array('handler'),
     ),
   );
 }
