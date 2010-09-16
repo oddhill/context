@@ -188,16 +188,6 @@ class context_reaction_block extends context_reaction {
    */
   function settings_form() {
     $form = array();
-    $form['context_reaction_block_disable_core'] = array(
-      '#title' => t('Core block system'),
-      '#type' => 'select',
-      '#options' => array(
-        FALSE => t('Enabled'),
-        TRUE => t('Disabled'),
-      ),
-      '#default_value' => variable_get('context_reaction_block_disable_core', FALSE),
-      '#description' => t('If enabled Context will include blocks enabled through the core block system when rendering regions. Disable to improve performance and hide the core block administration UI.')
-    );
     $form['context_reaction_block_all_regions'] = array(
       '#title' => t('Show all regions'),
       '#type' => 'checkbox',
@@ -228,33 +218,6 @@ class context_reaction_block extends context_reaction {
   }
 
   /**
-   * Determine whether inline editing requirements are met and that the current
-   * user may edit.
-   */
-  protected function is_editable($reset = FALSE) {
-    // Check requirements.
-    // Generally speaking, it does not make sense to allow anonymous users to
-    // edit a context inline. Though it may be possible to save (and restore)
-    // an edited context to an anonymous user's cookie or session, it's an
-    // edge case and probably not something we want to encourage anyway.
-    static $editable;
-    if (!isset($editable) || $reset) {
-      global $user;
-      if (module_exists('jquery_ui') && $user->uid) {
-        $editable = TRUE;
-        drupal_add_library('system', 'ui.droppable');
-        drupal_add_library('system', 'ui.sortable');
-        drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
-        drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
-      }
-      else {
-        $editable = FALSE;
-      }
-    }
-    return $editable;
-  }
-
-  /**
    * Return a list of enabled regions for which blocks should be built.
    * Split out into a separate method for easy overrides in extending classes.
    */
@@ -262,6 +225,62 @@ class context_reaction_block extends context_reaction {
     global $theme;
     $regions = array_keys(system_region_list($theme));
     return in_array($region, $regions, TRUE);
+  }
+
+  /**
+   * Determine whether inline editing requirements are met and that the current
+   * user may edit.
+   */
+  protected function is_editable_region($region, $reset = FALSE) {
+    // Check requirements.
+    // Generally speaking, it does not make sense to allow anonymous users to
+    // edit a context inline. Though it may be possible to save (and restore)
+    // an edited context to an anonymous user's cookie or session, it's an
+    // edge case and probably not something we want to encourage anyway.
+    static $requirements;
+    if (!isset($requirements) || $reset) {
+      global $user;
+      if ($user->uid) {
+        $requirements = TRUE;
+        drupal_add_library('system', 'ui.droppable');
+        drupal_add_library('system', 'ui.sortable');
+        drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
+        drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
+      }
+      else {
+        $requirements = FALSE;
+      }
+    }
+    // Check that this region is not locked by the theme.
+    global $theme;
+    $info = system_get_info('theme', $theme);
+    if ($info && isset($info['regions_locked']) && in_array($region, $info['regions_locked'])) {
+      return FALSE;
+    }
+    return $requirements && $this->is_enabled_region($region);
+  }
+
+  /**
+   * Add markup for making a block editable.
+   */
+  protected function editable_block($block) {
+    if (!empty($block->content['#markup'])) {
+      $block->content['#markup'] .= "<a id='context-block-{$block->module}-{$block->delta}' class='context-block editable edit-{$block->context}'></a>";
+    }
+    return $block;
+  }
+
+  /**
+   * Add markup for making a region editable.
+   */
+  protected function editable_region($region, $build) {
+    if ($this->is_editable_region($region) && (!empty($build) || variable_get('context_reaction_block_all_regions', FALSE))) {
+      global $theme;
+      $regions = system_region_list($theme);
+      $name = isset($regions[$region]) ? $regions[$region] : $region;
+      $build['context']['#markup'] = "<a class='context-block-region' id='context-block-region-{$region}'>{$name}</a>";
+    }
+    return $build;
   }
 
   /**
@@ -273,6 +292,9 @@ class context_reaction_block extends context_reaction {
     $build = array();
     if ($list = $this->block_list($region)) {
       $build = _block_get_renderable_array($list);
+    }
+    if ($this->is_editable_region($region)) {
+      $build = $this->editable_region($region, $build);
     }
     return $build;
   }
@@ -296,13 +318,20 @@ class context_reaction_block extends context_reaction {
             $block->title = NULL;
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
-            $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : BLOCK_NO_CACHE;
+            $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : DRUPAL_NO_CACHE;
             $context_blocks[$block->region][$block->bid] = $block;
           }
         }
       }
       foreach ($context_blocks as $r => $blocks) {
         $context_blocks[$r] = _block_render_blocks($blocks);
+
+        // Make blocks editable if allowed.
+        if ($this->is_editable_region($r)) {
+          foreach ($context_blocks[$r] as $key => $block) {
+            $context_blocks[$r][$key] = $this->editable_block($block);
+          }
+        }
       }
     }
     return isset($context_blocks[$region]) ? $context_blocks[$region] : array();

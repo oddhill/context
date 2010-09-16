@@ -53,18 +53,6 @@ function context_theme() {
     'template' => 'context-block-browser-item',
     'file' => 'context_reaction_block.theme.inc',
   );
-  $items['context_block_editable_block'] = array(
-    'variables' => array('block' => array()),
-    'path' => drupal_get_path('module', 'context') . '/theme',
-    'template' => 'context-block-editable-block',
-    'file' => 'context_reaction_block.theme.inc',
-  );
-  $items['context_block_editable_region'] = array(
-    'variables' => array('region' => '', 'blocks' => array(), 'editable' => FALSE),
-    'path' => drupal_get_path('module', 'context') . '/theme',
-    'template' => 'context-block-editable-region',
-    'file' => 'context_reaction_block.theme.inc',
-  );
   $items['context_block_script_placeholder'] = array(
     'variables' => array('text' => NULL),
     'path' => drupal_get_path('module', 'context') . '/theme',

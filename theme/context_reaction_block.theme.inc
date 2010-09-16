@@ -103,28 +103,3 @@ function template_preprocess_context_block_browser_item(&$vars) {
   $vars['bid'] = $vars['block']->bid;
   $vars['info'] = check_plain($vars['block']->info);
 }
-
-/**
- * Preprocessor for theme('context_block_editable_region').
- */
-function template_preprocess_context_block_editable_region(&$vars) {
-  if (!empty($vars['editable'])) {
-    // Show when empty?
-    $vars['show_always'] = variable_get('context_reaction_block_all_regions', FALSE);
-
-    // Provide the user-friendly name of the region
-    global $theme_key;
-    $regions = system_region_list($theme_key);
-    $vars['region_description'] = isset($regions[$vars['region']]) ? $regions[$vars['region']] : $vars['region'];
-  }
-}
-
-/**
- * Preprocessor for theme('context_block_editable_block').
- */
-function template_preprocess_context_block_editable_block(&$vars) {
-  $vars['empty'] = empty($vars['block']->content);
-  if (isset($vars['block']->context)) {
-    $vars['block']->content .= "<a id='context-block-{$vars['block']->module}-{$vars['block']->delta}' class='context-block editable edit-{$vars['block']->context}'></a>";
-  }
-}
