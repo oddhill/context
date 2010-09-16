@@ -69,7 +69,6 @@ function _context_context_registry() {
       'plugin' => 'context_condition_language',
     );
   }
-  /*
   if (module_exists('taxonomy')) {
     $registry['conditions']['node_taxonomy'] = array(
       'title' => t('Taxonomy'),
@@ -77,7 +76,6 @@ function _context_context_registry() {
       'plugin' => 'context_condition_node_taxonomy',
     );
   }
-  */
   $registry['reactions'] = array(
     'block' => array(
       'title' => t('Blocks'),

@@ -463,7 +463,10 @@ function context_get_plugin($type = 'condition', $key, $reset = FALSE) {
       $info = $registry[$key];
       $plugins = ctools_get_plugins('context', 'plugins');
       if (isset($plugins[$info['plugin']]) && $class = ctools_plugin_get_class($plugins[$info['plugin']], 'handler')) {
-        $cache[$type][$key] = new $class($key, $info);
+        // Check that class exists until CTools & registry issues are resolved.
+        if (class_exists($class)) {
+          $cache[$type][$key] = new $class($key, $info);
+        }
       }
     }
   }
