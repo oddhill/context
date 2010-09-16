@@ -28,7 +28,7 @@ function context_ui_theme() {
     'file' => 'theme.inc',
   );
   $items['context_ui_editor'] = array(
-    'variables' => array('form' => array()),
+    'render element' => 'form',
     'path' => drupal_get_path('module', 'context_ui') .'/theme',
     'template' => 'context-ui-editor',
     'file' => 'theme.inc',
@@ -41,9 +41,7 @@ function context_ui_theme() {
  */
 function context_ui_block_info() {
     $blocks = array();
-    if (module_exists('jquery_ui') && module_exists('admin')) {
-      $blocks['editor'] = array('info' => t('Context editor'), 'admin' => TRUE);
-    }
+    $blocks['editor'] = array('info' => t('Context editor'), 'admin' => TRUE);
     if (module_exists('devel')) {
       $blocks['devel'] = array('info' => t('Context inspector'), 'admin' => TRUE);
     }
@@ -107,11 +105,11 @@ function context_ui_help($path, $arg) {
 /**
  * Inline context editor form.
  */
-function context_ui_editor($form_state, $contexts) {
+function context_ui_editor($form, &$form_state, $contexts) {
   $form = array(
     '#attributes' => array('class' => 'context-editor'),
     '#theme' => array('context_ui_editor'),
-    'editables' => array('#type' => 'markup'),
+    'editables' => array(),
     'contexts' => array('#tree' => TRUE),
     'buttons' => array('#tree' => FALSE),
   );
@@ -121,11 +119,11 @@ function context_ui_editor($form_state, $contexts) {
   ksort($contexts);
 
   foreach ($contexts as $context) {
-    $edit = l(t('Edit'), $_GET['q'], array('fragment' => $context->name, 'attributes' => array('class' => 'edit')));
-    $done = l(t('Done'), $_GET['q'], array('fragment' => $context->name, 'attributes' => array('class' => 'done')));
+    $edit = l(t('Edit'), $_GET['q'], array('fragment' => $context->name, 'attributes' => array('class' => array('edit'))));
+    $done = l(t('Done'), $_GET['q'], array('fragment' => $context->name, 'attributes' => array('class' => array('done'))));
     $items[] = array(
       'data' => "<div class='label'>" . (empty($context->description) ? $context->name : check_plain($context->description)) ."</div><div class='links'>{$edit} {$done}</div>",
-      'class' => 'context-editable clearfix',
+      'class' => array('context-editable clearfix'),
       'id' => "context-editable-trigger-{$context->name}",
     );
     $form_context = array(
@@ -160,7 +158,7 @@ function context_ui_editor($form_state, $contexts) {
   }
 
   // Display editable contexts in list.
-  $form['editables']['#value'] = theme('item_list', $items);
+  $form['editables']['#markup'] = theme('item_list', array('items' => $items));
 
   // Buttons.
   $form['buttons']['save'] = array(

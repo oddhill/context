@@ -471,28 +471,6 @@ function context_get_plugin($type = 'condition', $key, $reset = FALSE) {
 }
 
 /**
- * Get info for modules.
- * @TODO: It really hurts that we have to do this. See a similar function in
- * features.module and recognize that this should be in system.module but is not...
- */
-function context_get_info($type = NULL, $name = NULL, $reset = FALSE) {
-  static $info;
-  if (!isset($info) || $reset) {
-    $result = db_query("SELECT name,type,info FROM {system}");
-    while ($row = db_fetch_object($result)) {
-      $info[$row->type][$row->name] = unserialize($row->info);
-    }
-  }
-  if (isset($type, $name)) {
-    return isset($info[$type][$name]) ? $info[$type][$name] : FALSE;
-  }
-  else if (isset($type)) {
-    return isset($info[$type]) ? $info[$type] : FALSE;
-  }
-  return $info;
-}
-
-/**
  * Get all context conditions.
  */
 function context_conditions($reset = FALSE) {

@@ -114,34 +114,35 @@ class context_reaction_block extends context_reaction {
    */
   function editor_form($context) {
     $form = array();
-    if (module_exists('jquery_ui')) {
-      jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
-      drupal_add_js(drupal_get_path('module', 'context_ui') .'/json2.js');
-      drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
-      drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
+    drupal_add_library('system', 'ui.droppable');
+    drupal_add_library('system', 'ui.sortable');
+    drupal_add_js(drupal_get_path('module', 'context_ui') .'/json2.js');
+    drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
+    drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
 
-      // We might be called multiple times so use a static to ensure this is set just once.
-      static $once;
-      if (!isset($once)) {
-        $settings = array(
-          'path' => url($_GET['q']),
-          'params' => (object) array_diff_key($_GET, array('q' => '')),
-          'scriptPlaceholder' => theme('context_block_script_placeholder', ''),
-        );
-        drupal_add_js(array('contextBlockEditor' => $settings), 'setting');
-        $once = TRUE;
-      }
-
-      $form['state'] = array(
-        '#type' => 'hidden',
-        '#attributes' => array('class' => 'context-block-editor-state'),
+    // We might be called multiple times so use a static to ensure this is set just once.
+    static $once;
+    if (!isset($once)) {
+      $settings = array(
+        'path' => url($_GET['q']),
+        'params' => (object) array_diff_key($_GET, array('q' => '')),
+        'scriptPlaceholder' => theme('context_block_script_placeholder', array('text' => '')),
       );
-      $form['browser'] = array(
-        '#type' => 'markup',
-        '#value' => theme('context_block_browser', $this->get_blocks(NULL, NULL, $this->rebuild_needed()), $context),
-      );
-      $this->rebuild_needed(FALSE);
+      drupal_add_js(array('contextBlockEditor' => $settings), 'setting');
+      $once = TRUE;
     }
+
+    $form['state'] = array(
+      '#type' => 'hidden',
+      '#attributes' => array('class' => array('context-block-editor-state')),
+    );
+    $form['browser'] = array(
+      '#markup' => theme('context_block_browser', array(
+        'blocks' => $this->get_blocks(NULL, NULL, $this->rebuild_needed()),
+        'context' => $context
+      )),
+    );
+    $this->rebuild_needed(FALSE);
     return $form;
   }
 
@@ -241,7 +242,8 @@ class context_reaction_block extends context_reaction {
       global $user;
       if (module_exists('jquery_ui') && $user->uid) {
         $editable = TRUE;
-        jquery_ui_add(array('ui.draggable', 'ui.droppable', 'ui.sortable'));
+        drupal_add_library('system', 'ui.droppable');
+        drupal_add_library('system', 'ui.sortable');
         drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
         drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
       }

@@ -1,5 +1,5 @@
 <div class='context-editor clearfix'>
-  <?php print drupal_render($form) ?>
+  <?php print drupal_render_children($form) ?>
   <div class='contexts'>
     <?php foreach (element_children($contexts) as $context): ?>
       <div class='context-editable' id='context-editable-<?php print $context ?>'><?php print drupal_render($contexts[$context]) ?></div>

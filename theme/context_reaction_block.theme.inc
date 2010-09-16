@@ -87,7 +87,7 @@ function template_preprocess_context_block_browser(&$vars) {
   // Group blocks by module.
   foreach ($vars['blocks'] as $block) {
     if (!isset($categories[$block->module])) {
-      $info = context_get_info('module', $block->module);
+      $info = system_get_info('module', $block->module);
       $categories['#options'][$block->module] = !empty($info['name']) ? $info['name'] : $block->module;
     }
     $blocks[$block->module][$block->bid] = $block; // Don't call theme('context_block_browser_item') to allow others to alter.

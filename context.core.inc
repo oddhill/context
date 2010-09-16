@@ -37,36 +37,36 @@ function context_theme() {
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_editor'] = array(
-    'arguments' => array('form' => array()),
+    'render element' => 'form',
     'path' => drupal_get_path('module', 'context') . '/theme',
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_browser'] = array(
-    'arguments' => array('blocks' => array(), 'context' => array()),
+    'variables' => array('blocks' => array(), 'context' => array()),
     'path' => drupal_get_path('module', 'context') . '/theme',
     'template' => 'context-block-browser',
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_browser_item'] = array(
-    'arguments' => array('block' => array()),
+    'variables' => array('block' => array()),
     'path' => drupal_get_path('module', 'context') . '/theme',
     'template' => 'context-block-browser-item',
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_editable_block'] = array(
-    'arguments' => array('block' => array()),
+    'variables' => array('block' => array()),
     'path' => drupal_get_path('module', 'context') . '/theme',
     'template' => 'context-block-editable-block',
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_editable_region'] = array(
-    'arguments' => array('region' => '', 'blocks' => array(), 'editable' => FALSE),
+    'variables' => array('region' => '', 'blocks' => array(), 'editable' => FALSE),
     'path' => drupal_get_path('module', 'context') . '/theme',
     'template' => 'context-block-editable-region',
     'file' => 'context_reaction_block.theme.inc',
   );
   $items['context_block_script_placeholder'] = array(
-    'arguments' => array('text' => NULL),
+    'variables' => array('text' => NULL),
     'path' => drupal_get_path('module', 'context') . '/theme',
     'file' => 'context_reaction_block.theme.inc',
   );
