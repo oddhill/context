@@ -69,6 +69,7 @@ function _context_context_registry() {
       'plugin' => 'context_condition_language',
     );
   }
+  /*
   if (module_exists('taxonomy')) {
     $registry['conditions']['node_taxonomy'] = array(
       'title' => t('Taxonomy'),
@@ -76,6 +77,7 @@ function _context_context_registry() {
       'plugin' => 'context_condition_node_taxonomy',
     );
   }
+  */
   $registry['reactions'] = array(
     'block' => array(
       'title' => t('Blocks'),
@@ -185,6 +187,7 @@ function _context_context_plugins() {
       'parent' => 'context_condition',
     ),
   );
+  /*
   if (module_exists('taxonomy')) {
     $plugins['context_condition_node_taxonomy'] = array(
       'handler' => array(
@@ -195,6 +198,7 @@ function _context_context_plugins() {
       ),
     );
   }
+  */
   if (module_exists('locale')) {
     $plugins['context_condition_language'] = array(
       'handler' => array(
