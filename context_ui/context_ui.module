@@ -40,12 +40,12 @@ function context_ui_theme() {
  * Implementation of hook_block_info().
  */
 function context_ui_block_info() {
-    $blocks = array();
-    $blocks['editor'] = array('info' => t('Context editor'), 'admin' => TRUE);
-    if (module_exists('devel')) {
-      $blocks['devel'] = array('info' => t('Context inspector'), 'admin' => TRUE);
-    }
-    return $blocks;
+  $blocks = array();
+  $blocks['editor'] = array('info' => t('Context editor'), 'admin' => TRUE);
+  if (module_exists('devel')) {
+    $blocks['devel'] = array('info' => t('Context inspector'), 'admin' => TRUE);
+  }
+  return $blocks;
 }
 
 /**
