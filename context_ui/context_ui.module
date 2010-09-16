@@ -72,7 +72,6 @@ function context_ui_block_view($delta = '') {
       }
       break;
   }
-  break;
 }
 
 /**
