@@ -41,7 +41,8 @@ class context_layouts_reaction_block extends context_reaction_block {
   function add_layout_template(&$vars) {
     if ($layout = $this->get_active_layout()) {
       if (!empty($layout['template'])) {
-        $vars['template_files'][] = $layout['template'];
+        global $theme;
+        $vars['theme_hook_suggestion'] = "page__context_layouts_{$theme}_{$layout['layout']}";
       }
     }
   }
@@ -127,8 +128,8 @@ class context_layouts_reaction_block extends context_reaction_block {
         '#options' => $layouts,
         '#type' => 'select',
         '#weight' => -100,
-        '#default_value' => $options['layout'] ? $options['layout'] : NULL,
-        '#attributes' => array('class' => 'context-blockform-layout'),
+        '#default_value' => !empty($options['layout']) ? $options['layout'] : NULL,
+        '#attributes' => array('class' => array('context-blockform-layout')),
       );
 
       // Add js.

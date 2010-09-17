@@ -13,15 +13,12 @@ version. You will need the latest CTools (as of Sept. 16 2010) from here:
 - all conditions except node taxonomy condition
 - all reactions
 - context UI
+- context layouts
 - inline editor (with Admin 2.x for D7)
 
 ### Expect API changes
 
 - node taxonomy condition to generic field condition for entities
-
-### Needs upgrade
-
-- context layouts
 
 
 Context 3.x for Drupal 7.x
