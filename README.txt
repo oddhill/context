@@ -1,6 +1,30 @@
 $Id$
 
-Context 3.x for Drupal 6.x
+Current state of Context for Drupal 7
+-------------------------------------
+Context for D7 is a straight port of Context 3.x from D6. There are no major
+API changes and any exported contexts from D6 should be compatible with the D7
+version. You will need the latest CTools (as of Sept. 16 2010) from here:
+
+- http://github.com/sdboyer/ctools
+
+### Working
+
+- all conditions except node taxonomy condition
+- all reactions
+- context UI
+- inline editor (with Admin 2.x for D7)
+
+### Expect API changes
+
+- node taxonomy condition to generic field condition for entities
+
+### Needs upgrade
+
+- context layouts
+
+
+Context 3.x for Drupal 7.x
 --------------------------
 Context allows you to manage contextual conditions and reactions for
 different portions of your site. You can think of each context as
