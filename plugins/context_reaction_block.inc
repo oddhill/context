@@ -206,6 +206,13 @@ class context_reaction_block extends context_reaction {
     // The theme system might not yet be initialized. We need $theme.
     drupal_theme_initialize();
 
+    // If the context_block querystring param is set, switch to AJAX rendering.
+    // Note that we check the output buffer for any content to ensure that we
+    // are not in the middle of a PHP template render.
+    if (isset($_GET['context_block']) && !ob_get_contents()) {
+      return $this->render_ajax($_GET['context_block']);
+    }
+
     // Populate all block regions
     $all_regions = system_region_list($theme);
 
@@ -522,15 +529,15 @@ class context_reaction_block extends context_reaction {
    */
   function render_ajax($param) {
     // Besure the page isn't a 404 or 403.
-    $headers = drupal_set_header();
-    foreach (explode("\n", $headers) as $header) {
+    $headers = drupal_get_http_header();
+    foreach (explode($headers) as $header) {
       if ($header == "HTTP/1.1 404 Not Found" || $header == "HTTP/1.1 403 Forbidden") {
         return;
       }
     }
     // Set the header right away. This will inform any players in the stack
     // that we are in the middle of responding to an AJAX request.
-    drupal_set_header('Content-Type: text/javascript; charset=utf-8');
+    drupal_add_http_header('Content-Type', 'text/javascript; charset=utf-8');
 
     if (strpos($param, ',') !== FALSE) {
       list($bid, $context) = explode(',', $param);
@@ -539,40 +546,23 @@ class context_reaction_block extends context_reaction {
       // Ensure $bid is valid.
       $info = $this->get_blocks();
       if (isset($info[$bid])) {
+        module_load_include('module', 'block', 'block');
         $block = $info[$bid];
         $block->context = $context;
         $block->region = '';
-        $block = $this->build_block($block);
-
-        if (empty($block->content)) {
-          $block->content = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
+        $block = array_shift(_block_render_blocks(array($block)));
+        if (empty($block->content['#markup'])) {
+          $block->content['#markup'] = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
         }
-
-        $css = array();
-
-        // On behalf of panels we try to load some css, but we don't support
-        // panels inside panels currently.
-        if ($block->module == 'panels_mini') {
-          $panel = panels_mini_load($block->delta);
-          $layout = panels_get_layout($panel->display->layout);
-          if (!empty($layout['css'])) {
-            if (file_exists(path_to_theme() . '/' . $layout['css'])) {
-              $css[] = path_to_theme() . '/' . $layout['css'];
-            }
-            else {
-              $css[] = $layout['path'] . '/' . $layout['css'];
-            }
-          }
-        }
-        echo drupal_to_js(array(
+        $block = $this->editable_block($block);
+        echo drupal_json_encode(array(
           'status' => 1,
-          'block' => theme('context_block_editable_block', $block),
-          'css' => $css,
+          'block' => drupal_render(_block_get_renderable_array(array($block))),
         ));
-        exit;
+        drupal_exit();
       }
     }
-    echo drupal_to_js(array('status' => 0));
-    exit;
+    echo drupal_json_encode(array('status' => 0));
+    drupal_exit();
   }
 }

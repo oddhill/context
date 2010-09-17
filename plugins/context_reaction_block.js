@@ -260,12 +260,6 @@ DrupalContextBlockEditor.prototype.addBlock = function(event, ui, editor, contex
           $(this).replaceWith(newBlock);
           self.initBlocks(newBlock);
           self.updateBlocks();
-          $.each(data.css, function(k, v){
-            var cssfile = Drupal.settings.basePath + v;
-            if ($('head link[href $='+cssfile+']').length === 0 ) {
-              $('head').append('<link type="text/css" rel="stylesheet" media="all" href="' + cssfile + " />'");
-            }
-          });
           Drupal.attachBehaviors();
         });
       }
