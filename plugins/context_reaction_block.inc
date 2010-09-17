@@ -58,7 +58,7 @@ class context_reaction_block extends context_reaction {
       '#tree' => TRUE,
       '#theme' => 'context_block_regions_form',
     );
-    foreach (system_region_list($theme_key) as $region => $label) {
+    foreach (system_region_list($theme_key, REGIONS_VISIBLE) as $region => $label) {
       $form['blocks'][$region] = array(
         '#type' => 'item',
         '#title' => $label,
@@ -264,7 +264,9 @@ class context_reaction_block extends context_reaction {
     if ($info && isset($info['regions_locked']) && in_array($region, $info['regions_locked'])) {
       return FALSE;
     }
-    return $requirements && $this->is_enabled_region($region);
+    // Check that this region is not hidden
+    $visible = system_region_list($theme, REGIONS_VISIBLE);
+    return $requirements && $this->is_enabled_region($region) && isset($visible[$region]);
   }
 
   /**
