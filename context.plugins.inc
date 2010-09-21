@@ -70,10 +70,17 @@ function _context_context_registry() {
     );
   }
   if (module_exists('taxonomy')) {
+    /*
     $registry['conditions']['node_taxonomy'] = array(
       'title' => t('Taxonomy'),
       'description' => t('Set this context when viewing a node with the selected taxonomy terms.'),
       'plugin' => 'context_condition_node_taxonomy',
+    );
+    */
+    $registry['conditions']['taxonomy_term'] = array(
+      'title' => t('Taxonomy term'),
+      'description' => t('Set this context when viewing a taxonomy term page.'),
+      'plugin' => 'context_condition_taxonomy_term',
     );
   }
   $registry['reactions'] = array(
@@ -185,8 +192,8 @@ function _context_context_plugins() {
       'parent' => 'context_condition',
     ),
   );
-  /*
   if (module_exists('taxonomy')) {
+    /*
     $plugins['context_condition_node_taxonomy'] = array(
       'handler' => array(
         'path' => drupal_get_path('module', 'context') .'/plugins',
@@ -195,8 +202,16 @@ function _context_context_plugins() {
         'parent' => 'context_condition_node',
       ),
     );
+    */
+    $plugins['context_condition_taxonomy_term'] = array(
+      'handler' => array(
+        'path' => drupal_get_path('module', 'context') .'/plugins',
+        'file' => 'context_condition_taxonomy_term.inc',
+        'class' => 'context_condition_taxonomy_term',
+        'parent' => 'context_condition',
+      ),
+    );
   }
-  */
   if (module_exists('locale')) {
     $plugins['context_condition_language'] = array(
       'handler' => array(

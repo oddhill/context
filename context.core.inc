@@ -94,6 +94,18 @@ function context_ctools_render_alter($info, $page, $args, $contexts, $task, $sub
 }
 
 /**
+ * Implementation of hook_entity_prepare_view().
+ */
+function context_entity_prepare_view($prepare, $entity_type) {
+  if ($entity_type === 'taxonomy_term' && count($prepare) === 1) {
+    $term = reset($prepare);
+    if ($term === menu_get_object('taxonomy_term', 2) && $plugin = context_get_plugin('condition', 'taxonomy_term')) {
+      $plugin->execute($term, 'view');
+    }
+  }
+}
+
+/**
  * Implementation of hook_node_view().
  */
 function context_node_view($node, $view_mode) {
@@ -184,9 +196,29 @@ function context_form_comment_form_alter(&$form, $form_state) {
 /**
  * Implementation of hook_views_pre_view().
  */
-function context_views_pre_view($view, $args) {
+function context_views_pre_view($view, $display) {
   if ($plugin = context_get_plugin('condition', 'views')) {
     $plugin->execute($view);
+  }
+  // Support Views overrides of specific entity paths.
+  if ($view->display_handler->has_path()) {
+    switch ($view->display_handler->get_option('path')) {
+      case 'taxonomy/term/%':
+        if (($term = taxonomy_term_load(arg(2))) && ($plugin = context_get_plugin('condition', 'taxonomy_term'))) {
+          $plugin->execute($term, 'view');
+        }
+        break;
+      case 'node/%':
+        if ($node = node_load(arg(1))) {
+          context_node_condition($node, 'view');
+        }
+        break;
+      case 'user/%':
+        if (($account = user_load(arg(1))) && ($plugin = context_get_plugin('condition', 'user_page'))) {
+          $plugin->execute($account, 'view');
+        }
+        break;
+    }
   }
 }
 
