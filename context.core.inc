@@ -126,7 +126,7 @@ function context_form_alter(&$form, $form_state, $form_id) {
     context_node_condition($form['#node'], 'form');
   }
   // Clear out block info cache when an admin area form is submitted.
-  if (arg(0) === 'admin' && !empty($form_state['post']) && (!isset($form_state['method']) || $form_state['method'] !== 'get')) {
+  if (arg(0) === 'admin' && !empty($form_state['input']) && isset($form_state['method']) && $form_state['method'] === 'post') {
     if ($plugin = context_get_plugin('reaction', 'block')) {
       $plugin->rebuild_needed(TRUE);
     }
