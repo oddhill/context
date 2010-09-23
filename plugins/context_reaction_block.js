@@ -210,9 +210,13 @@ DrupalContextBlockEditor.prototype.updateRegion = function(event, ui, region, op
       break;
     case 'out':
       if (
-        $('div.draggable-placeholder', region).size() === 0 &&
-        $('div.block:has(a.context-block)', region).size() == 1 &&
-        $('div.block:has(a.context-block)', region).attr('id') == ui.item.attr('id')
+        // jQuery UI 1.8
+        $('div.draggable-placeholder', region).size() === 1 &&
+        $('div.block:has(a.context-block)', region).size() == 0
+        // jQuery UI 1.6
+        // $('div.draggable-placeholder', region).size() === 0 &&
+        // $('div.block:has(a.context-block)', region).size() == 1 &&
+        // $('div.block:has(a.context-block)', region).attr('id') == ui.item.attr('id')
       ) {
         $(region).addClass('context-block-region-empty');
       }
