@@ -80,6 +80,9 @@ class context_layouts_reaction_block extends context_reaction_block {
           '#type' => 'select',
           '#weight' => -100,
           '#default_value' => isset($options['layout']) ? $options['layout'] : NULL,
+          '#required' => FALSE,
+          '#empty_value' => 0,
+          '#empty_option' => '- '. t('Site default') .' -',
         ),
         'update' => array(
           '#value' => t('Change layout'),
@@ -176,7 +179,6 @@ class context_layouts_reaction_block extends context_reaction_block {
     $layouts = context_layouts_get_layouts($theme_key);
     $layout_options = array();
     if (!empty($layouts)) {
-      $layout_options[0] = '<'. t('Site default') .'>';
       foreach ($layouts as $layout => $info) {
         $layout_options[$layout] = isset($info['name']) ? $info['name'] : $layout_options;
       }
