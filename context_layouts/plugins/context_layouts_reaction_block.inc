@@ -133,6 +133,9 @@ class context_layouts_reaction_block extends context_reaction_block {
         '#weight' => -100,
         '#default_value' => !empty($options['layout']) ? $options['layout'] : NULL,
         '#attributes' => array('class' => array('context-blockform-layout')),
+        '#required' => FALSE,
+        '#empty_value' => 0,
+        '#empty_option' => '- '. t('Site default') .' -',
       );
 
       // Add js.
