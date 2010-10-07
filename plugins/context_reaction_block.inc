@@ -273,8 +273,11 @@ class context_reaction_block extends context_reaction {
    * Add markup for making a block editable.
    */
   protected function editable_block($block) {
-    if (!empty($block->content['#markup'])) {
-      $block->content['#markup'] .= "<a id='context-block-{$block->module}-{$block->delta}' class='context-block editable edit-{$block->context}'></a>";
+    if (!empty($block->content['#markup']) || element_children($block->content)) {
+      $block->content = array(
+        'content' => $block->content,
+        'context' => array('#markup' => "<a id='context-block-{$block->module}-{$block->delta}' class='context-block editable edit-{$block->context}'></a>"),
+      );
     }
     return $block;
   }
