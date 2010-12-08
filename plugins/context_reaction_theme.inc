@@ -66,10 +66,10 @@ class context_reaction_theme extends context_reaction {
     $classes = array();
     foreach ($this->get_contexts() as $k => $v) {
       if (!empty($v->reactions[$this->plugin]['title']) && !isset($vars['section_title'])) {
-        $vars['section_title'] = t($v->reactions[$this->plugin]['title']);
+        $vars['section_title'] = check_plain(t($v->reactions[$this->plugin]['title']));
       }
       if (!empty($v->reactions[$this->plugin]['subtitle']) && !isset($vars['section_subtitle'])) {
-        $vars['section_subtitle'] = t($v->reactions[$this->plugin]['subtitle']);
+        $vars['section_subtitle'] = check_plain(t($v->reactions[$this->plugin]['subtitle']));
       }
       if (!empty($v->reactions[$this->plugin]['class'])) {
         $vars['classes_array'][] = $v->reactions[$this->plugin]['class'];
