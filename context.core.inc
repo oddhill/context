@@ -82,7 +82,8 @@ function context_theme_registry_alter(&$theme_registry) {
  * Implementation of hook_ctools_render_alter().
  * Used to detect the presence of a page manager node view or node form.
  */
-function context_ctools_render_alter($info, $page, $args, $contexts, $task, $subtask) {
+function context_ctools_render_alter($info, $page, $data) {
+  extract($data);
   if ($page && in_array($task['name'], array('node_view', 'node_edit'), TRUE)) {
     foreach ($contexts as $ctools_context) {
       if ($ctools_context->type === 'node' && !empty($ctools_context->data)) {
