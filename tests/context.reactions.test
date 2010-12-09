@@ -4,11 +4,11 @@
 class ContextReactionBlockTest extends DrupalWebTestCase {
   protected $profile = 'testing';
 
-  function getInfo() {
+  public static function getInfo() {
     return array(
-      'name' => t('Reaction: block'),
-      'description' => t('Test block reaction.'),
-      'group' => t('Context'),
+      'name' => 'Reaction: block',
+      'description' => 'Test block reaction.',
+      'group' => 'Context',
     );
   }
 
@@ -55,11 +55,11 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
 class ContextReactionBlockAjaxTest extends DrupalWebTestCase {
   protected $profile = 'testing';
 
-  function getInfo() {
+  public static function getInfo() {
     return array(
-      'name' => t('Reaction: block ajax'),
-      'description' => t('Test block reaction ajax behavior.'),
-      'group' => t('Context'),
+      'name' => 'Reaction: block ajax',
+      'description' => 'Test block reaction ajax behavior.',
+      'group' => 'Context',
     );
   }
 
@@ -80,11 +80,11 @@ class ContextReactionBlockAjaxTest extends DrupalWebTestCase {
 class ContextReactionMenuTest extends DrupalWebTestCase {
   protected $profile = 'testing';
 
-  function getInfo() {
+  public static function getInfo() {
     return array(
-      'name' => t('Reaction: menu'),
-      'description' => t('Test menu reaction.'),
-      'group' => t('Context'),
+      'name' => 'Reaction: menu',
+      'description' => 'Test menu reaction.',
+      'group' => 'Context',
     );
   }
 
@@ -126,11 +126,11 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
 class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
   protected $profile = 'testing';
 
-  function getInfo() {
+  public static function getInfo() {
     return array(
-      'name' => t('Reaction: breadcrumb'),
-      'description' => t('Test breadcrumb reaction.'),
-      'group' => t('Context'),
+      'name' => 'Reaction: breadcrumb',
+      'description' => 'Test breadcrumb reaction.',
+      'group' => 'Context',
     );
   }
 

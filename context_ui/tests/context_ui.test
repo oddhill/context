@@ -10,11 +10,11 @@
 class ContextUiTestCase extends DrupalWebTestCase {
   protected $profile = 'testing';
 
-  function getInfo() {
+  public static function getInfo() {
     return array(
-      'name' => t('Context UI functional tests'),
-      'description' => t('Create and save a context.') ,
-      'group' => t('Context UI'),
+      'name' => 'Context UI functional tests',
+      'description' => 'Create and save a context.',
+      'group' => 'Context UI',
     );
   }
 
