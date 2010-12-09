@@ -17,8 +17,8 @@ Requirements
 Basic usage
 -----------
 As a site administrator you can manage your site's contexts at
-`admin/build/context`. The main page will show you a list of the contexts on the
-site and give you some options for managing each context.
+`admin/structure/context`. The main page will show you a list of the contexts
+on the site and give you some options for managing each context.
 
 When editing or adding a new context, you will be presented with a form to
 manage some basic information about the context and then alter its conditions

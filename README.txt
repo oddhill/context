@@ -52,7 +52,7 @@ a book with media resources tightly to this section. You would also
 like a contact block you've made to appear whenever a user is in the
 pressroom section.
 
-1. Add a new context on admin/build/context
+1. Add a new context on admin/structure/context
 2. Under "Conditions", associate the pressroom nodetype, the pressroom view,
    and the media kit book with the context.
 3. Under "Reactions > Menu", choose the pressroom menu item to be set active.

@@ -21,7 +21,7 @@ class context_reaction_debug extends context_reaction {
     foreach ($contexts as $context) {
       if (!empty($context->reactions['debug'])) {
         if (user_access('administer site configuration') && module_exists('context_ui')) {
-          $name = l($context->name, "admin/build/context/list/{$context->name}", array('query' => 'destination=' . $_GET['q']));
+          $name = l($context->name, "admin/structure/context/list/{$context->name}", array('query' => 'destination=' . $_GET['q']));
         }
         else {
           $name = check_plain($context->name);

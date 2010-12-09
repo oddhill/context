@@ -54,7 +54,7 @@ function context_ui_block_info() {
 function context_ui_block_view($delta = '') {
   switch ($delta) {
     case 'editor':
-      if (user_access('administer site configuration') && strpos($_GET['q'], 'admin/build/context') === FALSE && $contexts = context_active_contexts()) {
+      if (user_access('administer site configuration') && strpos($_GET['q'], 'admin/structure/context') === FALSE && $contexts = context_active_contexts()) {
         return array(
           'subject' => t('Context editor'),
           'content' => drupal_get_form('context_ui_editor', $contexts),
@@ -97,7 +97,7 @@ function context_ui_help($path, $arg) {
     case 'admin/help#context_ui':
       $output = file_get_contents(drupal_get_path('module', 'context_ui') .'/README.txt');
       return module_exists('markdown') ? filter_xss_admin(module_invoke('markdown', 'filter', 'process', 0, -1, $output)) : '<pre>'. check_plain($output) .'</pre>';
-    case 'admin/build/context':
+    case 'admin/structure/context':
       return '<p>'. t('Context allows you to manage contextual conditions and reactions for different portions of your site. You can think of each context as representing a "section" of your site. For each context, you can choose the conditions that trigger this context to be active and choose different aspects of Drupal that should react to this active context.') .'</p>';
   }
 }

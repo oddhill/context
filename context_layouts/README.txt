@@ -21,7 +21,7 @@ In order to use context layouts, your site must meet a few conditions:
 Basic usage
 -----------
 Once you have layouts enabled, you can have a context trigger the usage of a
-particular layout in either the admin interface (`admin/build/context`) or
+particular layout in either the admin interface (`admin/structure/context`) or
 inline context editor. Different layouts may have fewer or greater regions than
 the default page template, so adjust your blocks accordingly.
 
