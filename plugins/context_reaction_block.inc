@@ -344,6 +344,9 @@ class context_reaction_block extends context_reaction {
             $context_blocks[$r][$key] = $this->editable_block($block);
           }
         }
+
+        // Sort blocks.
+        uasort($context_blocks[$r], array('context_reaction_block', 'block_sort'));
       }
     }
     return isset($context_blocks[$region]) ? $context_blocks[$region] : array();
