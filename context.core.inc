@@ -349,7 +349,7 @@ function context_node_condition(&$node, $op) {
   }
 
   // Implementation of context for taxonomy.
-  if (module_exists('taxonomy') && $node->taxonomy) {
+  if (module_exists('taxonomy') && is_array($node->taxonomy)) {
     // Set context for terms
     foreach ($node->taxonomy as $term) {
       context_set_by_condition('taxonomy', $term->vid .':'. $term->tid);
