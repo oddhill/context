@@ -683,11 +683,15 @@ function context_page_alter(&$vars) {
  * Implementation of hook_context_page_condition().
  */
 function context_context_page_condition() {
-  // Menu trail condition integration
-  $trail = menu_get_active_trail();
-  foreach ($trail as $item) {
-    if (!empty($item['href'])) {
-      context_set_by_condition('menu_trail', $item['href']);
+  // See if any contexts will be set by computing this condition.
+  $map = context_condition_map();
+  if (!empty($map['menu_trail'])) {
+    // Menu trail condition integration
+    $trail = menu_get_active_trail();
+    foreach ($trail as $item) {
+      if (!empty($item['href'])) {
+        context_set_by_condition('menu_trail', $item['href']);
+      }
     }
   }
 }
