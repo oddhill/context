@@ -701,8 +701,8 @@ function context_context_page_condition() {
  */
 function context_preprocess_page(&$vars) {
   $info = context_active_values('theme_section');
-  $vars['section_title'] = !empty($info['title']) ? $info['title'] : '';
-  $vars['section_subtitle'] = !empty($info['subtitle']) ? $info['subtitle'] : '';
+  $vars['section_title'] = !empty($info['title']) ? check_plain($info['title']) : '';
+  $vars['section_subtitle'] = !empty($info['subtitle']) ? check_plain($info['subtitle']) : '';
 
   // Merge body classes from *any* active contexts.
   $classes = array();
@@ -711,7 +711,7 @@ function context_preprocess_page(&$vars) {
       $classes[$context->theme_section['class']] = $context->theme_section['class'];
     }
   }
-  $vars['body_classes'] .= !empty($classes) ? ' '. implode(' ', $classes) : '';
+  $vars['body_classes'] .= !empty($classes) ? ' '. check_plain(implode(' ', $classes)) : '';
 
   // If primary + secondary links are pointed at the same menu, provide
   // contextual trailing by default.
