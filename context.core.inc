@@ -145,6 +145,7 @@ function context_form_alter(&$form, $form_state, $form_id) {
   // Prevent this from firing on admin pages... damn form driven apis...
   if ($form['#id'] === 'node-form' && arg(0) != 'admin') {
     context_node_condition($form['#node'], 'form');
+    $form['#validate'][] = 'context_form_alter_node_validate';
   }
   else if ($form_id == 'system_modules') {
     context_invalidate_cache();
@@ -180,6 +181,16 @@ function context_node_condition(&$node, $op) {
   }
   // Allow other plugins to easily be triggered on node-related events.
   drupal_alter('context_node_condition', $node, $op);
+}
+
+/**
+ * Node form validation callback.
+ *
+ * Set context also on validate, otherwise forms that don't validate drop out
+ * of context.
+ */
+function context_form_alter_node_validate($form, &$form_state) {
+  context_node_condition($form['#node'], 'form');
 }
 
 /**
