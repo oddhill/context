@@ -37,12 +37,14 @@ function _context_context_registry() {
       'description' => t('Set this context when viewing a user page.'),
       'plugin' => 'context_condition_user_page',
     ),
-    'menu' => array(
+  );
+  if (module_exists('menu')) {
+    $registry['conditions']['menu'] = array(
       'title' => t('Menu'),
       'description' => t('Set this context when any of the selected menu items belong to the current active menu trail.'),
       'plugin' => 'context_condition_menu',
-    ),
-  );
+    );
+  }
   if (module_exists('views')) {
     $registry['conditions']['views'] = array(
       'title' => t('Views'),
@@ -87,11 +89,6 @@ function _context_context_registry() {
       'description' => t('Set the breadcrumb trail to the selected menu item.'),
       'plugin' => 'context_reaction_breadcrumb',
     ),
-    'menu' => array(
-      'title' => t('Menu'),
-      'description' => t('Control menu active class using context.'),
-      'plugin' => 'context_reaction_menu',
-    ),
     'theme' => array(
       'title' => t('Theme'),
       'description' => t('Control theme variables using context.'),
@@ -103,6 +100,13 @@ function _context_context_registry() {
       'plugin' => 'context_reaction_debug',
     ),
   );
+  if (module_exists('menu')) {
+    $registry['reactions']['menu'] = array(
+      'title' => t('Menu'),
+      'description' => t('Control menu active class using context.'),
+      'plugin' => 'context_reaction_menu',
+    );
+  }
   if (module_exists('css_injector')) {
     $registry['reactions']['css_injector'] = array(
       'title' => t('CSS Injector'),
