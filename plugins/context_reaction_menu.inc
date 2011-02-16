@@ -54,7 +54,7 @@ class context_reaction_menu extends context_reaction {
    * If primary + secondary links are pointed at the same menu, provide
    * contextual trailing by default.
    */
-  function execute(&$vars) {
+  function execute(&$vars = NULL) {
     if (variable_get('menu_main_links_source', 'main-menu') == variable_get('menu_secondary_links_source', 'user-menu')) {
       $vars['main_menu'] = theme_get_setting('toggle_main_menu') ? $this->menu_navigation_links(variable_get('menu_main_links_source', 'main-menu')) : $vars['main_menu'];
       $vars['secondary_menu'] = theme_get_setting('toggle_secondary_menu') ? $this->menu_navigation_links(variable_get('menu_secondary_links_source', 'secondary-links'), 1) : $vars['secondary_menu'];
