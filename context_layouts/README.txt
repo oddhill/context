@@ -13,7 +13,7 @@ Requirements
 ------------
 In order to use context layouts, your site must meet a few conditions:
 
-- Context and Context layouts modules are enabled (`admin/build/modules`).
+- Context and Context layouts modules are enabled (`admin/modules`).
 - You are using a theme which provides and has declared multiple layouts. (See
   "Example themes" for themes you can try.)
 
