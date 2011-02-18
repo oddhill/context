@@ -331,3 +331,12 @@ function context_preprocess_page(&$vars) {
   }
   */
 }
+
+/**
+ * Implementation of hook_preprocess_html().
+ */
+function context_preprocess_html(&$vars) {
+  if ($plugin = context_get_plugin('reaction', 'theme_html')) {
+    $plugin->execute($vars);
+  }
+}

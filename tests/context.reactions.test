@@ -166,3 +166,41 @@ class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
     context_delete($context);
   }
 }
+
+class ContextReactionThemeHtmlTest extends DrupalWebTestCase {
+  protected $profile = 'testing';
+
+  public static function getInfo() {
+    return array(
+      'name' => 'Reaction: theme html',
+      'description' => 'Test theme html reaction.',
+      'group' => 'Context',
+    );
+  }
+
+  function setUp() {
+    parent::setUp('context', 'ctools');
+    $admin_user = $this->drupalCreateUser(array(
+      'access administration pages',
+      'administer nodes',
+      'administer site configuration'
+    ));
+    $this->drupalLogin($admin_user);
+  }
+
+  function test() {
+    ctools_include('export');
+    $context = ctools_export_new_object('context');
+    $context->name = 'testcontext';
+    $context->conditions = array('sitewide' => array('values' => array(1)));
+    $context->reactions = array('theme_html' => array('class' => 'context-test-class'));
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $output = $this->drupalGet('node');
+    $this->assertRaw('context-test-class');
+
+    // Cleanup
+    context_delete($context);
+  }
+}

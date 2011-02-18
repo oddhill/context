@@ -97,9 +97,14 @@ function _context_context_registry() {
       'plugin' => 'context_reaction_breadcrumb',
     ),
     'theme' => array(
-      'title' => t('Theme'),
-      'description' => t('Control theme variables using context.'),
+      'title' => t('Theme Page'),
+      'description' => t('Control page theme variables using context.'),
       'plugin' => 'context_reaction_theme',
+    ),
+    'theme_html' => array(
+      'title' => t('Theme HTML'),
+      'description' => t('Control HTML theme variables using context.'),
+      'plugin' => 'context_reaction_theme_html',
     ),
     'debug' => array(
       'title' => t('Debug'),
@@ -295,6 +300,14 @@ function _context_context_plugins() {
       'file' => 'context_reaction_theme.inc',
       'class' => 'context_reaction_theme',
       'parent' => 'context_reaction',
+    ),
+  );
+  $plugins['context_reaction_theme_html'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') .'/plugins',
+      'file' => 'context_reaction_theme_html.inc',
+      'class' => 'context_reaction_theme_html',
+      'parent' => 'context_reaction_theme',
     ),
   );
   $plugins['context_reaction_debug'] = array(
