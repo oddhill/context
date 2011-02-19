@@ -241,6 +241,10 @@ function context_page_build(&$page) {
   if ($plugin = context_get_plugin('reaction', 'block')) {
     $plugin->execute($page);
   }
+
+  // See block_page_build. Clear static cache b/c in overlay form submissions
+  // hook_page_build can get called more than once per page load.
+  drupal_static_reset('context_reaction_block_list');
 }
 
 /**
