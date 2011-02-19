@@ -108,7 +108,7 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
     $saved = context_save($context);
     $this->assertTrue($saved, "Context 'testcontext' saved.");
 
-    $this->drupalPost('admin/structure/menu/settings', array('menu_main_links_source' => 'management'), 'Save configuration');
+    $this->drupalPost('admin/structure/menu/settings', array('menu_main_links_source' => 'navigation'), 'Save configuration');
     theme_enable(array('bartik'));
     variable_set('theme_default', 'bartik');
     $this->refreshVariables();
