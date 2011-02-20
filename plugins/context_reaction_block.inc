@@ -538,10 +538,8 @@ class context_reaction_block extends context_reaction {
   function render_ajax($param) {
     // Besure the page isn't a 404 or 403.
     $headers = drupal_get_http_header();
-    foreach (explode($headers) as $header) {
-      if ($header == "HTTP/1.1 404 Not Found" || $header == "HTTP/1.1 403 Forbidden") {
-        return;
-      }
+    if (array_key_exists('status', $headers) && ($headers['status'] == "404 Not Found" || $headers['status'] == "403 Forbidden")) {
+      return;
     }
     // Set the header right away. This will inform any players in the stack
     // that we are in the middle of responding to an AJAX request.
@@ -556,16 +554,19 @@ class context_reaction_block extends context_reaction {
       if (isset($info[$bid])) {
         module_load_include('module', 'block', 'block');
         $block = $info[$bid];
-        $block->context = $context;
+        $block->title = isset($block->title) ? $block->title : '';
+        $block->context = $context;        
         $block->region = '';
-        $block = array_shift(_block_render_blocks(array($block)));
+        $rendered_blocks = _block_render_blocks(array($block)); // For E_STRICT warning
+        $block = array_shift($rendered_blocks);
         if (empty($block->content['#markup'])) {
           $block->content['#markup'] = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
         }
         $block = $this->editable_block($block);
+        $renderable_block = _block_get_renderable_array(array($block)); // For E_STRICT warning
         echo drupal_json_encode(array(
           'status' => 1,
-          'block' => drupal_render(_block_get_renderable_array(array($block))),
+          'block' => drupal_render($renderable_block),
         ));
         drupal_exit();
       }

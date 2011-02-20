@@ -69,11 +69,11 @@ class ContextReactionBlockAjaxTest extends DrupalWebTestCase {
 
   function test() {
     $this->drupalGet('node', array(
-      'query' => array('context_block' => 'user-3,testcontext')
+      'query' => array('context_block' => 'user-online,testcontext')
     ));
 
-    $this->assertText('"status": 1');
-    $this->assertText("Who\'s online");
+    $this->assertText('"status":1');
+    $this->assertText("Who's online");
   }
 }
 
