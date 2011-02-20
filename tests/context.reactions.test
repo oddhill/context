@@ -158,9 +158,9 @@ class ContextReactionBreadcrumbTest extends DrupalWebTestCase {
     $this->refreshVariables();
 
     $output = $this->drupalGet('node');
-    $this->assertText('Home » Administer » Structure');
+    $this->assertText('Home » Administration » Structure');
     $output = $this->drupalGet('user');
-    $this->assertNoText('Home » Administer » Structure');
+    $this->assertNoText('Home » Administration » Structure');
 
     // Cleanup
     context_delete($context);
