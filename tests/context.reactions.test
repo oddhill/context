@@ -13,9 +13,10 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('context', 'ctools');
+    parent::setUp('context', 'ctools', 'block');
     $admin_user = $this->drupalCreateUser(array(
-      'administer site configuration'
+      'administer site configuration',
+      'administer blocks'
     ));
     $this->drupalLogin($admin_user);
   }
@@ -43,12 +44,35 @@ class ContextReactionBlockTest extends DrupalWebTestCase {
     $this->drupalGet('node');
     $this->assertText('Who\'s online');
 
+    // Test title override of code provided block
+    $edit = array('title' => 'Context Online Block');
+    $this->drupalPost('admin/structure/block/manage/user/online/configure', $edit, t('Save block'));
+    $this->drupalGet('node');
+    $this->assertText('Context Online Block');
+
+    // Test title of custom block
+    $edit = array(
+      'info' => 'Context Custom Block Info',
+      'title' => 'Context Custom Block Title',
+      'body[value]' => $this->randomName(32),
+    );
+    $this->drupalPost('admin/structure/block/add', $edit, t('Save block'));
+    $bid = db_query("SELECT bid FROM {block_custom} WHERE info = :info", array(':info' => $edit['info']))->fetchField();
+
+    $context->reactions['block']['blocks']["block-{$bid}"] = array(
+      'module' => 'block',
+      'delta' => $bid,
+      'region' => 'sidebar_first',
+      'weight' => 2,      
+    );
+    $saved = context_save($context);
+    $this->assertTrue($saved, "Context 'testcontext' saved.");
+
+    $this->drupalGet('node');
+    $this->assertText('Context Custom Block Title');
+
     // Cleanup
     context_delete($context);
-
-    // @TODO:
-    // - Implement & test title overrides (if we plan to support them).
-    // - Implement & test core + context block visibility conditions
   }
 }
 

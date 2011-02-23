@@ -327,9 +327,9 @@ class context_reaction_block extends context_reaction {
         if (!empty($options['blocks'])) {
           foreach ($options['blocks'] as $block) {
             $block = (object) $block;
-            $block->title = NULL;
             $block->context = $context->name;
             $block->bid = "{$block->module}-{$block->delta}";
+            $block->title = isset($info[$block->bid]->title) ? $info[$block->bid]->title : NULL;
             $block->cache = isset($info[$block->bid]->cache) ? $info[$block->bid]->cache : DRUPAL_NO_CACHE;
             $context_blocks[$block->region][$block->bid] = $block;
           }
@@ -421,14 +421,14 @@ class context_reaction_block extends context_reaction {
       if (module_exists('block')) {
         $theme_key = variable_get('theme_default', 'garland');
         $result = db_select('block')
-          ->fields('block', array('module','weight','delta','region'))
+          ->fields('block', array('module','weight','delta','region', 'title'))
           ->condition('theme', $theme_key)
-          ->condition('status', 1)
           ->execute();
         foreach ($result as $row) {
           if (isset($block_info["{$row->module}-{$row->delta}"])) {
             $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
             $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
+            $block_info["{$row->module}-{$row->delta}"]->title = $row->title;
           }
         }
       }
