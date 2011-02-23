@@ -143,8 +143,8 @@ class ContextConditionNodeTaxonomyTest extends DrupalWebTestCase {
     $this->vocab = taxonomy_vocabulary_machine_name_load('tags');
 
     $this->terms = array();
-    $this->terms['apples'] = (object)array('name' => 'apples', 'vocabulary_machine_name' => $this->vocab->machine_name);
-    $this->terms['oranges'] = (object)array('name' => 'oranges', 'vocabulary_machine_name' => $this->vocab->machine_name);
+    $this->terms['apples'] = (object)array('name' => 'apples', 'vid' => $this->vocab->vid);
+    $this->terms['oranges'] = (object)array('name' => 'oranges', 'vid' => $this->vocab->vid);
     taxonomy_term_save($this->terms['apples']);
     taxonomy_term_save($this->terms['oranges']);
 
@@ -167,12 +167,23 @@ class ContextConditionNodeTaxonomyTest extends DrupalWebTestCase {
 
   function test() {
     // Apples does trigger the context.
-    $this->drupalPost('node/add/article', array('title' => 'Apples', "field_tags[und]" => $this->terms['apples']->name), 'Save');
-    $this->drupalGet('node/1');
+    $edit = array(
+      'title' => 'Apples', 
+      'field_tags[und]' => $this->terms['apples']->name
+    );
+    $this->drupalPost('node/add/article', $edit, t('Save'));
+    $node = $this->drupalGetNodeByTitle($edit['title']);
+    $this->drupalGet('node/' . $node->nid);
     $this->assertText('Active context: testcontext');
 
     // Oranges does not trigger the context.
-    $this->drupalPost('node/add/article', array('title' => 'Oranges', "field_tags[und]" => $this->terms['oranges']->name), 'Save');
+    $edit = array(
+      'title' => 'Oranges', 
+      'field_tags[und]' => $this->terms['oranges']->name
+    );
+    $this->drupalPost('node/add/article', $edit, t('Save'));
+    $node = $this->drupalGetNodeByTitle($edit['title']);
+    $this->drupalGet('node/' . $node->nid);
     $this->assertNoText('Active context: testcontext');
   }
 }
