@@ -70,7 +70,7 @@ class context_reaction_block extends context_reaction {
             '#weight' => $block->weight,
             '#type' => 'markup',
             '#tree' => TRUE,
-            'weight' => array('#type' => 'weight', '#delta' => $weight_delta, '#default_value' => 0),
+            'weight' => array('#type' => 'weight', '#delta' => $weight_delta, '#default_value' => $block->weight),
           );
         }
       }
@@ -93,14 +93,14 @@ class context_reaction_block extends context_reaction {
       $edited = array();
     }
 
-    foreach ($edited as $region => $bids) {
-      foreach ($bids as $position => $bid) {
-        if (isset($block_info[$bid])) {
-          $blocks[$bid] = array(
-            'module' => $block_info[$bid]->module,
-            'delta' => $block_info[$bid]->delta,
+    foreach ($edited as $region => $block_data) {
+      foreach ($block_data as $position => $data) {
+        if (isset($block_info[$data->bid])) {
+          $blocks[$data->bid] = array(
+            'module' => $block_info[$data->bid]->module,
+            'delta' => $block_info[$data->bid]->delta,
             'region' => $region,
-            'weight' => $position,
+            'weight' => $data->weight,
           );
         }
       }
