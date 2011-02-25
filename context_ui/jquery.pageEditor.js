@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * Generic pageEditor plugin. Allows an editor DOM object to trigger

@@ -1,4 +1,3 @@
-// $Id$
 
 /**
  * Context plugin form.

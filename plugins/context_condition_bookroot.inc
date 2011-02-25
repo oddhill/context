@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Set the context on the basis of the node type of page's book root.

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class context_layouts_reaction_block extends context_reaction_block {
   /**

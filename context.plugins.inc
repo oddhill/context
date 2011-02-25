@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Context registry.

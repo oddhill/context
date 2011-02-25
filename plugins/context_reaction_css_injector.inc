@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class context_reaction_css_injector extends context_reaction {
 

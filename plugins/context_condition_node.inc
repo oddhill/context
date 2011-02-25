@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Trigger context on node view only.

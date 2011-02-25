@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose paths as a context condition.

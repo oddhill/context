@@ -1,4 +1,3 @@
-// $Id$
 
 Drupal.behaviors.contextLayoutsReactionBlock = function(context) {
   // ContextBlockForm: Init.

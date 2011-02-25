@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class ContextReactionBlockTest extends DrupalWebTestCase {
   function getInfo() {

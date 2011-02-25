@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose current language as a context condition.

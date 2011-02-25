@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * CTools export UI extending class. Slightly customized for Context.

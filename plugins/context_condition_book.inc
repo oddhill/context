@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose book properties as a context condition.

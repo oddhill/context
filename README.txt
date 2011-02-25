@@ -1,4 +1,3 @@
-$Id$
 
 Context 3.x for Drupal 6.x
 --------------------------

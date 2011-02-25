@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose themes as context reactions.

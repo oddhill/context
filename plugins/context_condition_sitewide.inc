@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Simple sitewide context, always present.
