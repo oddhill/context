@@ -1,4 +1,3 @@
-$Id$
 
 Current state of Context for Drupal 7
 -------------------------------------

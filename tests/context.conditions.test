@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class ContextConditionUserTest extends DrupalWebTestCase {
   protected $profile = 'testing';

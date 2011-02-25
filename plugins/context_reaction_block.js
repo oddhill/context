@@ -1,4 +1,3 @@
-// $Id$
 (function($){
 Drupal.behaviors.contextReactionBlock = {attach: function(context) {
   $('form.context-editor:not(.context-block-processed)')

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose menu items as context reactions.

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 require('context.core.inc');
 

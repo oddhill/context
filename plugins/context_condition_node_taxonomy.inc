@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose node taxonomy terms as a context condition.

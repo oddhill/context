@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose active contexts as a context condition.

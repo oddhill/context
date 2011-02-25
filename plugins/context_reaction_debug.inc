@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Output context debug information.

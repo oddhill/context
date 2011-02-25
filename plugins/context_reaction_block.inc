@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose blocks as context reactions.

@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Base class for a context condition.

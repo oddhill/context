@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 class context_condition_views extends context_condition {
 

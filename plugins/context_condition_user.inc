@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Expose current user role as a context condition.

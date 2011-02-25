@@ -1,5 +1,4 @@
 <?php
-// $Id$
 
 /**
  * Set the breadcrumb using a context reaction.
