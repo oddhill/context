@@ -459,7 +459,7 @@ class context_reaction_block extends context_reaction {
             $context_block = $block_info["{$block['module']}-{$block['delta']}"];
             $context_block->weight = $block['weight'];
             $context_block->region = $block['region'];
-            $context_block->context = $context->name;
+            $context_block->context = !empty($context->name) ? $context->name : 'tempname';
             $blocks[$context_block->bid] = $context_block;
           }
         }
