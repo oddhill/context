@@ -334,6 +334,8 @@ class context_reaction_block extends context_reaction {
           }
         }
       }
+      
+      $this->is_editable_check($context_blocks);
       foreach ($context_blocks as $r => $blocks) {
         $context_blocks[$r] = _block_render_blocks($blocks);
 
@@ -351,6 +353,30 @@ class context_reaction_block extends context_reaction {
     return isset($context_blocks[$region]) ? $context_blocks[$region] : array();
   }
 
+  /**
+   * Determine if there is an active context editor block, and set a flag.  We will set a flag so 
+   * that we can make sure that blocks with empty content have some default content.  This is
+   * needed so the save of the context inline editor does not remove the blocks with no content.
+   */
+  function is_editable_check($context_blocks) {
+    $context_ui_editor_present = &drupal_static('context_ui_editor_present', FALSE);
+    foreach ($context_blocks as $r => $blocks) {
+      if (isset($blocks['context_ui-editor'])) {
+        $block = $blocks['context_ui-editor'];
+        // see if the editor is actually enabled, lifted from _block_render_blocks
+        if (!count(module_implements('node_grants')) && ($_SERVER['REQUEST_METHOD'] == 'GET' || $_SERVER['REQUEST_METHOD'] == 'HEAD') && ($cid = _block_get_cache_id($block)) && ($cache = cache_get($cid, 'cache_block'))) {
+          $array = $cache->data;
+        }
+        else {
+          $array = module_invoke($block->module, 'block_view', $block->delta);
+          drupal_alter(array('block_view', "block_view_{$block->module}_{$block->delta}"), $array, $block);
+        }
+        $context_ui_editor_present = !empty($array['content']);
+        break;
+      }
+    }
+  }
+  
   /**
    * Generate the safe weight range for a block being added to a region such that
    * there are enough potential unique weights to support all blocks.
