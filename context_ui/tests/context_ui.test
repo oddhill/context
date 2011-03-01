@@ -18,7 +18,7 @@ class ContextUiTestCase extends DrupalWebTestCase {
   }
 
   function setUp() {
-    parent::setUp('ctools', 'context', 'context_ui', 'blog');
+    parent::setUp('ctools', 'context', 'context_ui', 'blog', 'menu');
 
     // Create and login user
     $admin_user = $this->drupalCreateUser(array(
@@ -46,7 +46,7 @@ class ContextUiTestCase extends DrupalWebTestCase {
       'name' => $context->name,
       'description' => $context->description,
       'tag' => $context->tag,
-      'conditions[plugins][node][values][page]' => 'blog',
+      'conditions[plugins][node][values][blog]' => 'blog',
       'reactions[plugins][menu]' => 'node/add/blog',
     );
     $this->drupalPost('admin/structure/context/add', $edit, 'Save');
