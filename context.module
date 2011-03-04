@@ -518,3 +518,14 @@ function context_block_view_alter(&$data, $block) {
     $data['content']['#markup'] = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') . "</div>";
   }
 }
+
+/**
+ * implement hook_page_alter()
+ *
+ * used for region context
+ */
+function context_page_alter(&$page) {
+  if ($plugin = context_get_plugin('reaction', 'region')) {
+    $plugin->execute($page);
+  }
+}
