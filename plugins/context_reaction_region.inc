@@ -17,11 +17,11 @@ class context_reaction_region extends context_reaction {
           '#type' => 'fieldset',
           '#title' => "Disable Regions in {$theme->name} Theme",
           '#collapsible' => TRUE,
-          '#collapsed' => !array_reduce($default, create_function('$a, $b','return $a || $b;')), 
+          '#collapsed' => !array_reduce($default, create_function('$a, $b', 'return $a || $b;')),
         );
         $form[$theme->name]['disable'] = array(
           '#type' => 'checkboxes',
-          '#title' => "Disable the following",
+          '#title' => t("Disable the following"),
           '#options' => $regions,
           '#default_value' => $default,
         );
@@ -35,7 +35,7 @@ class context_reaction_region extends context_reaction {
     foreach ($this->get_contexts() as $k => $v) { 
       if (isset($v->reactions[$this->plugin][$theme])) {
         $regions = $v->reactions[$this->plugin][$theme]['disable'];
-        foreach($regions as $region => $disable) {
+        foreach ($regions as $region => $disable) {
           if ($disable && isset($page[$region])) {
             unset($page[$region]);
           }

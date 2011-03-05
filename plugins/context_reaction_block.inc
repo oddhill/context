@@ -115,9 +115,9 @@ class context_reaction_block extends context_reaction {
     $form = array();
     drupal_add_library('system', 'ui.droppable');
     drupal_add_library('system', 'ui.sortable');
-    drupal_add_js(drupal_get_path('module', 'context_ui') .'/json2.js');
-    drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
-    drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
+    drupal_add_js(drupal_get_path('module', 'context_ui') . '/json2.js');
+    drupal_add_js(drupal_get_path('module', 'context') . '/plugins/context_reaction_block.js');
+    drupal_add_css(drupal_get_path('module', 'context') . '/plugins/context_reaction_block.css');
 
     // We might be called multiple times so use a static to ensure this is set just once.
     static $once;
@@ -250,8 +250,8 @@ class context_reaction_block extends context_reaction {
         $requirements = TRUE;
         drupal_add_library('system', 'ui.droppable');
         drupal_add_library('system', 'ui.sortable');
-        drupal_add_js(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.js');
-        drupal_add_css(drupal_get_path('module', 'context') .'/plugins/context_reaction_block.css');
+        drupal_add_js(drupal_get_path('module', 'context') . '/plugins/context_reaction_block.js');
+        drupal_add_css(drupal_get_path('module', 'context') . '/plugins/context_reaction_block.css');
       }
       else {
         $requirements = FALSE;
@@ -446,7 +446,7 @@ class context_reaction_block extends context_reaction {
       if (module_exists('block')) {
         $theme_key = variable_get('theme_default', 'garland');
         $result = db_select('block')
-          ->fields('block', array('module','weight','delta','region', 'title'))
+          ->fields('block', array('module', 'weight', 'delta', 'region', 'title'))
           ->condition('theme', $theme_key)
           ->execute();
         foreach ($result as $row) {
@@ -520,7 +520,7 @@ class context_reaction_block extends context_reaction {
    * Original author: walidator.info 2009.
    */
   static function _json_decode($json) {
-    $comment = false;
+    $comment = FALSE;
     $out = '$x = ';
     for ($i=0; $i < strlen($json); $i++) {
       if (!$comment) {
@@ -585,7 +585,7 @@ class context_reaction_block extends context_reaction {
         $rendered_blocks = _block_render_blocks(array($block)); // For E_STRICT warning
         $block = array_shift($rendered_blocks);
         if (empty($block->content['#markup'])) {
-          $block->content['#markup'] = "<div class='context-block-empty'>". t('This block appears empty when displayed on this page.') ."</div>";
+          $block->content['#markup'] = "<div class='context-block-empty'>" . t('This block appears empty when displayed on this page.') . "</div>";
         }
         $block = $this->editable_block($block);
         $renderable_block = _block_get_renderable_array(array($block)); // For E_STRICT warning

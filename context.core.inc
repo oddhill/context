@@ -6,8 +6,8 @@
 function context_help($path, $arg) {
   switch ($path) {
     case 'admin/help#context':
-      $output = file_get_contents(drupal_get_path('module', 'context') .'/README.txt');
-      return module_exists('markdown') ? filter_xss_admin(module_invoke('markdown', 'filter', 'process', 0, -1, $output)) : '<pre>'. check_plain($output) .'</pre>';
+      $output = file_get_contents(drupal_get_path('module', 'context') . '/README.txt');
+      return module_exists('markdown') ? filter_xss_admin(module_invoke('markdown', 'filter', 'process', 0, -1, $output)) : '<pre>' . check_plain($output) . '</pre>';
   }
 }
 
@@ -272,7 +272,7 @@ function context_links($reset = FALSE) {
     if (!empty($active_types)) {
       // Iterate over active contexts
       foreach ($active_types as $type) {
-        $add_url = 'node/add/'. str_replace('_', '-', $type);
+        $add_url = 'node/add/' . str_replace('_', '-', $type);
         $item = menu_get_item($add_url);
         if ($item && $item['access'] && strpos($_GET['q'], $add_url) !== 0) {
           $links[$type] = array('title' => t('Add @type', array('@type' => node_type_get_name($type))), 'href' => $add_url);

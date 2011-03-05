@@ -138,7 +138,7 @@ class ContextReactionMenuTest extends DrupalWebTestCase {
 
     $output = $this->drupalGet('user');
     $url = url('node/add');
-    $active = $this->xpath('//li[contains(@class, "active")]/a[@href="'. $url .'"]');
+    $active = $this->xpath('//li[contains(@class, "active")]/a[@href="' . $url . '"]');
     $this->assertTrue(!empty($active), t('Active menu item found.'));
 
     // Cleanup
@@ -268,7 +268,7 @@ class ContextReactionRegionTest extends DrupalWebTestCase {
           ),
         ),
       ),
-      'region' => array('bartik' => array('disable'=> array('sidebar_first' => 'sidebar_first')))
+      'region' => array('bartik' => array('disable' => array('sidebar_first' => 'sidebar_first')))
     );
     $saved = context_save($context);
     $this->assertTrue($saved, "Context 'testcontext' saved.");
