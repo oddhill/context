@@ -254,7 +254,7 @@ function context_save($context) {
  */
 function context_delete($context) {
   if (isset($context->name) && ($context->export_type & EXPORT_IN_DATABASE)) {
-    db_query("DELETE FROM {context} WHERE name = '%s'", $context->name);
+    db_query("DELETE FROM {context} WHERE name = :name", array(':name' => $context->name));
     context_invalidate_cache();
     return TRUE;
   }
