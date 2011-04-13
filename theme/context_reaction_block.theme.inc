@@ -86,9 +86,11 @@ function template_preprocess_context_block_browser(&$vars) {
   // Group blocks by module.
   foreach ($vars['blocks'] as $block) {
     $group = isset($block->context_group) ? $block->context_group : $block->module;
+    // Normalize the $group, borrowed from drupal_html_id
+    $group = strtr(drupal_strtolower($group), array(' ' => '-', '_' => '-', '[' => '-', ']' => ''));
     if (!isset($categories[$group])) {
       $info = system_get_info('module', $block->module);
-      $title = $group = isset($block->context_group) ? $block->context_group : (!empty($info['name']) ? $info['name'] : $block->module);
+      $title = isset($block->context_group) ? $block->context_group : (!empty($info['name']) ? $info['name'] : $block->module);
       $categories['#options'][$group] = $title;
     }
     $blocks[$group][$block->bid] = $block; // Don't call theme('context_block_browser_item') to allow others to alter.
