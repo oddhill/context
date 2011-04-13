@@ -39,14 +39,15 @@ class context_reaction_block extends context_reaction {
       '#suffix' => '</div>',
     );
     foreach ($this->get_blocks() as $block) {
-      if (!isset($form['selector'][$block->module])) {
-        $form['selector'][$block->module] = array(
+      $group = isset($block->context_group) ? $block->context_group : $block->module;
+      if (!isset($form['selector'][$group])) {
+        $form['selector'][$group] = array(
           '#type' => 'checkboxes',
-          '#title' => $modules[$block->module],
+          '#title' => isset($block->context_group) ? $block->context_group : $modules[$block->module],
           '#options' => array(),
         );
       }
-      $form['selector'][$block->module]['#options'][$block->bid] = check_plain($block->info);
+      $form['selector'][$group]['#options'][$block->bid] = check_plain($block->info);
     }
     ksort($form['selector']);
 
