@@ -513,8 +513,7 @@ function _context_registry($key = NULL, $reset = FALSE) {
  * not dropped
  */
 function context_block_view_alter(&$data, $block) {
-  $context_ui_editor_present = &drupal_static('context_ui_editor_present', FALSE);
-  if ($context_ui_editor_present && empty($data['content'])) {
+  if (context_isset('context_ui', 'context_ui_editor_present') && empty($data['content'])) {
     $data['content']['#markup'] = "<div class='context-block-empty'>" . t('This block appears empty when displayed on this page.') . "</div>";
   }
 }

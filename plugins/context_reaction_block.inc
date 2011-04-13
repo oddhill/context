@@ -286,7 +286,11 @@ class context_reaction_block extends context_reaction {
    * Add markup for making a region editable.
    */
   protected function editable_region($region, $build) {
-    if ($this->is_editable_region($region) && (!empty($build) || variable_get('context_reaction_block_all_regions', FALSE))) {
+    if ($this->is_editable_region($region) &&
+        (!empty($build) ||
+         variable_get('context_reaction_block_all_regions', FALSE) ||
+         context_isset('context_ui', 'context_ui_editor_present'))
+    ) {
       global $theme;
       $regions = system_region_list($theme);
       $name = isset($regions[$region]) ? $regions[$region] : $region;
@@ -360,7 +364,6 @@ class context_reaction_block extends context_reaction {
    * needed so the save of the context inline editor does not remove the blocks with no content.
    */
   function is_editable_check($context_blocks) {
-    $context_ui_editor_present = &drupal_static('context_ui_editor_present', FALSE);
     foreach ($context_blocks as $r => $blocks) {
       if (isset($blocks['context_ui-editor'])) {
         $block = $blocks['context_ui-editor'];
@@ -372,7 +375,9 @@ class context_reaction_block extends context_reaction {
           $array = module_invoke($block->module, 'block_view', $block->delta);
           drupal_alter(array('block_view', "block_view_{$block->module}_{$block->delta}"), $array, $block);
         }
-        $context_ui_editor_present = !empty($array['content']);
+        if(!empty($array['content'])) {
+          context_set('context_ui', 'context_ui_editor_present', TRUE);
+        }
         break;
       }
     }
