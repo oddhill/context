@@ -85,7 +85,7 @@ function context_ctools_render_alter($info, $page, $data) {
   extract($data);
   if ($page && in_array($task['name'], array('node_view', 'node_edit'), TRUE)) {
     foreach ($contexts as $ctools_context) {
-      if ($ctools_context->type === 'node' && !empty($ctools_context->data)) {
+      if (in_array('node', $ctools_context->type) && !empty($ctools_context->data)) {
         context_node_condition($ctools_context->data, $task['name'] === 'node_view' ? 'view' : 'form');
         break;
       }
