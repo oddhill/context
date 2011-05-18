@@ -245,7 +245,7 @@ function _context_ui_rebuild_from_input($context, $input, $conditions, $reaction
  *   A context object
  */
 function context_ui_form_process($context, $form, $submit = TRUE) {
-  $context->name = isset($form['name']) ? $form['name'] : NULL;
+  $context->name = isset($form['name']) ? $form['name'] : $context->name;
   $context->description = isset($form['description']) ? $form['description'] : NULL;
   $context->tag = isset($form['tag']) ? $form['tag'] : NULL;
   $context->condition_mode = isset($form['condition_mode']) ? $form['condition_mode'] : NULL;

@@ -52,5 +52,9 @@ class ContextUiTestCase extends DrupalWebTestCase {
     $this->drupalPost('admin/structure/context/add', $edit, 'Save');
     $this->assertText($context->name . ' has been created.', 'Context saved.');
 
+    $edit = array();
+    // export_ui confirm delete
+    $this->drupalPost('admin/structure/context/list/' . $context->name . '/edit', $edit, 'Delete');
+    $this->assertTrue(strpos($this->getUrl(), 'admin/structure/context/list/' . $context->name . '/delete') !== FALSE, 'Context deletion confirmation page displayed');
   }
 }
