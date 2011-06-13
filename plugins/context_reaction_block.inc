@@ -219,7 +219,9 @@ class context_reaction_block extends context_reaction {
     // Load all region content assigned via blocks.
     foreach (array_keys($all_regions) as $region) {
       if ($this->is_enabled_region($region)) {
-        $page[$region] = isset($page[$region]) ? array_merge($page[$region], $this->block_get_blocks_by_region($region)) : $this->block_get_blocks_by_region($region);
+        if ($blocks = $this->block_get_blocks_by_region($region)) {
+          $page[$region] = isset($page[$region]) ? array_merge($page[$region], $blocks) : $blocks;
+        }
       }
     }
   }
