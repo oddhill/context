@@ -278,6 +278,11 @@ class context_reaction_block extends context_reaction {
         'content' => $block->content,
         'context' => array('#markup' => "<a id='context-block-{$block->module}-{$block->delta}' class='context-block editable edit-{$block->context}'></a>"),
       );
+      //Contextual links are in the wrong spot in the render array once we've nested them
+      if (isset($block->content['content']['#contextual_links'])) {
+        $block->content['#contextual_links'] = $block->content['content']['#contextual_links'];
+        unset($block->content['content']['#contextual_links']);
+      }
     }
     return $block;
   }
