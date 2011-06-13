@@ -74,6 +74,24 @@ class context_export_ui extends ctools_export_ui {
       $this->plugin['form']['submit']($form, $form_state);
     }
   }
+
+  /**
+   * Override default final validation for ctools. With import wizard
+   * it was possible to get default ctools export ui name validation
+   * rules, this ensures we always get ours.
+   */
+  function edit_finish_validate(&$form, &$form_state) {
+    if ($form_state['op'] != 'edit') {
+      // Validate the name. Fake an element for form_error().
+      $export_key = $this->plugin['export']['key'];
+      $element = array(
+        '#value' => $form_state['item']->{$export_key},
+        '#parents' => array('name'),
+      );
+      $form_state['plugin'] = $this->plugin;
+      context_ui_edit_name_validate($element, $form_state);
+    }
+  }
 }
 
 
@@ -102,6 +120,8 @@ function context_ui_form(&$form, &$form_state) {
   // Core context definition
   $form['info']['#type'] = 'fieldset';
   $form['info']['#tree'] = FALSE;
+
+
   $form['info']['name']['#element_validate'] = array('context_ui_edit_name_validate');
 
   $form['info']['tag'] = array(
@@ -298,7 +318,7 @@ function context_ui_edit_name_validate($element, &$form_state) {
   }
 
   // Check for name collision
-  if (empty($form_state['item']->export_ui_allow_overwrite) && $exists = ctools_export_crud_load($plugin['schema'], $element['#value'])) {
+  if (@$form_state['item']->export_ui_allow_overwrite === 0 && $exists = ctools_export_crud_load($plugin['schema'], $element['#value'])) {
     form_error($element, t('A @plugin with this name already exists. Please choose another name or delete the existing item before creating a new one.', array('@plugin' => $plugin['title singular'])));
   }
 }
