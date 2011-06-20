@@ -125,11 +125,18 @@ function context_form_alter(&$form, $form_state, $form_id) {
   if (!empty($form['#node_edit_form']) && arg(0) != 'admin') {
     context_node_condition($form['#node'], 'form');
   }
-  // Clear out block info cache when an admin area form is submitted.
-  if (arg(0) === 'admin' && !empty($form_state['input']) && isset($form_state['method']) && $form_state['method'] === 'post') {
-    if ($plugin = context_get_plugin('reaction', 'block')) {
-      $plugin->rebuild_needed(TRUE);
-    }
+  // If the form is an admin for, flag it so that we can force a rebuild if needed.
+  if (path_is_admin($_GET['q'])) {
+    $form['#submit'][] = 'context_admin_form_submit';
+  }
+}
+
+/**
+ * Clear out block info cache when an admin area form is submitted.
+ */
+function context_admin_form_submit(&$form, $form_state) {
+  if ($plugin = context_get_plugin('reaction', 'block')) {
+    $plugin->rebuild_needed(TRUE);
   }
 }
 
