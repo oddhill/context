@@ -179,6 +179,25 @@ function context_init() {
 }
 
 /**
+ * Implementation of hook_preprocess_menu_link().
+ *
+ * This allows menus that are not primary/secondary menus to get
+ * the "active" class assigned to them. This assumes they are using
+ * theme('menu_link') for the menu rendering to html.
+ */
+function context_preprocess_menu_link(&$variables) {
+  if($contexts = context_active_contexts()){
+    foreach($contexts as $context){
+      if((isset($context->reactions['menu']))){
+        if ($variables['element']['#href'] == $context->reactions['menu']) {
+          $variables['element']['#localized_options']['attributes']['class'][] = "active";
+        }
+      }
+    }
+  }
+}
+
+/**
  * Load & crud functions ==============================================
  */
 
