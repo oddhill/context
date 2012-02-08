@@ -89,7 +89,7 @@ class context_condition {
   /**
    * Context editor form for conditions.
    */
-  function editor_form($context) {
+  function editor_form($context = NULL) {
     $form = array();
     if (!empty($this->values)) {
       $options = $this->condition_values();
