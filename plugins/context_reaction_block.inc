@@ -220,7 +220,29 @@ class context_reaction_block extends context_reaction {
     foreach (array_keys($all_regions) as $region) {
       if ($this->is_enabled_region($region)) {
         if ($blocks = $this->block_get_blocks_by_region($region)) {
-          $page[$region] = isset($page[$region]) ? array_merge($page[$region], $blocks) : $blocks;
+
+          // Are the blocks already sorted.
+          $blocks_sorted = TRUE;
+
+          // If blocks have already been placed in this region (most likely by
+          // Block module), then merge in blocks from Context.
+          if (isset($page[$region])) {
+            $page[$region] = array_merge($page[$region], $blocks);
+
+            // Restore the weights that Block module manufactured
+            // @see _block_get_renderable_array()
+            foreach ($page[$region] as &$block) {
+              if (isset($block['#block']->weight)) {
+                $block['#weight'] = $block['#block']->weight;
+                $blocks_sorted = FALSE;
+              }
+            }
+          }
+          else {
+            $page[$region] = $blocks;
+          }
+
+          $page[$region]['#sorted'] = $blocks_sorted;
         }
       }
     }
