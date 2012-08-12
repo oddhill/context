@@ -117,6 +117,7 @@ class context_reaction_block extends context_reaction {
     drupal_add_library('system', 'ui.droppable');
     drupal_add_library('system', 'ui.sortable');
     drupal_add_js(drupal_get_path('module', 'context_ui') . '/json2.js');
+    drupal_add_js(drupal_get_path('module', 'context_ui') . '/theme/filter.js');
     drupal_add_js(drupal_get_path('module', 'context') . '/plugins/context_reaction_block.js');
     drupal_add_css(drupal_get_path('module', 'context') . '/plugins/context_reaction_block.css');
 
@@ -124,7 +125,7 @@ class context_reaction_block extends context_reaction {
     static $once;
     if (!isset($once)) {
       $settings = array(
-        'path' => url($_GET['q']),
+        'path' => drupal_is_front_page() ? base_path() : url($_GET['q']),
         'params' => (object) array_diff_key($_GET, array('q' => '')),
         'scriptPlaceholder' => theme('context_block_script_placeholder', array('text' => '')),
       );
@@ -329,8 +330,17 @@ class context_reaction_block extends context_reaction {
       global $theme;
       $regions = system_region_list($theme);
       $name = isset($regions[$region]) ? $regions[$region] : $region;
-      $build['context']['#markup'] = "<a class='context-block-region' id='context-block-region-{$region}'>{$name}</a>";
+      // The negative weight + sorted will push our region marker to the top of the region
+      $build['context'] = array(
+        '#prefix' => "<div class='context-block-region' id='context-block-region-{$region}'>",
+        '#markup' => "<span class='region-name'>{$name}</span>" .
+                     "<a class='context-ui-add-link'>" . t('Add a block here.') . '</a>',
+        '#suffix' => '</div>',
+        '#weight' => -100,
+      );
+      $build['#sorted'] = FALSE;
     }
+
     return $build;
   }
 
