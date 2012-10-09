@@ -57,7 +57,7 @@ DrupalContextBlockForm = function(blockForm) {
       var blocks = [];
       $('tr', $(this)).each(function() {
         var bid = $(this).attr('id');
-        var weight = $(this).find('select').val();
+        var weight = $(this).find('select,input').first().val();
         blocks.push({'bid' : bid, 'weight' : weight});
       });
       Drupal.contextBlockForm.state[region] = blocks;
