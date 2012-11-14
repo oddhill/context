@@ -554,7 +554,13 @@ class context_reaction_block extends context_reaction {
   function render_ajax($param) {
     // Besure the page isn't a 404 or 403.
     $headers = drupal_set_header();
-    foreach (explode("\n", $headers) as $header) {
+
+    // Support for Pressflow drupal_set_header.
+    if (!is_array($headers)) {
+      $headers = explode("\n", $headers);
+    }
+
+    foreach ($headers as $header) {
       if ($header == "HTTP/1.1 404 Not Found" || $header == "HTTP/1.1 403 Forbidden") {
         return;
       }
