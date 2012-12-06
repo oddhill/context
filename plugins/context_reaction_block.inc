@@ -512,14 +512,15 @@ class context_reaction_block extends context_reaction {
       // Gather only region info from the database.
       if (module_exists('block')) {
         $result = db_select('block')
-          ->fields('block', array('module', 'weight', 'delta', 'region', 'title'))
+          ->fields('block')
           ->condition('theme', $theme_key)
           ->execute();
         foreach ($result as $row) {
           if (isset($block_info["{$row->module}-{$row->delta}"])) {
-            $block_info["{$row->module}-{$row->delta}"]->weight = $row->weight;
-            $block_info["{$row->module}-{$row->delta}"]->region = $row->region;
-            $block_info["{$row->module}-{$row->delta}"]->title = $row->title;
+            $block_info["{$row->module}-{$row->delta}"] = (object) array_merge((array) $row, (array) $block_info["{$row->module}-{$row->delta}"]);
+            unset($block_info["{$row->module}-{$row->delta}"]->status);
+            unset($block_info["{$row->module}-{$row->delta}"]->visibility);
+            unset($block_info["{$row->module}-{$row->delta}"]->cache);
           }
         }
       }
