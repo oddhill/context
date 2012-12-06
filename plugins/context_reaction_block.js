@@ -103,16 +103,39 @@ DrupalContextBlockForm = function(blockForm) {
   $('td.blocks a', blockForm).each(function() {
     $(this).click(function() {
       var region = $(this).attr('href').split('#')[1];
+      var base = "context-blockform-region-"+ region;
       var selected = $("div.context-blockform-selector input:checked");
       if (selected.size() > 0) {
+        var weight_warn = false;
+        var min_weight_option = -10;
+        var max_weight_option = 10;
+        var max_observed_weight = min_weight_option - 1;
+        $('table#' + base + ' tr').each(function() {
+          var weight_input_val = $(this).find('select,input').first().val();
+          if (+weight_input_val > +max_observed_weight) {
+            max_observed_weight = weight_input_val;
+          }
+        });
+
         selected.each(function() {
           // create new block markup
           var block = document.createElement('tr');
           var text = $(this).parents('div.form-item').eq(0).hide().children('label').text();
           var select = '<div class="form-item form-type-select"><select class="tabledrag-hide form-select">';
           var i;
-          for (i = -10; i < 10; ++i) {
-            select += '<option>' + i + '</option>';
+          weight_warn = true;
+          var selected_weight = max_weight_option;
+          if (max_weight_option >= (1 + +max_observed_weight)) {
+            selected_weight = ++max_observed_weight;
+            weight_warn = false;
+          }
+
+          for (i = min_weight_option; i <= max_weight_option; ++i) {
+            select += '<option';
+            if (i == selected_weight) {
+              select += ' selected=selected';
+            }
+            select += '>' + i + '</option>';
           }
           select += '</select></div>';
           $(block).attr('id', $(this).attr('value')).addClass('draggable');
@@ -120,7 +143,6 @@ DrupalContextBlockForm = function(blockForm) {
 
           // add block item to region
           //TODO : Fix it so long blocks don't get stuck when added to top regions and dragged towards bottom regions
-          var base = "context-blockform-region-"+ region;
           Drupal.tableDrag[base].makeDraggable(block);
           $('table#'+base).append(block);
           if ($.cookie('Drupal.tableDrag.showWeight') == 1) {
@@ -136,6 +158,9 @@ DrupalContextBlockForm = function(blockForm) {
           Drupal.contextBlockForm.setState();
           $(this).removeAttr('checked');
         });
+        if (weight_warn) {
+          alert(Drupal.t('Desired block weight exceeds available weight options, please check weights for blocks before saving'));
+        }
       }
       return false;
     });
