@@ -561,7 +561,7 @@ class context_reaction_block extends context_reaction {
     }
 
     foreach ($headers as $header) {
-      if ($header == "HTTP/1.1 404 Not Found" || $header == "HTTP/1.1 403 Forbidden") {
+      if (strpos($header, "404 Not Found") !== FALSE || strpos($header, "403 Forbidden") !== FALSE) {
         return;
       }
     }
@@ -572,6 +572,11 @@ class context_reaction_block extends context_reaction {
     if (strpos($param, ',') !== FALSE) {
       list($bid, $context) = explode(',', $param);
       list($module, $delta) = explode('-', $bid, 2);
+      // Check token to make sure user has access to block.
+      if (empty($_GET['context_token']) || $_GET['context_token'] != drupal_get_token($bid)) {
+        echo drupal_to_js(array('status' => 0));
+        exit;
+      }
 
       // Ensure $bid is valid.
       $info = $this->get_blocks();
