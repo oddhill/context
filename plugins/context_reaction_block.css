@@ -48,7 +48,7 @@
   border-radius:5px;
   -moz-border-radius:5px;
   -moz-user-select:none;
--  -webkit-user-select:none;
+  -webkit-user-select:none;
 }
 
 
@@ -114,7 +114,6 @@ body.context-editing div.context-block-region {
     font-size:18px;
     color:#fff;
     white-space:nowrap;
-    padding:;
     display:block;
     -moz-user-select:none;
     -webkit-user-select:none;
