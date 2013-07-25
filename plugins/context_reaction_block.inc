@@ -520,7 +520,6 @@ class context_reaction_block extends context_reaction {
             $block_info["{$row->module}-{$row->delta}"] = (object) array_merge((array) $row, (array) $block_info["{$row->module}-{$row->delta}"]);
             unset($block_info["{$row->module}-{$row->delta}"]->status);
             unset($block_info["{$row->module}-{$row->delta}"]->visibility);
-            unset($block_info["{$row->module}-{$row->delta}"]->cache);
           }
         }
       }
