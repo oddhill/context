@@ -260,8 +260,3 @@ a.context-ui-add-link, a:link.context-ui-add-link, a:visited.context-ui-add-link
   margin:10px 0px;
   padding:0;
 }
-
-.ui-sortable-helper {
-  max-width: 300px;
-  max-height: 300px;
-}
