@@ -58,7 +58,7 @@ class context_reaction_block extends context_reaction {
       '#tree' => TRUE,
       '#theme' => 'context_block_regions_form',
     );
-    foreach (system_region_list($theme_key, REGIONS_VISIBLE) as $region => $label) {
+    foreach ($this->system_region_list($theme_key, REGIONS_VISIBLE) as $region => $label) {
       $form['blocks'][$region] = array(
         '#type' => 'item',
         '#title' => $label,
@@ -215,7 +215,7 @@ class context_reaction_block extends context_reaction {
     }
 
     // Populate all block regions
-    $all_regions = system_region_list($theme);
+    $all_regions = $this->system_region_list($theme);
 
     // Load all region content assigned via blocks.
     foreach (array_keys($all_regions) as $region) {
@@ -255,7 +255,7 @@ class context_reaction_block extends context_reaction {
    */
   protected function is_enabled_region($region) {
     global $theme;
-    $regions = array_keys(system_region_list($theme));
+    $regions = array_keys($this->system_region_list($theme));
     return in_array($region, $regions, TRUE);
   }
 
@@ -290,7 +290,7 @@ class context_reaction_block extends context_reaction {
       return FALSE;
     }
     // Check that this region is not hidden
-    $visible = system_region_list($theme, REGIONS_VISIBLE);
+    $visible = $this->system_region_list($theme, REGIONS_VISIBLE);
     return $requirements && $this->is_enabled_region($region) && isset($visible[$region]);
   }
 
@@ -328,7 +328,7 @@ class context_reaction_block extends context_reaction {
          context_isset('context_ui', 'context_ui_editor_present'))
     ) {
       global $theme;
-      $regions = system_region_list($theme);
+      $regions = $this->system_region_list($theme);
       $name = isset($regions[$region]) ? $regions[$region] : $region;
       // The negative weight + sorted will push our region marker to the top of the region
       $build['context'] = array(
@@ -389,7 +389,7 @@ class context_reaction_block extends context_reaction {
       
       $this->is_editable_check($context_blocks);
       global $theme;
-      $active_regions = system_region_list($theme);
+      $active_regions = $this->system_region_list($theme);
       foreach ($context_blocks as $r => $blocks) {
         //only render blocks in an active region
         if (array_key_exists($r, $active_regions)) {
@@ -674,5 +674,21 @@ class context_reaction_block extends context_reaction {
     }
     echo drupal_json_encode(array('status' => 0));
     drupal_exit();
+  }
+
+  /**
+   * Provide caching for system_region_list since it can get called
+   * frequently. Evaluate for removal once https://drupal.org/node/1873450
+   * lands or system_region_list is otherwise cached in core
+   */
+  protected function system_region_list($theme_key, $show = REGIONS_ALL) {
+    static $cache = array();
+    if (!isset($cache[$theme_key])) {
+      $cache[$theme_key] = array();
+    }
+    if (!isset($cache[$theme_key][$show])) {
+      $cache[$theme_key][$show] = system_region_list($theme_key, $show);
+    }
+    return $cache[$theme_key][$show];
   }
 }
