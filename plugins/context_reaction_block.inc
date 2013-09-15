@@ -388,13 +388,18 @@ class context_reaction_block extends context_reaction {
       }
       
       $this->is_editable_check($context_blocks);
+      global $theme;
+      $active_regions = system_region_list($theme);
       foreach ($context_blocks as $r => $blocks) {
-        $context_blocks[$r] = _block_render_blocks($blocks);
+        //only render blocks in an active region
+        if (array_key_exists($r, $active_regions)) {
+          $context_blocks[$r] = _block_render_blocks($blocks);
 
-        // Make blocks editable if allowed.
-        if ($this->is_editable_region($r)) {
-          foreach ($context_blocks[$r] as $key => $block) {
-            $context_blocks[$r][$key] = $this->editable_block($block);
+          // Make blocks editable if allowed.
+          if ($this->is_editable_region($r)) {
+            foreach ($context_blocks[$r] as $key => $block) {
+              $context_blocks[$r][$key] = $this->editable_block($block);
+            }
           }
         }
 
