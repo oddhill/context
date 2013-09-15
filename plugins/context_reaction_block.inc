@@ -519,7 +519,12 @@ class context_reaction_block extends context_reaction {
         $result = db_select('block')
           ->fields('block')
           ->condition('theme', $theme_key)
-          ->execute();
+          ->execute()
+          ->fetchAllAssoc('bid');
+
+        drupal_alter('block_list', $result);
+        drupal_alter('context_block_list', $result);
+
         foreach ($result as $row) {
           if (isset($block_info["{$row->module}-{$row->delta}"])) {
             $block_info["{$row->module}-{$row->delta}"] = (object) array_merge((array) $row, (array) $block_info["{$row->module}-{$row->delta}"]);
