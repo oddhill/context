@@ -435,7 +435,6 @@ function context_condition_map($reset = FALSE) {
  * when/if it becomes available.
  */
 function context_invalidate_cache() {
-debug(__FUNCTION__);
   cache_clear_all('context', 'cache', TRUE);
   cache_clear_all('plugins:context', 'cache', TRUE);
 }
