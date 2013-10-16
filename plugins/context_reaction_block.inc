@@ -650,7 +650,7 @@ class context_reaction_block extends context_reaction {
       list($bid, $context) = explode(',', $param);
       list($module, $delta) = explode('-', $bid, 2);
       // Check token to make sure user has access to block.
-      if (empty($_GET['context_token']) || $_GET['context_token'] != drupal_get_token($bid)) {
+      if (!(user_access('administer contexts') || user_access('context ajax block access') || $this->context_block_ajax_rendering_allowed($bid))) {
         echo drupal_json_encode(array('status' => 0));
         exit;
       }
@@ -695,5 +695,19 @@ class context_reaction_block extends context_reaction {
       $cache[$theme_key][$show] = system_region_list($theme_key, $show);
     }
     return $cache[$theme_key][$show];
+  }
+
+  /**
+   * Allow modules to selectively allow ajax rendering of a specific block
+   */
+  private function context_block_ajax_rendering_allowed($bid) {
+    $allowed = FALSE;
+    foreach (module_invoke_all('context_allow_ajax_block_access', $bid) as $module_allow) {
+      $allowed = $allow || $module_allow;
+      if ($allowed) {
+        break;
+      }
+    }
+    return $allowed;
   }
 }
