@@ -501,50 +501,9 @@ class context_reaction_block extends context_reaction {
     if (function_exists('json_decode')) {
       return json_decode($json, $assoc);
     }
-    return context_reaction_block::_json_decode($json);
-  }
-
-  /**
-   * From http://www.php.net/manual/en/function.json-decode.php#91216
-   * with modifications for consistency with output of json_decode().
-   *
-   * Original author: walidator.info 2009.
-   */
-  static function _json_decode($json) {
-    $comment = false;
-    $out = '$x = ';
-    for ($i=0; $i < strlen($json); $i++) {
-      if (!$comment) {
-        switch ($json[$i]) {
-          case '{':
-            $out .= ' (object) array(';
-            break;
-          case '}':
-            $out .= ')';
-            break;
-          case '[':
-            $out .= ' array(';
-            break;
-          case ']':
-            $out .= ')';
-            break;
-          case ':';
-            $out .= '=>';
-            break;
-          default:
-            $out .= $json[$i];
-            break;
-        }
-      }
-      else {
-        $out .= $json[$i];
-      }
-      if ($json[$i] == '"') {
-        $comment = !$comment;
-      }
+    else {
+      watchdog('context', 'Please upgrade your PHP version to one that supports json_decode.');
     }
-    eval($out . ';');
-    return $x;
   }
 
   /**
