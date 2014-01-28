@@ -461,7 +461,7 @@ function context_empty($element) {
     }
   }
   else {
-    $empty = $empty && empty($element);
+    $empty = $empty && !isset($element);
   }
   return $empty;
 }
