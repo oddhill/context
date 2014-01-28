@@ -168,6 +168,9 @@ function context_init() {
   if ($plugin = context_get_plugin('condition', 'path')) {
     $plugin->execute();
   }
+  if ($plugin = context_get_plugin('condition', 'query_string')) {
+    $plugin->execute();
+  }
   if ($plugin = context_get_plugin('condition', 'language')) {
     global $language;
     $plugin->execute($language->language);

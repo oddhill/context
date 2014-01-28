@@ -26,6 +26,11 @@ function _context_context_registry() {
       'description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the <code>*</code> character (asterisk) as a wildcard and the <code>~</code> character (tilde) to exclude one or more paths. Use &lt;front&gt; for the site front page.'),
       'plugin' => 'context_condition_path',
     ),
+    'query_string' => array(
+      'title' => t('Query String'),
+      'description' => t('Set this context when any of the query strings above match the page query string. Put each query string on a separate line. You can use the "*" character as a wildcard and <code>~</code> to exclude one or more query strings.'),
+      'plugin' => 'context_condition_query_string',
+    ),
     'user' => array(
       'title' => t('User role'),
       'description' => t('Set this context when the current user has one of the selected role(s).'),
@@ -177,6 +182,14 @@ function _context_context_plugins() {
       'file' => 'context_condition_path.inc',
       'class' => 'context_condition_path',
       'parent' => 'context_condition',
+    ),
+  );
+  $plugins['context_condition_query_string'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') .'/plugins',
+      'file' => 'context_condition_query_string.inc',
+      'class' => 'context_condition_query_string',
+      'parent' => 'context_condition_path',
     ),
   );
   $plugins['context_condition_user'] = array(
