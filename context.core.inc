@@ -57,6 +57,11 @@ function context_theme() {
     'path' => drupal_get_path('module', 'context') . '/theme',
     'file' => 'context_reaction_block.theme.inc',
   );
+  $items['context_block_edit_wrap'] = array(
+    'render element' => 'element',
+    'path' => drupal_get_path('module', 'context') . '/theme',
+    'file' => 'context_reaction_block.theme.inc',
+  );
   return $items;
 }
 
