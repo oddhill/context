@@ -316,9 +316,6 @@ function context_context_page_condition() {
   if ($plugin = context_get_plugin('condition', 'menu')) {
     $plugin->execute();
   }
-  if ($plugin = context_get_plugin('condition', 'sitewide')) {
-    $plugin->execute(1);
-  }
   if ($plugin = context_get_plugin('condition', 'context')) {
     $plugin->execute();
   }
