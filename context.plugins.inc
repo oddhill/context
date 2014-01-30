@@ -108,6 +108,11 @@ function _context_context_registry() {
       'description' => t('Set the breadcrumb trail to the selected menu item.'),
       'plugin' => 'context_reaction_breadcrumb',
     ),
+    'template_suggestions' => array(
+      'title' => t('Template suggestions'),
+      'description' => t('Add template suggestions using context.'),
+      'plugin' => 'context_reaction_template_suggestions',
+    ),
     'theme' => array(
       'title' => t('Theme Page'),
       'description' => t('Control page theme variables using context.'),
@@ -318,6 +323,14 @@ function _context_context_plugins() {
       'file' => 'context_reaction_breadcrumb.inc',
       'class' => 'context_reaction_breadcrumb',
       'parent' => 'context_reaction_menu',
+    ),
+  );
+  $plugins['context_reaction_template_suggestions'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') . '/plugins',
+      'file' => 'context_reaction_template_suggestions.inc',
+      'class' => 'context_reaction_template_suggestions',
+      'parent' => 'context_reaction',
     ),
   );
   $plugins['context_reaction_menu'] = array(

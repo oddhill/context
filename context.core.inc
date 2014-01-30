@@ -352,6 +352,9 @@ function context_preprocess_page(&$vars) {
   if ($plugin = context_get_plugin('reaction', 'theme')) {
     $plugin->execute($vars);
   }
+  if ($plugin = context_get_plugin('reaction', 'template_suggestions')) {
+    $plugin->execute($vars);
+  }
   /*
   if ($context_links = context_links()) {
     $vars['context_links'] = theme('links', $context_links);
