@@ -9,11 +9,13 @@ class context_reaction_template_suggestions extends context_reaction {
    * Display the text area field for adding new template suggestions.
    */
   function options_form($context) {
+    $default_value = $this->fetch_from_context($context);
+
     return array(
       '#title' => t('Template suggestions'),
       '#type' => 'textarea',
       '#description' => t('Enter template suggestions such as "page__front", one per line, in order of preference (using underscores instead of hyphens).  For more information, please visit ') . l(t('Drupal 7 Template (Theme Hook) Suggestions'), 'http://drupal.org/node/1089656', array(array('target' => '_blank'), 'html' => TRUE,)) . '.',
-      '#default_value' => $this->fetch_from_context($context),
+      '#default_value' => is_string($default_value) ? $default_value : '',
     );
   }
 
