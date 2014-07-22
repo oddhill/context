@@ -331,9 +331,6 @@ function context_context_page_condition() {
  * Implementation of hook_context_page_reaction().
  */
 function context_context_page_reaction() {
-  if ($plugin = context_get_plugin('reaction', 'breadcrumb')) {
-    $plugin->execute();
-  }
   if ($plugin = context_get_plugin('reaction', 'css_injector')) {
     $plugin->execute();
   }
@@ -346,9 +343,6 @@ function context_context_page_reaction() {
  * Implementation of hook_preprocess_page().
  */
 function context_preprocess_page(&$vars) {
-  if ($plugin = context_get_plugin('reaction', 'menu')) {
-    $plugin->execute($vars);
-  }
   if ($plugin = context_get_plugin('reaction', 'theme')) {
     $plugin->execute($vars);
   }
@@ -363,6 +357,19 @@ function context_preprocess_page(&$vars) {
     $vars['context_links'] = '';
   }
   */
+}
+
+/**
+* Implementation of hook_delivery_callback_alter().
+* Based on menu_position's and menu_trail_by_path's implementations.
+*/
+function context_page_delivery_callback_alter() {
+  if ($plugin = context_get_plugin('reaction', 'menu')) {
+    $plugin->execute();
+  }
+  if ($plugin = context_get_plugin('reaction', 'breadcrumb')) {
+    $plugin->execute();
+  }
 }
 
 /**
