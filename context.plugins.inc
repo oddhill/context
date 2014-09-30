@@ -26,6 +26,11 @@ function _context_context_registry() {
       'description' => t('Should this context always be set? If <strong>true</strong>, this context will be active across your entire site.'),
       'plugin' => 'context_condition_sitewide',
     ),
+    'default' => array(
+      'title' => t('Default context'),
+      'description' => t('This context will be set if no other context is active except sitewide contexts.'),
+      'plugin' => 'context_condition_default',
+    ),
     'path' => array(
       'title' => t('Path'),
       'description' => t('Set this context when any of the paths above match the page path. Put each path on a separate line. You can use the <code>*</code> character (asterisk) as a wildcard and the <code>~</code> character (tilde) to exclude one or more paths. Use &lt;front&gt; for the site front page.'),
@@ -191,6 +196,14 @@ function _context_context_plugins() {
       'path' => drupal_get_path('module', 'context') . '/plugins',
       'file' => 'context_condition_sitewide.inc',
       'class' => 'context_condition_sitewide',
+      'parent' => 'context_condition',
+    ),
+  );
+  $plugins['context_condition_default'] = array(
+    'handler' => array(
+      'path' => drupal_get_path('module', 'context') . '/plugins',
+      'file' => 'context_condition_default.inc',
+      'class' => 'context_condition_default',
       'parent' => 'context_condition',
     ),
   );
