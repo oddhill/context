@@ -1,0 +1,7 @@
+context.admin:
+  version: VERSION
+  js:
+    js/context.admin.js: {}
+  dependencies:
+    - core/jquery
+    - core/drupal

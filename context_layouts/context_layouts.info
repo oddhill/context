@@ -1,7 +1,0 @@
-name = Context layouts
-description = Allow theme layer to provide multiple region layouts and integrate with context.
-dependencies[] = context
-package = Context
-core = 7.x
-
-files[] = plugins/context_layouts_reaction_block.inc
