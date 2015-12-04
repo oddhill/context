@@ -34,8 +34,8 @@ before_script:
   - cd drupal
 
   # Reference rules in build site.
-  - ln -s $TESTDIR modules/rules
+  - ln -s $TESTDIR modules/context
 
 script:
   # Run the PHPUnit tests which also include the kernel tests.
-  - ./core/vendor/phpunit/phpunit/phpunit -c ./core/phpunit.xml.dist ./modules/context
+  - ./vendor/phpunit/phpunit/phpunit -c ./core/phpunit.xml.dist ./modules/context
