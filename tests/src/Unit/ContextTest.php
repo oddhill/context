@@ -19,4 +19,10 @@ use Drupal\context\Entity\Context;
  */
 class ContextTest extends UnitTestCase {
 
+  public function testEquals() {
+    $value = 'value';
+
+    $this->assertEquals('value', $value);
+  }
+
 }
