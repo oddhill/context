@@ -489,6 +489,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
 
     foreach ($blocks as $block_id => $configuration) {
       $block = $this->getBlock($block_id);
+      $configuration += $block->getConfiguration();
 
       $block_state = (new FormState())->setValues($configuration);
       $block->submitConfigurationForm($form, $block_state);
