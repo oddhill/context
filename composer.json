@@ -3,7 +3,7 @@
   "description": "Set conditions and configure reactions that should be implemented when conditions pass.",
   "type": "drupal-module",
   "license": "MIT",
-  "homepage": "https://github.com/oddhill/d8-context",
+  "homepage": "https://github.com/oddhill/context",
   "authors": [
     {
       "name": "Christoffer Palm",
@@ -13,8 +13,8 @@
     }
   ],
   "support": {
-    "issues": "https://github.com/oddhill/d8-context/issues",
-    "source": "https://github.com/oddhill/d8-context",
-    "docs": "https://github.com/oddhill/d8-context"
+    "issues": "https://github.com/oddhill/context/issues",
+    "source": "https://github.com/oddhill/context",
+    "docs": "https://github.com/oddhill/context"
   }
 }
