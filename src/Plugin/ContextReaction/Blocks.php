@@ -148,6 +148,10 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
 
         $blockContent = $block->build();
 
+        if (($configuration = $block->getConfiguration()) && array_key_exists('weight', $configuration)) {
+          $blockContent['#weight'] = $configuration['weight'];
+        }
+
         // Abort rendering: render as the empty string and ensure this block is
         // render cached, so we can avoid the work of having to repeatedly
         // determine whether the block is empty. E.g. modifying or adding entities
