@@ -124,15 +124,19 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
       /** @var $blocks BlockPluginInterface[] */
       foreach ($blocks as $block_id => $block) {
 
+        $block_placement_key = $this->blockShouldBePlacedUniquely($block)
+          ? $block_id
+          : $block->getConfiguration()['id'];
+
         // If the block being placed is a main content block then remove the
-        // existing existing main content from the page and add the content to
-        // this block.
+        // existing main content from the page and add the content to this
+        // block.
         if ($block instanceof MainContentBlockPluginInterface) {
           if (isset($build['content']['system_main'])) {
-            $block->setMainContent($mainContent);
-
             unset($build['content']['system_main']);
           }
+
+          $block->setMainContent($mainContent);
         }
 
         // If the block is a title block the supply it with the page title.
@@ -143,7 +147,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
         // Code taken from the BlockPageVariant display.
         // @see Drupal\block\Plugin\DisplayVariantBlockPageVariant
         if ($block instanceof MainContentBlockPluginInterface || $block instanceof TitleBlockPluginInterface) {
-          unset($build[$region][$block_id]['#cache']['keys']);
+          unset($build[$region][$block_placement_key]['#cache']['keys']);
         }
 
         $blockContent = $block->build();
@@ -483,6 +487,19 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
     }
 
     return $form;
+  }
+
+  /**
+   * Check to see if the block should be uniquely placed.
+   *
+   * @param BlockPluginInterface $block
+   *
+   * @return bool
+   */
+  private function blockShouldBePlacedUniquely(BlockPluginInterface $block) {
+    $configuration = $block->getConfiguration();
+
+    return (isset($configuration['unique']) && $configuration['unique']);
   }
 
   /**
