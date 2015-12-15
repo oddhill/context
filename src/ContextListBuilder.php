@@ -188,7 +188,7 @@ class ContextListBuilder extends ConfigEntityListBuilder implements FormInterfac
           ],
           'weight' => [
             '#type' => 'weight',
-            '#title' => $this->t('Weight for $context context', ['$context' => $context->getLabel()]),
+            '#title' => $this->t('Weight for @context context', ['@context' => $context->getLabel()]),
             '#default_value' => $context->getWeight(),
             '#delta' => $weight_delta,
             '#title_display' => 'invisible',
