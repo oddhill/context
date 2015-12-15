@@ -85,7 +85,7 @@ class ContextEditForm extends ContextFormBase {
     if (!count($conditions)) {
       $element['reactions']['empty'] = [
         '#type' => 'container',
-        '#markup' => $this->t('No conditions has been added.'),
+        '#markup' => $this->t('No conditions has been added. When there are no added conditions the context will be considered sitewide.'),
       ];
     }
 
