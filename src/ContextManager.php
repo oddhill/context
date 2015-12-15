@@ -253,6 +253,12 @@ class ContextManager {
       ? 'and'
       : 'or';
 
+    // Of there are no conditions then the context will be
+    // applied as a site wide context.
+    if (!count($conditions)) {
+      $logic = 'and';
+    }
+
     return $this->resolveConditions($conditions, $logic);
   }
 
