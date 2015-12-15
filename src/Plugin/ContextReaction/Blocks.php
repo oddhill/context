@@ -164,7 +164,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
           $blockContent['#markup'] = '';
         }
 
-        $build[$region][$block_id] = $blockContent;
+        $build[$region][$block_placement_key] = $blockContent;
 
         // If $content is not empty, then it contains cacheability metadata, and
         // we must merge it with the existing cacheability metadata. This allows
@@ -351,6 +351,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
       '#header' => [
         $this->t('Block'),
         $this->t('Category'),
+        $this->t('Unique'),
         $this->t('Region'),
         $this->t('Weight'),
         $this->t('Operations'),
@@ -419,6 +420,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
         ],
       ];
 
+      // Add each block specified for the region if there are any.
       if (isset($blocks[$region])) {
         /** @var BlockPluginInterface $block */
         foreach ($blocks[$region] as $block_id => $block) {
@@ -457,6 +459,9 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
             ],
             'category' => [
               '#markup' => $block->getPluginDefinition()['category'],
+            ],
+            'unique' => [
+              '#markup' => $this->blockShouldBePlacedUniquely($block) ? $this->t('Yes') : $this->t('No'),
             ],
             'region' => [
               '#type' => 'select',

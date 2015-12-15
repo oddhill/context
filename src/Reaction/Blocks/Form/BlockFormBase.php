@@ -173,6 +173,8 @@ abstract class BlockFormBase extends FormBase {
     // contextual values.
     $form_state->setTemporaryValue('gathered_contexts', $this->contextRepository->getAvailableContexts());
 
+    $configuration = $this->block->getConfiguration();
+
     $form['#tree'] = TRUE;
 
     $form['settings'] = $this->block->buildConfigurationForm([], $form_state);
@@ -187,7 +189,14 @@ abstract class BlockFormBase extends FormBase {
       '#title' => $this->t('Region'),
       '#description' => $this->t('Select the region where this block should be displayed.'),
       '#options' => $this->getThemeRegionOptions($theme),
-      '#default_value' => isset($this->block->getConfiguration()['region']) ? $this->block->getConfiguration()['region'] : '',
+      '#default_value' => isset($configuration['region']) ? $configuration['region'] : '',
+    ];
+
+    $form['unique'] = [
+      '#type' => 'checkbox',
+      '#title' => $this->t('Unique'),
+      '#description' => $this->t('Check if the block should be uniquely placed, this means that the block can not be overridden by other blocks of the same type in the selected region.'),
+      '#default_value' => isset($configuration['unique']) ? $configuration['unique'] : FALSE,
     ];
 
     $form['theme'] = [
@@ -230,10 +239,11 @@ abstract class BlockFormBase extends FormBase {
       $this->block->setContextMapping($form_state->getValue('context_mapping', []));
     }
 
-    $configuration = $this->block->getConfiguration() + [
+    $configuration = array_merge($this->block->getConfiguration(), [
       'region' => $form_state->getValue('region'),
       'theme' => $form_state->getValue('theme'),
-    ];
+      'unique' => $form_state->getValue('unique'),
+    ]);
 
     // Add/Update the block.
     if (!isset($configuration['uuid'])) {
