@@ -2,9 +2,11 @@
 
 namespace Drupal\context\Plugin\ContextReaction;
 
-use Drupal\Core\Form\FormState;
-use Drupal\Core\Plugin\ContextAwarePluginInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Plugin\Context\ContextRepositoryInterface;
 use Drupal\Core\Url;
+use Drupal\Core\Cache\Cache;
+use Drupal\Core\Form\FormState;
 use Drupal\Core\Render\Element;
 use Drupal\context\ContextInterface;
 use Drupal\context\Form\AjaxFormTrait;
@@ -17,6 +19,7 @@ use Drupal\context\ContextReactionPluginBase;
 use Drupal\Core\Block\TitleBlockPluginInterface;
 use Drupal\Core\Extension\ThemeHandlerInterface;
 use Drupal\context\Reaction\Blocks\BlockCollection;
+use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Block\MainContentBlockPluginInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -66,6 +69,16 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
   protected $themeHandler;
 
   /**
+   * @var ContextRepositoryInterface
+   */
+  protected $contextRepository;
+
+  /**
+   * @var ContextHandlerInterface
+   */
+  protected $contextHandler;
+
+  /**
    * {@inheritdoc}
    */
   function __construct(
@@ -74,13 +87,17 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
     $pluginDefinition,
     UuidInterface $uuid,
     ThemeManagerInterface $themeManager,
-    ThemeHandlerInterface $themeHandler
+    ThemeHandlerInterface $themeHandler,
+    ContextRepositoryInterface $contextRepository,
+    ContextHandlerInterface $contextHandler
   ) {
     parent::__construct($configuration, $pluginId, $pluginDefinition);
 
     $this->uuid = $uuid;
     $this->themeManager = $themeManager;
     $this->themeHandler = $themeHandler;
+    $this->contextRepository = $contextRepository;
+    $this->contextHandler = $contextHandler;
   }
 
   /**
@@ -93,7 +110,9 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
       $pluginDefinition,
       $container->get('uuid'),
       $container->get('theme.manager'),
-      $container->get('theme_handler')
+      $container->get('theme_handler'),
+      $container->get('context.repository'),
+      $container->get('context.handler')
     );
   }
 
@@ -111,7 +130,9 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
    *
    * @return array
    */
-  public function execute($build = array(), $title = NULL, $mainContent = NULL) {
+  public function execute(array $build = array(), $title = NULL, $mainContent = NULL) {
+
+    $cacheability = CacheableMetadata::createFromRenderArray($build);
 
     // Use the currently active theme to fetch blocks.
     $theme = $this->themeManager->getActiveTheme()->getName();
@@ -123,8 +144,9 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
 
       /** @var $blocks BlockPluginInterface[] */
       foreach ($blocks as $block_id => $block) {
+        $configuration = $block->getConfiguration();
 
-        $block_placement_key = $this->blockShouldBePlacedUniquely($block)
+        $blockPlacementKey = $this->blockShouldBePlacedUniquely($block)
           ? $block_id
           : $block->getConfiguration()['id'];
 
@@ -147,35 +169,83 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
         // Code taken from the BlockPageVariant display.
         // @see Drupal\block\Plugin\DisplayVariantBlockPageVariant
         if ($block instanceof MainContentBlockPluginInterface || $block instanceof TitleBlockPluginInterface) {
-          unset($build[$region][$block_placement_key]['#cache']['keys']);
+          unset($build[$region][$blockPlacementKey]['#cache']['keys']);
         }
 
-        $blockContent = $block->build();
-
-        if (($configuration = $block->getConfiguration()) && array_key_exists('weight', $configuration)) {
-          $blockContent['#weight'] = $configuration['weight'];
+        // Inject runtime contexts.
+        if ($block instanceof ContextAwarePluginInterface) {
+          $contexts = $this->contextRepository->getRuntimeContexts($block->getContextMapping());
+          $this->contextHandler->applyContextMapping($block, $contexts);
         }
 
-        // Abort rendering: render as the empty string and ensure this block is
-        // render cached, so we can avoid the work of having to repeatedly
-        // determine whether the block is empty. E.g. modifying or adding entities
-        // could cause the block to no longer be empty.
-        if (is_null($blockContent) || Element::isEmpty($blockContent)) {
-          $blockContent['#markup'] = '';
+        // Create the render array for the block as a whole.
+        // @see template_preprocess_block().
+        $blockBuild = [
+          '#theme' => 'block',
+          '#attributes' => [],
+          '#configuration' => $configuration,
+          '#plugin_id' => $block->getPluginId(),
+          '#base_plugin_id' => $block->getBaseId(),
+          '#derivative_plugin_id' => $block->getDerivativeId(),
+          '#block_plugin' => $block,
+          '$pre_render' => [[$this, 'buildBlock']],
+          '#cache' => [
+            'keys' => ['block', $blockPlacementKey],
+            'tags' => Cache::mergeTags($block->getCacheTags()),
+            'contexts' => $block->getCacheContexts(),
+            'max-age' => $block->getCacheMaxAge(),
+          ],
+        ];
+
+        if (array_key_exists('weight', $configuration)) {
+          $blockBuild['#weight'] = $configuration['weight'];
         }
 
-        $build[$region][$block_placement_key] = $blockContent;
+        $cacheability->addCacheableDependency($block);
 
-        // If $content is not empty, then it contains cacheability metadata, and
-        // we must merge it with the existing cacheability metadata. This allows
-        // blocks to be empty, yet still bubble cacheability metadata, to indicate
-        // why they are empty.
-        if (!empty($blockContent)) {
-          CacheableMetadata::createFromRenderArray($build)
-            ->merge(CacheableMetadata::createFromRenderArray($blockContent))
-            ->applyTo($build);
-        }
+        $build[$region][$blockPlacementKey] = $blockBuild;
       }
+    }
+
+    $cacheability->applyTo($build);
+
+    return $build;
+  }
+
+  /**
+   * Renders the content using the provided block plugin.
+   *
+   * @param  array $build
+   * @return array
+   */
+  public function buildBlock($build) {
+
+    $content = $build['#block_plugin']->build();
+
+    unset($build['#block_plugin']);
+
+    // Abort rendering: render as the empty string and ensure this block is
+    // render cached, so we can avoid the work of having to repeatedly
+    // determine whether the block is empty. E.g. modifying or adding entities
+    // could cause the block to no longer be empty.
+    if (is_null($content) || Element::isEmpty($content)) {
+      $build = array(
+        '#markup' => '',
+        '#cache' => $build['#cache'],
+      );
+
+      // If $content is not empty, then it contains cacheability metadata, and
+      // we must merge it with the existing cacheability metadata. This allows
+      // blocks to be empty, yet still bubble cacheability metadata, to indicate
+      // why they are empty.
+      if (!empty($content)) {
+        CacheableMetadata::createFromRenderArray($build)
+          ->merge(CacheableMetadata::createFromRenderArray($content))
+          ->applyTo($build);
+      }
+    }
+    else {
+      $build['content'] = $content;
     }
 
     return $build;

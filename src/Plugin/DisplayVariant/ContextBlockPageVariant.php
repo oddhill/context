@@ -2,11 +2,10 @@
 
 namespace Drupal\context\Plugin\DisplayVariant;
 
-use Drupal\block\BlockRepositoryInterface;
-use Drupal\context\ContextManager;
-use Drupal\context\Plugin\ContextReaction\Blocks;
-use Drupal\Core\Entity\EntityViewBuilderInterface;
 use Drupal\Core\Render\Element;
+use Drupal\context\ContextManager;
+use Drupal\block\BlockRepositoryInterface;
+use Drupal\Core\Entity\EntityViewBuilderInterface;
 use Drupal\block\Plugin\DisplayVariant\BlockPageVariant;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
@@ -29,34 +28,39 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
 class ContextBlockPageVariant extends BlockPageVariant {
 
   /**
-   * @var \Drupal\context\ContextManager
+   * @var ContextManager
    */
-  private $contextManager;
+  protected $contextManager;
 
   /**
    * Constructs a new BlockPageVariant.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
+   *
    * @param string $plugin_id
    *   The plugin ID for the plugin instance.
+   *
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
-   * @param \Drupal\block\BlockRepositoryInterface $block_repository
-   *   The block repository.
-   * @param \Drupal\Core\Entity\EntityViewBuilderInterface $block_view_builder
-   *   The block view builder.
+   *
    * @param string[] $block_list_cache_tags
    *   The Block entity type list cache tags.
-   * @param \Drupal\context\ContextManager $contextManager
+   * @param \Drupal\block\BlockRepositoryInterface $block_repository
+   *   The block repository.
+   *
+   * @param \Drupal\Core\Entity\EntityViewBuilderInterface $block_view_builder
+   *   The block view builder.
+   *
+   * @param ContextManager $contextManager
    */
   public function __construct(
     array $configuration,
     $plugin_id,
     $plugin_definition,
+    array $block_list_cache_tags,
     BlockRepositoryInterface $block_repository,
     EntityViewBuilderInterface $block_view_builder,
-    array $block_list_cache_tags,
     ContextManager $contextManager
   ) {
     parent::__construct(
@@ -67,7 +71,6 @@ class ContextBlockPageVariant extends BlockPageVariant {
       $block_view_builder,
       $block_list_cache_tags
     );
-
     $this->contextManager = $contextManager;
   }
 
@@ -79,9 +82,9 @@ class ContextBlockPageVariant extends BlockPageVariant {
       $configuration,
       $plugin_id,
       $plugin_definition,
+      $container->get('entity.manager')->getDefinition('block')->getListCacheTags(),
       $container->get('block.repository'),
       $container->get('entity.manager')->getViewBuilder('block'),
-      $container->get('entity.manager')->getDefinition('block')->getListCacheTags(),
       $container->get('context.manager')
     );
   }
