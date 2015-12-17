@@ -5,3 +5,4 @@ context.admin:
   dependencies:
     - core/jquery
     - core/drupal
+    - core/drupal/dialog
