@@ -469,7 +469,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
         'title' => [
           '#markup' => $title,
           '#wrapper_attributes' => [
-            'colspan' => 5,
+            'colspan' => 6,
           ],
         ],
       ];
@@ -485,7 +485,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
         'message' => [
           '#markup' => '<em>' . $this->t('No blocks in this region') . '</em>',
           '#wrapper_attributes' => [
-            'colspan' => 5,
+            'colspan' => 6,
           ],
         ],
       ];
