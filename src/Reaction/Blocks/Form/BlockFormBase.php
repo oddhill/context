@@ -98,7 +98,8 @@ abstract class BlockFormBase extends FormBase {
     FormBuilderInterface $formBuilder,
     ContextReactionManager $contextReactionManager,
     ContextManager $contextManager
-  ) {
+  )
+  {
     $this->blockManager = $block_manager;
     $this->contextRepository = $contextRepository;
     $this->themeHandler = $themeHandler;
@@ -236,7 +237,7 @@ abstract class BlockFormBase extends FormBase {
 
     // Add available contexts if this is a context aware block.
     if ($this->block instanceof ContextAwarePluginInterface) {
-      $this->block->setContextMapping($form_state->getValue('context_mapping', []));
+      $this->block->setContextMapping($form_state->getValue(['settings', 'context_mapping'], []));
     }
 
     $configuration = array_merge($this->block->getConfiguration(), [
@@ -248,8 +249,7 @@ abstract class BlockFormBase extends FormBase {
     // Add/Update the block.
     if (!isset($configuration['uuid'])) {
       $this->reaction->addBlock($configuration);
-    }
-    else {
+    } else {
       $this->reaction->updateBlock($configuration['uuid'], $configuration);
     }
 
@@ -298,3 +298,4 @@ abstract class BlockFormBase extends FormBase {
   }
 
 }
+
