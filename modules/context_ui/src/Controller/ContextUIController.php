@@ -87,18 +87,25 @@ class ContextUIController extends ControllerBase {
   public function groupsAutocomplete(Request $request) {
     $query = $request->query->get('q');
 
-    $matches = array();
+    $matches = [];
 
     foreach ($this->contextManager->getContexts() as $context) {
       if (stripos($context->getGroup(), $query) === 0) {
-        $matches[] = [
-          'value' => $context->getGroup(),
-          'label' => Html::escape($context->getGroup()),
-        ];
+        $matches[] = $context->getGroup();
       }
     }
 
-    return new JsonResponse($matches);
+    $response = [];
+
+    // Format the unique matches to be used with the autocomplete field.
+    foreach (array_unique($matches) as $match) {
+      $response[] = [
+        'value' => $match,
+        'label' => Html::escape($match),
+      ];
+    }
+
+    return new JsonResponse($response);
   }
 
   /**
