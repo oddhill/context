@@ -574,7 +574,6 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
    */
   private function blockShouldBePlacedUniquely(BlockPluginInterface $block) {
     $configuration = $block->getConfiguration();
-
     return (isset($configuration['unique']) && $configuration['unique']);
   }
 
@@ -584,19 +583,21 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
   public function submitConfigurationForm(array &$form, FormStateInterface $form_state) {
     $blocks = $form_state->getValue(['blocks', 'blocks'], []);
 
-    foreach ($blocks as $block_id => $configuration) {
-      $block = $this->getBlock($block_id);
-      $configuration += $block->getConfiguration();
+    if (is_array($blocks)) {
+      foreach ($blocks as $block_id => $configuration) {
+        $block = $this->getBlock($block_id);
+        $configuration += $block->getConfiguration();
 
-      $block_state = (new FormState())->setValues($configuration);
-      $block->submitConfigurationForm($form, $block_state);
+        $block_state = (new FormState())->setValues($configuration);
+        $block->submitConfigurationForm($form, $block_state);
 
-      // If the block is context aware then add context mapping to the block.
-      if ($block instanceof ContextAwarePluginInterface) {
-        $block->setContextMapping($block_state->getValue('context_mapping', []));
+        // If the block is context aware then add context mapping to the block.
+        if ($block instanceof ContextAwarePluginInterface) {
+          $block->setContextMapping($block_state->getValue('context_mapping', []));
+        }
+
+        $this->updateBlock($block_id, $block_state->getValues());
       }
-
-      $this->updateBlock($block_id, $block_state->getValues());
     }
   }
 
