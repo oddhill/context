@@ -104,7 +104,7 @@ class ContextReactionBlocksController extends ControllerBase {
       '#size' => 30,
       '#placeholder' => $this->t('Filter by block name'),
       '#attributes' => [
-        'class' => ['block-filter-text'],
+        'class' => ['context-table-filter'],
         'data-element' => '.block-add-table',
         'title' => $this->t('Enter a part of the block name to filter by.'),
       ],
@@ -154,7 +154,7 @@ class ContextReactionBlocksController extends ControllerBase {
         'title' => [
           'data' => [
             '#type' => 'inline_template',
-            '#template' => '<div class="block-filter-text-source">{{ label }}</div>',
+            '#template' => '<div class="context-table-filter-text-source">{{ label }}</div>',
             '#context' => [
               'label' => $block['admin_label'],
             ],
@@ -171,6 +171,8 @@ class ContextReactionBlocksController extends ControllerBase {
         ],
       ];
     }
+
+    $build['#attached']['library'][] = 'context_ui/admin';
 
     return $build;
   }

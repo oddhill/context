@@ -2,7 +2,9 @@
  * @file
  * Context admin behaviors.
  */
-(function ($, Drupal) { 'use strict';
+(function ($, Drupal) {
+
+  'use strict';
 
   /**
    * This is a generic table filter that works with any table formatted in the
@@ -14,7 +16,7 @@
    *   Attaches the behavior for the block filtering.
    */
   Drupal.behaviors.contextTableFilter = {
-    attach: function (context, settings) {
+    attach: function () {
       var $input = $('input.context-table-filter').once('.context-table-filter');
       var $table = $($input.attr('data-element'));
       var $filter_rows;

@@ -171,7 +171,7 @@ class ContextUIController extends ControllerBase {
       ],
     ];
 
-    $build['#attached']['library'][] = 'context/context.admin';
+    $build['#attached']['library'][] = 'context_ui/admin';
 
     return $build;
   }
@@ -247,7 +247,7 @@ class ContextUIController extends ControllerBase {
       ],
     ];
 
-    $build['#attached']['library'][] = 'context/context.admin';
+    $build['#attached']['library'][] = 'context_ui/admin';
 
     return $build;
   }
