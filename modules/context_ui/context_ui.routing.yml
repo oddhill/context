@@ -38,7 +38,7 @@ entity.context.delete_form:
 context.groups.autocomplete:
   path: '/admin/structure/context/groups/autocomplete'
   defaults:
-    _controller: '\Drupal\context\Controller\ContextController::groupsAutocomplete'
+    _controller: '\Drupal\context_ui\Controller\ContextUIController::groupsAutocomplete'
   requirements:
     _permission: 'administer contexts'
 
@@ -48,23 +48,23 @@ context.conditions_library:
   path: '/admin/structure/context/{context}/conditions/library'
   defaults:
     _title: 'Add condition'
-    _controller: '\Drupal\context\Controller\ContextController::listConditions'
+    _controller: '\Drupal\context_ui\Controller\ContextUIController::listConditions'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 context.condition_add:
   path: '/admin/structure/context/{context}/condition/add/{condition_id}'
   defaults:
-    _controller: '\Drupal\context\Controller\ContextController::addCondition'
+    _controller: '\Drupal\context_ui\Controller\ContextUIController::addCondition'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 context.condition_delete:
   path: '/admin/structure/context/{context}/condition/delete/{condition_id}'
   defaults:
-    _form: '\Drupal\context\Form\ConditionDeleteForm'
+    _form: '\Drupal\context_ui\Form\ConditionDeleteForm'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 ## Context reactions.
 
@@ -72,23 +72,23 @@ context.reactions_library:
   path: '/admin/structure/context/{context}/reactions/library'
   defaults:
     _title: 'Add reaction'
-    _controller: '\Drupal\context\Controller\ContextController::listReactions'
+    _controller: '\Drupal\context_ui\Controller\ContextUIController::listReactions'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 context.reaction_add:
   path: '/admin/structure/context/{context}/reaction/add/{reaction_id}'
   defaults:
-    _controller: '\Drupal\context\Controller\ContextController::addReaction'
+    _controller: '\Drupal\context_ui\Controller\ContextUIController::addReaction'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 context.reaction_delete:
   path: '/admin/structure/context/{context}/reaction/delete/{reaction_id}'
   defaults:
-    _form: '\Drupal\context\Form\ReactionDeleteForm'
+    _form: '\Drupal\context_ui\Form\ReactionDeleteForm'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 ## Context blocks reaction.
 
@@ -98,7 +98,7 @@ context.reaction.blocks.regions:
   defaults:
     _controller: '\Drupal\context\Reaction\Blocks\Controller\ContextReactionBlocksController::blocksFormThemeSelect'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 # Display a list of all blocks.
 context.reaction.blocks.library:
@@ -107,7 +107,7 @@ context.reaction.blocks.library:
     _title: 'Add block'
     _controller: '\Drupal\context\Reaction\Blocks\Controller\ContextReactionBlocksController::blocksLibrary'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 # Display a form to deleta a block.
 context.reaction.blocks.block_delete:
@@ -116,7 +116,7 @@ context.reaction.blocks.block_delete:
     _form: '\Drupal\context\Reaction\Blocks\Form\BlockDeleteForm'
     _title: 'Delete block'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 # Display a form to add a block.
 context.reaction.blocks.block_add:
@@ -125,7 +125,7 @@ context.reaction.blocks.block_add:
     _form: '\Drupal\context\Reaction\Blocks\Form\BlockAddForm'
     _title: 'Add block'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'
 
 # Display a form to edit a block.
 context.reaction.blocks.block_edit:
@@ -134,4 +134,4 @@ context.reaction.blocks.block_edit:
     _form: '\Drupal\context\Reaction\Blocks\Form\BlockEditForm'
     _title: 'Edit block'
   requirements:
-    _entity_access: context.update
+    _entity_access: 'context.update'

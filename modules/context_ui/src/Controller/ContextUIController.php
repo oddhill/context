@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\context\Controller;
+namespace Drupal\context_ui\Controller;
 
 use Drupal\Core\Url;
 use Drupal\Component\Utility\Html;
@@ -19,7 +19,7 @@ use Symfony\Component\HttpFoundation\RedirectResponse;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
-class ContextController extends ControllerBase {
+class ContextUIController extends ControllerBase {
 
   /**
    * The context reaction manager.

@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\context\Form;
+namespace Drupal\context_ui\Form;
 
 use Drupal\Core\Form\FormStateInterface;
 
@@ -25,4 +25,6 @@ class ContextAddForm extends ContextFormBase {
       'context' => $this->entity->id(),
     ]);
   }
+
 }
+

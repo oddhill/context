@@ -17,11 +17,11 @@ use Drupal\context\Plugin\ContextReactionPluginCollection;
  *   label = @Translation("Context"),
  *   handlers = {
  *     "access" = "Drupal\context\Entity\ContextAccess",
- *     "list_builder" = "Drupal\context\ContextListBuilder",
+ *     "list_builder" = "Drupal\context_ui\ContextListBuilder",
  *     "form" = {
- *       "add" = "Drupal\context\Form\ContextAddForm",
- *       "edit" = "Drupal\context\Form\ContextEditForm",
- *       "delete" = "Drupal\context\Form\ContextDeleteForm",
+ *       "add" = "Drupal\context_ui\Form\ContextAddForm",
+ *       "edit" = "Drupal\context_ui\Form\ContextEditForm",
+ *       "delete" = "Drupal\context_ui\Form\ContextDeleteForm",
  *     }
  *   },
  *   links = {

@@ -1,7 +1,9 @@
 <?php
 
-namespace Drupal\context;
+namespace Drupal\context_ui;
 
+use Drupal\context\ContextInterface;
+use Drupal\context\ContextManager;
 use Drupal\context\Entity\Context;
 use Drupal\Component\Utility\Html;
 use Drupal\Core\Form\FormInterface;
@@ -81,7 +83,7 @@ class ContextListBuilder extends ConfigEntityListBuilder implements FormInterfac
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'context_admin_display_form';
+    return 'context_ui_admin_display_form';
   }
 
   /**

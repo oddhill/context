@@ -1,7 +1,7 @@
-context.admin:
+context_ui.admin:
   version: VERSION
   js:
-    assets/js/context.admin.js: {}
+    assets/js/context_ui.admin.js: {}
   dependencies:
     - core/jquery
     - core/drupal

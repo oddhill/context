@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\context\Form;
+namespace Drupal\context_ui\Form;
 
 use Drupal\Core\Url;
 use Drupal\context\ContextManager;

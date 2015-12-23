@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\context\Form;
+namespace Drupal\context_ui\Form;
 
 use Drupal\context\ContextManager;
 use Drupal\Core\Ajax\AjaxResponse;
@@ -56,7 +56,7 @@ class ConditionDeleteForm extends ConfirmFormBase {
    * {@inheritdoc}
    */
   public function getFormId() {
-    return 'context_condition_delete_form';
+    return 'context_ui_condition_delete_form';
   }
 
   /**
