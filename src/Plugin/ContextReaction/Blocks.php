@@ -2,10 +2,7 @@
 
 namespace Drupal\context\Plugin\ContextReaction;
 
-use Drupal\Core\Plugin\Context\ContextHandlerInterface;
-use Drupal\Core\Plugin\Context\ContextRepositoryInterface;
 use Drupal\Core\Url;
-use Drupal\Core\Cache\Cache;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Render\Element;
 use Drupal\context\ContextInterface;
@@ -22,6 +19,8 @@ use Drupal\context\Reaction\Blocks\BlockCollection;
 use Drupal\Core\Plugin\ContextAwarePluginInterface;
 use Drupal\Core\Block\MainContentBlockPluginInterface;
 use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
+use Drupal\Core\Plugin\Context\ContextHandlerInterface;
+use Drupal\Core\Plugin\Context\ContextRepositoryInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
@@ -125,12 +124,12 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
    * @param string|null $title
    *   The page title.
    *
-   * @param string|null $mainContent
+   * @param string|null $main_content
    *   The main page content.
    *
    * @return array
    */
-  public function execute(array $build = array(), $title = NULL, $mainContent = NULL) {
+  public function execute(array $build = array(), $title = NULL, $main_content = NULL) {
 
     $cacheability = CacheableMetadata::createFromRenderArray($build);
 
@@ -146,30 +145,24 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
       foreach ($blocks as $block_id => $block) {
         $configuration = $block->getConfiguration();
 
-        $blockPlacementKey = $this->blockShouldBePlacedUniquely($block)
+        $block_placement_key = $this->blockShouldBePlacedUniquely($block)
           ? $block_id
           : $block->getConfiguration()['id'];
 
-        // If the block being placed is a main content block then remove the
-        // existing main content from the page and add the content to this
-        // block.
         if ($block instanceof MainContentBlockPluginInterface) {
           if (isset($build['content']['system_main'])) {
             unset($build['content']['system_main']);
           }
 
-          $block->setMainContent($mainContent);
+          $block->setMainContent($main_content);
         }
 
-        // If the block is a title block the supply it with the page title.
         if ($block instanceof TitleBlockPluginInterface) {
-          $block->setTitle($title);
-        }
+          if (isset($build['content']['messages'])) {
+            unset($build['content']['messages']);
+          }
 
-        // Code taken from the BlockPageVariant display.
-        // @see Drupal\block\Plugin\DisplayVariantBlockPageVariant
-        if ($block instanceof MainContentBlockPluginInterface || $block instanceof TitleBlockPluginInterface) {
-          unset($build[$region][$blockPlacementKey]['#cache']['keys']);
+          $block->setTitle($title);
         }
 
         // Inject runtime contexts.
@@ -188,10 +181,10 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
           '#base_plugin_id' => $block->getBaseId(),
           '#derivative_plugin_id' => $block->getDerivativeId(),
           '#block_plugin' => $block,
-          '#pre_render' => [[$this, 'buildBlock']],
+          '#pre_render' => [[$this, 'preRenderBlock']],
           '#cache' => [
-            'keys' => ['block', $blockPlacementKey],
-            'tags' => Cache::mergeTags($block->getCacheTags()),
+            'keys' => ['context_blocks_reaction', 'block', $block_placement_key, $block_placement_key],
+            'tags' => $block->getCacheTags(),
             'contexts' => $block->getCacheContexts(),
             'max-age' => $block->getCacheMaxAge(),
           ],
@@ -201,9 +194,17 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
           $blockBuild['#weight'] = $configuration['weight'];
         }
 
-        $cacheability->addCacheableDependency($block);
+        $build[$region][$block_placement_key] = $blockBuild;
 
-        $build[$region][$blockPlacementKey] = $blockBuild;
+        // The main content block cannot be cached: it is a placeholder for the
+        // render array returned by the controller. It should be rendered as-is,
+        // with other placed blocks "decorating" it. Analogous reasoning for the
+        // title block.
+        if ($block instanceof MainContentBlockPluginInterface || $block instanceof TitleBlockPluginInterface) {
+          unset($build[$region][$block_placement_key]['#cache']['keys']);
+        }
+
+        $cacheability->addCacheableDependency($block);
       }
     }
 
@@ -218,7 +219,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
    * @param  array $build
    * @return array
    */
-  public function buildBlock($build) {
+  public function preRenderBlock($build) {
 
     $content = $build['#block_plugin']->build();
 
@@ -229,10 +230,10 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
     // determine whether the block is empty. E.g. modifying or adding entities
     // could cause the block to no longer be empty.
     if (is_null($content) || Element::isEmpty($content)) {
-      $build = array(
+      $build = [
         '#markup' => '',
         '#cache' => $build['#cache'],
-      );
+      ];
 
       // If $content is not empty, then it contains cacheability metadata, and
       // we must merge it with the existing cacheability metadata. This allows

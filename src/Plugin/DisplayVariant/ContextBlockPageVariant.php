@@ -2,20 +2,14 @@
 
 namespace Drupal\context\Plugin\DisplayVariant;
 
-use Drupal\Core\Render\Element;
 use Drupal\context\ContextManager;
-use Drupal\block\BlockRepositoryInterface;
-use Drupal\Core\Entity\EntityViewBuilderInterface;
-use Drupal\block\Plugin\DisplayVariant\BlockPageVariant;
+use Drupal\Core\Display\VariantBase;
+use Drupal\Core\Display\PageVariantInterface;
+use Drupal\Core\Plugin\ContainerFactoryPluginInterface;
 use Symfony\Component\DependencyInjection\ContainerInterface;
 
 /**
  * Provides a page display variant that decorates the main content with blocks.
- *
- * To ensure essential information is displayed, each essential part of a page
- * has a corresponding block plugin interface, so that BlockPageVariant can
- * automatically provide a fallback in case no block for each of these
- * interfaces is placed.
  *
  * @see \Drupal\Core\Block\MainContentBlockPluginInterface
  * @see \Drupal\Core\Block\MessagesBlockPluginInterface
@@ -25,7 +19,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   admin_label = @Translation("Page with blocks")
  * )
  */
-class ContextBlockPageVariant extends BlockPageVariant {
+class ContextBlockPageVariant extends VariantBase implements PageVariantInterface, ContainerFactoryPluginInterface {
 
   /**
    * @var ContextManager
@@ -33,7 +27,21 @@ class ContextBlockPageVariant extends BlockPageVariant {
   protected $contextManager;
 
   /**
-   * Constructs a new BlockPageVariant.
+   * The render array representing the main page content.
+   *
+   * @var array
+   */
+  protected $mainContent = [];
+
+  /**
+   * The page title: a string (plain title) or a render array (formatted title).
+   *
+   * @var string|array
+   */
+  protected $title = '';
+
+  /**
+   * Constructs a new ContextBlockPageVariant.
    *
    * @param array $configuration
    *   A configuration array containing information about the plugin instance.
@@ -44,33 +52,11 @@ class ContextBlockPageVariant extends BlockPageVariant {
    * @param mixed $plugin_definition
    *   The plugin implementation definition.
    *
-   * @param string[] $block_list_cache_tags
-   *   The Block entity type list cache tags.
-   * @param \Drupal\block\BlockRepositoryInterface $block_repository
-   *   The block repository.
-   *
-   * @param \Drupal\Core\Entity\EntityViewBuilderInterface $block_view_builder
-   *   The block view builder.
-   *
    * @param ContextManager $contextManager
+   *   The context module manager.
    */
-  public function __construct(
-    array $configuration,
-    $plugin_id,
-    $plugin_definition,
-    array $block_list_cache_tags,
-    BlockRepositoryInterface $block_repository,
-    EntityViewBuilderInterface $block_view_builder,
-    ContextManager $contextManager
-  ) {
-    parent::__construct(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $block_repository,
-      $block_view_builder,
-      $block_list_cache_tags
-    );
+  public function __construct(array $configuration, $plugin_id, $plugin_definition, ContextManager $contextManager) {
+    parent::__construct($configuration, $plugin_id, $plugin_definition);
     $this->contextManager = $contextManager;
   }
 
@@ -82,9 +68,6 @@ class ContextBlockPageVariant extends BlockPageVariant {
       $configuration,
       $plugin_id,
       $plugin_definition,
-      $container->get('entity.manager')->getDefinition('block')->getListCacheTags(),
-      $container->get('block.repository'),
-      $container->get('entity.manager')->getViewBuilder('block'),
       $container->get('context.manager')
     );
   }
@@ -92,10 +75,37 @@ class ContextBlockPageVariant extends BlockPageVariant {
   /**
    * {@inheritdoc}
    */
+  public function setMainContent(array $main_content) {
+    $this->mainContent = $main_content;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function setTitle($title) {
+    $this->title = $title;
+    return $this;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function build() {
-    // Let the block page variant build it's render array before executing any
-    // block reactions.
-    $build = parent::build();
+    $build = [
+      '#cache' => [
+        'tags' => ['context_block_page', $this->getPluginId()],
+      ],
+    ];
+
+    // Place main content and messages blocks, these will be removed by the
+    // reactions if a message or content block has been manually placed.
+    $build['content']['system_main'] = $this->mainContent;
+
+    $build['content']['messages'] = [
+      '#weight' => -1000,
+      '#type' => 'status_messages',
+    ];
 
     // Execute each block reaction and let them modify the page build.
     foreach ($this->contextManager->getActiveReactions('blocks') as $reaction) {
