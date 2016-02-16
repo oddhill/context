@@ -2,6 +2,7 @@
 
 namespace Drupal\context\Plugin\ContextReaction;
 
+use Drupal\Core\Session\AccountInterface;
 use Drupal\Core\Url;
 use Drupal\Core\Form\FormState;
 use Drupal\Core\Render\Element;
@@ -78,6 +79,11 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
   protected $contextHandler;
 
   /**
+   * @var AccountInterface
+   */
+  protected $account;
+
+  /**
    * {@inheritdoc}
    */
   function __construct(
@@ -88,7 +94,8 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
     ThemeManagerInterface $themeManager,
     ThemeHandlerInterface $themeHandler,
     ContextRepositoryInterface $contextRepository,
-    ContextHandlerInterface $contextHandler
+    ContextHandlerInterface $contextHandler,
+    AccountInterface $account
   ) {
     parent::__construct($configuration, $pluginId, $pluginDefinition);
 
@@ -97,6 +104,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
     $this->themeHandler = $themeHandler;
     $this->contextRepository = $contextRepository;
     $this->contextHandler = $contextHandler;
+    $this->account = $account;
   }
 
   /**
@@ -111,7 +119,8 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
       $container->get('theme.manager'),
       $container->get('theme_handler'),
       $container->get('context.repository'),
-      $container->get('context.handler')
+      $container->get('context.handler'),
+      $container->get('current_user')
     );
   }
 
@@ -130,7 +139,7 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
    * @return array
    */
   public function execute(array $build = array(), $title = NULL, $main_content = NULL) {
-
+    
     $cacheability = CacheableMetadata::createFromRenderArray($build);
 
     // Use the currently active theme to fetch blocks.
@@ -153,15 +162,22 @@ class Blocks extends ContextReactionPluginBase implements ContainerFactoryPlugin
           if (isset($build['content']['system_main'])) {
             unset($build['content']['system_main']);
           }
-
           $block->setMainContent($main_content);
+        }
+
+        // Make sure the user is allowed to view the block.
+        $access = $block->access($this->account, TRUE);
+        $cacheability->addCacheableDependency($access);
+
+        // If the user is not allowed then do not render the block.
+        if (!$access->isAllowed()) {
+          continue;
         }
 
         if ($block instanceof TitleBlockPluginInterface) {
           if (isset($build['content']['messages'])) {
             unset($build['content']['messages']);
           }
-
           $block->setTitle($title);
         }
 
