@@ -210,11 +210,13 @@ class ContextListBuilder extends ConfigEntityListBuilder implements FormInterfac
       '#type' => 'actions',
     );
 
-    $form['actions']['submit'] = array(
-      '#type' => 'submit',
-      '#value' => $this->t('Save contexts'),
-      '#button_type' => 'primary',
-    );
+    if (count($groups) > 0) {
+      $form['actions']['submit'] = array(
+        '#type'        => 'submit',
+        '#value'       => $this->t('Save contexts'),
+        '#button_type' => 'primary',
+      );
+    }
 
     return $form;
   }
