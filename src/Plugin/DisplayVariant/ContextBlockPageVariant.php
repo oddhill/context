@@ -2,11 +2,6 @@
 
 namespace Drupal\context\Plugin\DisplayVariant;
 
-
-use Drupal\block\BlockRepositoryInterface;
-use Drupal\Core\Entity\EntityViewBuilderInterface;
-use Drupal\Core\Display\VariantBase;
-use Symfony\Component\DependencyInjection\ContainerInterface;
 use Drupal\block\Plugin\DisplayVariant\BlockPageVariant;
 use Drupal\context\ContextManager;
 use Drupal\Core\Display\PageVariantInterface;
