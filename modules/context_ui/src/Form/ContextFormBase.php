@@ -104,6 +104,15 @@ abstract class ContextFormBase extends EntityForm {
   /**
    * {@inheritdoc}
    */
+  public function validateForm(array &$form, FormStateInterface $form_state) {
+    if ($form_state->hasValue('reactions')) {
+      $this->validateReactions($form, $form_state);
+    }
+  }
+
+  /**
+   * {@inheritdoc}
+   */
   public function submitForm(array &$form, FormStateInterface $form_state) {
     // Save entity values that the built in submit handler cant take care of.
     if ($form_state->hasValue('require_all_conditions')) {
@@ -175,6 +184,35 @@ abstract class ContextFormBase extends EntityForm {
 
       $reaction_values = (new FormState())->setValues($configuration);
       $reaction->submitConfigurationForm($form, $reaction_values);
+    }
+  }
+
+  /**
+   * Validate the context reaction plugins configuration forms.
+   *
+   * @param array $form
+   *   The rendered form.
+   *
+   * @param FormStateInterface $form_state
+   *   The current form state.
+   */
+  private function validateReactions(array &$form, FormStateInterface $form_state) {
+    $reactions = $form_state->getValue('reactions', []);
+
+    // Loop trough each reaction and update the configuration values by
+    // validating the reactions form.
+    foreach ($reactions as $reaction_id => $configuration) {
+      $reaction = $this->entity->getReaction($reaction_id);
+
+      $reaction_values = (new FormState())->setValues($configuration);
+      $reaction->validateConfigurationForm($form, $reaction_values);
+      if ($reaction_values->hasAnyErrors()) {
+        // In case of errors, copy them back from the dummy FormState to the
+        // master form.
+        foreach ($reaction_values->getErrors() as $element => $error) {
+          $form_state->setErrorByName("reactions][$reaction_id][$element", $error);
+        }
+      }
     }
   }
 
