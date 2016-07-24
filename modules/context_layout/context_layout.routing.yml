@@ -1,0 +1,53 @@
+context_layout.admin_settings:
+  path: '/admin/config/development/context_layout'
+  defaults:
+    _form: '\Drupal\context_layout\Form\SettingsForm'
+    _title: 'Context Layout'
+  requirements:
+    _permission: 'administer site configuration'
+
+context.reaction.layouts.theme_select:
+  path: '/admin/structure/context/{context}/reaction/layouts/theme'
+  defaults:
+    _controller: '\Drupal\context_layout\Reaction\Layouts\Controller\ContextReactionLayoutsController::themeSelect'
+  requirements:
+    _entity_access: 'context.update'
+
+context.reaction.layouts.layout_select:
+  path: '/admin/structure/context/{context}/reaction/layouts/layout'
+  defaults:
+    _controller: '\Drupal\context_layout\Reaction\Layouts\Controller\ContextReactionLayoutsController::layoutSelect'
+  requirements:
+    _permission: 'administer contexts'
+
+context.reaction.layouts.library:
+  path: '/admin/structure/context/{context}/reaction/layouts/{reaction_id}/library'
+  defaults:
+    _title: 'Add block'
+    _controller: '\Drupal\context_layout\Reaction\Layouts\Controller\ContextReactionLayoutsController::blocksLibrary'
+  requirements:
+    _entity_access: 'context.update'
+
+context.reaction.layouts.block_delete:
+  path: '/admin/structure/context/{context}/reaction/layouts/delete/{block_id}'
+  defaults:
+    _form: '\Drupal\context_layout\Reaction\Layouts\Form\LayoutBlockDeleteForm'
+    _title: 'Delete block'
+  requirements:
+    _entity_access: 'context.update'
+
+context.reaction.layouts.block_add:
+  path: '/admin/structure/context/{context}/reaction/layouts/{reaction_id}/add/{block_id}'
+  defaults:
+    _form: '\Drupal\context_layout\Reaction\Layouts\Form\LayoutBlockAddForm'
+    _title: 'Add block'
+  requirements:
+    _entity_access: 'context.update'
+
+context.reaction.layouts.block_edit:
+  path: '/admin/structure/context/{context}/reaction/layouts/{reaction_id}/edit/{block_id}'
+  defaults:
+    _form: '\Drupal\context_layout\Reaction\Layouts\Form\LayoutBlockEditForm'
+    _title: 'Edit block'
+  requirements:
+    _entity_access: 'context.update'

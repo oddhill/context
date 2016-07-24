@@ -1,0 +1,5 @@
+context_layout.admin_settings:
+  title: 'Settings'
+  route_name: context_layout.admin_settings
+  base_route: context_layout.admin_settings
+  weight: 0
