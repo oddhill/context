@@ -1,0 +1,9 @@
+services:
+  context_layout.layout_page_display_variant_subscriber:
+    class: Drupal\context_layout\EventSubscriber\LayoutPageDisplayVariantSubscriber
+    arguments: ['@context.manager']
+    tags:
+      - { name: event_subscriber }
+  plugin.manager.context_layout:
+    class: Drupal\context_layout\Plugin\ContextLayout\ContextLayoutManager
+    arguments: ['@container.namespaces', '@cache.discovery', '@module_handler', '@theme_handler']
